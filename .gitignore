@@ -1,0 +1,92 @@
+# External repositories (DO NOT COMMIT)
+awsaerospace-core/
+
+# Build outputs
+rift-rewind-hackathon-aws/dist/
+rift-rewind-hackathon-aws/.yarn/
+
+# CDK build outputs
+riot-api-cdk/cdk.out/
+riot-api-cdk/lib/*.js
+riot-api-cdk/lib/*.d.ts
+riot-api-cdk/bin/*.js
+riot-api-cdk/bin/*.d.ts
+riot-api-cdk/test/*.js
+riot-api-cdk/test/*.d.ts
+
+# Node.js dependencies
+node_modules/
+*/node_modules/
+package-lock.json
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+*/__pycache__/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
+# Python dependencies (installed via pip -t)
+riot-api-cdk/lambda/riot-api-source/bin/
+riot-api-cdk/lambda/riot-api-source/certifi/
+riot-api-cdk/lambda/riot-api-source/charset_normalizer/
+riot-api-cdk/lambda/riot-api-source/idna/
+riot-api-cdk/lambda/riot-api-source/requests/
+riot-api-cdk/lambda/riot-api-source/urllib3/
+riot-api-cdk/lambda/riot-api-source/*-dist-info/
+
+# Agentic workshop Python environment
+agentic-ai-workshop/.venv/
+agentic-ai-workshop/__pycache__/
+
+# Environment and secrets
+.env
+.env.local
+.env.production
+.env.development
+*.pem
+*.key
+
+# IDE and OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# Temporary folders
+tmp/
+temp/
+
+# CDK context and cache
+cdk.context.json
+.cdk.staging/
