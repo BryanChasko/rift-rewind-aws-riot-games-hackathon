@@ -12,12 +12,13 @@
 ## Project Status: 🚀 DEPLOYED TO AWS
 
 ### ✅ Live Infrastructure
-- **🚀 Frontend**: React 18 + Vite 5 + Cloudscape Design System
+- **🚀 Frontend**: React 18 + Vite 5 + Cloudscape Design System with gradients
 - **⚡ Backend**: AWS Lambda with Function URL + Python 3.11
 - **🏗️ Infrastructure**: AWS CDK (TypeScript) - Lambda + SSM + IAM
 - **🔒 Security**: API keys in SSM Parameter Store (encrypted)
-- **🌐 Hosting**: Ready for S3 Static Website + CloudFront
-- **🤖 AI Integration**: Agentic AI workshop with Amazon Bedrock
+- **🌐 Hosting**: S3 Static Website + CloudFront at https://awsaerospace.org/apitraining/
+- **🎮 Live Data**: T1 Worlds 2023 Champions with signature champions
+- **📊 REST Education**: Complete 6-constraint demonstration with live examples
 
 ### 📁 Project Structure
 ```
@@ -97,14 +98,16 @@ aws ssm put-parameter --name "/rift-rewind/riot-api-key" --value "YOUR_KEY" --ty
 
 ## ✨ Features
 
-- 🎮 **Live Match Data** - Real-time League of Legends statistics
-- 🔒 **Secure by Design** - No hardcoded secrets, encrypted storage
-- ⚡ **Serverless Architecture** - Auto-scaling, pay-per-use
-- 🌍 **Global Distribution** - CloudFront edge locations
-- 📱 **Responsive UI** - Cloudscape Design System
-- 🤖 **AI-Powered** - Intelligent data processing
-- 🛠️ **Infrastructure as Code** - Reproducible deployments
-- 📊 **Real-time Analytics** - Player performance insights
+- 🎮 **Live Champion Data** - T1 Worlds 2023 signature champions (Azir, Aatrox, Jinx, Thresh, Graves)
+- 🏆 **Tournament Winners** - Real T1 championship data with performance scores
+- 🔒 **Secure by Design** - No hardcoded secrets, encrypted SSM storage
+- ⚡ **Serverless Architecture** - AWS Lambda Function URLs, auto-scaling
+- 🌍 **Global Distribution** - CloudFront CDN with S3 static hosting
+- 📱 **Responsive UI** - Cloudscape Design System with light gradients
+- 📊 **REST Education** - Complete 6-constraint demonstration with live API examples
+- 🛠️ **Infrastructure as Code** - AWS CDK with TypeScript
+- 🎯 **Tier System** - Custom S-Tier/A-Tier rankings with visual indicators
+- 🔄 **Error Handling** - Graceful fallback to demo data with professional status alerts
 
 ## Workshop Reference
 Workshop: https://catalog.us-east-1.prod.workshops.aws/join?access-code=5c39-0e3d60-5e

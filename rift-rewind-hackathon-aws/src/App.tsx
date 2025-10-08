@@ -30,19 +30,21 @@ function App() {
   const content = (
     <ContentLayout 
         header={
-            <Header variant="h1" description="Riot Games Hackathon Feature Deployment">
-                Rift Rewind: Riot API Training Dashboard
+            <Header variant="h1" description="League of Legends is a multiplayer online battle arena (MOBA) game where two teams of 5 players compete. Each player controls a unique champion - a character with distinct abilities, strengths, and weaknesses. There are 160+ champions, each with their own lore, abilities, and gameplay role.">
+                Rift Rewind: API fundamentals with Riot Games Developer Portal
             </Header>
         }
     >
         <Container 
-            header={<Header variant="h2">Feature Development Area</Header>}
+            header={<Header variant="h2">🎮 League of Legends Champion Insights</Header>}
         >
+            
+            
             <Flashbar 
                 items={[{ 
                     type: 'success', 
-                    header: '🚀 Live Riot Games API Integration Active', 
-                    content: 'AWS Lambda → Riot Data Dragon API → React Frontend | Real-time champion data from League of Legends servers | Auto-refreshes with game patches', 
+                    header: '🚀 Live REST API Integration', 
+                    content: 'Cloudscape Design System → AWS Lambda → Riot Data Dragon API | Demonstrating REST principles with real League of Legends champion data', 
                     id: 'live-integration' 
                 }]} 
             />
