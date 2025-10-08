@@ -90,3 +90,11 @@ temp/
 # CDK context and cache
 cdk.context.json
 .cdk.staging/
+
+# CDK test and config files
+riot-api-cdk/jest.config.js
+riot-api-cdk/.npmignore
+riot-api-cdk/test/
+
+# Temporary files
+/tmp/
