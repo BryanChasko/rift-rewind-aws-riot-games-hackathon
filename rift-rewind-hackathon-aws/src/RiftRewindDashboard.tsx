@@ -30,18 +30,7 @@ const RiftRewindDashboard: React.FC = () => {
   const [endpointDetails, setEndpointDetails] = useState<string>('');
   const [hasTriedLiveData, setHasTriedLiveData] = useState(false);
 
-  const simulateError = () => {
-    setDemoError(true);
-    setErrorMessage('Demo Error: Simulated API failure (using dummy data for demonstration) | 🔧 Riot API key may be expired - Contact @bryanChasko on GitHub or LinkedIn to refresh the developer key or get a production API key!');
-    setApiResponse('❌ Demo: Simulated 403 Forbidden or network error - This is dummy data for testing error handling');
-    setDataSource('mock');
-    
-    const mockMatches: MatchSummary[] = [
-      { matchId: 'DEMO_ERROR_1', kills: 0, deaths: 0, assists: 0, win: false, champion: 'DUMMY DATA - Error Demo Simulation' },
-      { matchId: 'DEMO_ERROR_2', kills: 0, deaths: 0, assists: 0, win: false, champion: 'DUMMY DATA - Contact @bryanChasko for real API fix' }
-    ];
-    setMatches(mockMatches);
-  };
+
   
   const fetchMatchHistory = async () => {
     setLoading(true);
@@ -357,9 +346,6 @@ const RiftRewindDashboard: React.FC = () => {
                       🚀 Fetch from Riot API
                     </Button>
                   )}
-                  <Button onClick={simulateError} variant="normal">
-                    Error Handling Demo
-                  </Button>
                   {hasTriedLiveData && (
                     <Button onClick={() => { loadDummyData(); setHasTriedLiveData(false); }} variant="normal">
                       Reset to Demo Data
@@ -492,9 +478,11 @@ const RiftRewindDashboard: React.FC = () => {
                         🚀 Fetch from Riot API
                       </Button>
                     )}
-                    <Button onClick={simulateError} variant="normal">
-                      Error Handling Demo
-                    </Button>
+                    {hasTriedLiveData && (
+                      <Button onClick={() => { loadDummyData(); setHasTriedLiveData(false); }} variant="normal">
+                        Reset to Demo Data
+                      </Button>
+                    )}
                   </SpaceBetween>
                 }
               >
