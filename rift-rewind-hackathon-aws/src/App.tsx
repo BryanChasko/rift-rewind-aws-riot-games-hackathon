@@ -30,8 +30,8 @@ function App() {
   const content = (
     <ContentLayout 
         header={
-            <Header variant="h1" description="League of Legends is a multiplayer online battle arena (MOBA) game where two teams of 5 players compete. Each player controls a unique champion - a character with distinct abilities, strengths, and weaknesses. There are 160+ champions, each with their own lore, abilities, and gameplay role.">
-                Rift Rewind: API fundamentals with Riot Games Developer Portal
+            <Header variant="h1" description="League of Legends is a multiplayer online battle arena (MOBA) game where two teams of 5 players compete. Each player controls a unique champion - a character with distinct abilities, strengths, and weaknesses. There are 160+ champions, each with their own lore, abilities, and gameplay role. This application demonstrates REST (REpresentational State Transfer) and API (Application Programming Interface) fundamentals using real Riot Games data.">
+                Rift Rewind: REST API fundamentals with Riot Games Developer Portal
             </Header>
         }
     >

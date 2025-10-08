@@ -25,6 +25,109 @@ SSM_PARAMETER_NAME = '/rift-rewind/riot-api-key'
 RIOT_API_HEADER = 'X-Riot-Token'
 DATA_DRAGON_VERSION = '15.20.1'
 
+def handle_contests_endpoint(api_attempts: List[Dict[str, Any]], year: str = '2024') -> Dict[str, Any]:
+    """
+    Handle contests endpoint - demonstrates uniform interface for tournament data.
+    """
+    all_contests = {
+        '2024': [
+            {'id': 'worlds2024', 'name': 'Worlds Championship 2024', 'status': 'completed', 'winner': 'T1'},
+            {'id': 'msi2024', 'name': 'Mid-Season Invitational 2024', 'status': 'completed', 'winner': 'Gen.G'}
+        ],
+        '2023': [
+            {'id': 'worlds2023', 'name': 'Worlds Championship 2023', 'status': 'completed', 'winner': 'T1'},
+            {'id': 'msi2023', 'name': 'Mid-Season Invitational 2023', 'status': 'completed', 'winner': 'JDG'}
+        ],
+        '2022': [
+            {'id': 'worlds2022', 'name': 'Worlds Championship 2022', 'status': 'completed', 'winner': 'DRX'},
+            {'id': 'msi2022', 'name': 'Mid-Season Invitational 2022', 'status': 'completed', 'winner': 'RNG'}
+        ],
+        '2021': [
+            {'id': 'worlds2021', 'name': 'Worlds Championship 2021', 'status': 'completed', 'winner': 'EDG'},
+            {'id': 'msi2021', 'name': 'Mid-Season Invitational 2021', 'status': 'completed', 'winner': 'DK'}
+        ]
+    }
+    
+    contests_data = all_contests.get(year, all_contests['2024'])
+    
+    api_attempts.append({
+        'endpoint': 'Contests API',
+        'status': 'Success',
+        'method': 'GET',
+        'url': 'lambda://contests',
+        'auth': 'None (demo data)',
+        'result': 'Recent contests loaded',
+        'data_count': len(contests_data)
+    })
+    
+    return {
+        'statusCode': 200,
+        'body': json.dumps({
+            'data': contests_data,
+            'source': 'CONTESTS',
+            'api_attempts': api_attempts
+        })
+    }
+
+def handle_players_endpoint(api_attempts: List[Dict[str, Any]], headers: Dict[str, str], make_request) -> Dict[str, Any]:
+    """
+    Handle players endpoint - demonstrates uniform interface for player data.
+    """
+    # Try Challenger League API for top players
+    try:
+        challenger_url = "https://na1.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5"
+        challenger_data = make_request(challenger_url, headers)
+        
+        if challenger_data and 'entries' in challenger_data:
+            top_players = challenger_data['entries'][:5]
+            players_data = [{
+                'summonerId': player.get('summonerId', 'unknown'),
+                'summonerName': player.get('summonerName', 'Unknown'),
+                'leaguePoints': player.get('leaguePoints', 0),
+                'rank': player.get('rank', 'I'),
+                'wins': player.get('wins', 0),
+                'losses': player.get('losses', 0)
+            } for player in top_players]
+            
+            api_attempts.append({
+                'endpoint': 'Challenger League API',
+                'status': 'Success',
+                'method': 'GET',
+                'url': 'na1.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5',
+                'auth': 'X-Riot-Token required',
+                'result': f'Top {len(players_data)} challenger players',
+                'data_count': len(players_data)
+            })
+        else:
+            raise Exception("No challenger data available")
+            
+    except Exception as e:
+        # Fallback to demo data
+        players_data = [
+            {'summonerId': 'demo1', 'summonerName': 'Faker', 'leaguePoints': 1500, 'rank': 'I', 'wins': 150, 'losses': 50},
+            {'summonerId': 'demo2', 'summonerName': 'Canyon', 'leaguePoints': 1450, 'rank': 'I', 'wins': 140, 'losses': 60},
+            {'summonerId': 'demo3', 'summonerName': 'Showmaker', 'leaguePoints': 1400, 'rank': 'I', 'wins': 130, 'losses': 70}
+        ]
+        
+        api_attempts.append({
+            'endpoint': 'Challenger League API',
+            'status': 'Failed',
+            'method': 'GET',
+            'url': 'na1.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5',
+            'auth': 'X-Riot-Token required',
+            'result': f'API failed, using demo data: {str(e)}',
+            'data_count': len(players_data)
+        })
+    
+    return {
+        'statusCode': 200,
+        'body': json.dumps({
+            'data': players_data,
+            'source': 'PLAYERS',
+            'api_attempts': api_attempts
+        })
+    }
+
 def get_endpoint_url(source: str) -> str:
     """
     Get the endpoint URL for display purposes in the frontend.
@@ -55,7 +158,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     4. Returns detailed API attempt tracking for educational transparency
     
     Args:
-        event (Dict[str, Any]): Lambda event object (unused in this implementation)
+        event (Dict[str, Any]): Lambda event object with queryStringParameters
         context (Any): Lambda context object (unused in this implementation)
         
     Returns:
@@ -65,6 +168,11 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             - api_attempts: Detailed tracking of all API calls made
     """
     try:
+        # Parse query parameters to determine endpoint
+        query_params = event.get('queryStringParameters') or {}
+        endpoint_type = query_params.get('endpoint', 'champions')
+        
+        print(f"Lambda invoked with endpoint: {endpoint_type}")
         # Retrieve encrypted API key from AWS Systems Manager Parameter Store
         # This follows AWS security best practices by not hardcoding secrets
         ssm = boto3.client('ssm')
@@ -241,15 +349,34 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'data_count': 0
             })
         
-        # Return successful response with all data and transparency information
-        return {
-            'statusCode': 200,
-            'body': json.dumps({
-                'data': live_data,  # Primary champion/match data for frontend
-                'source': 'T1_CHAMPIONS',  # Indicates primary data source used
-                'api_attempts': api_attempts  # Educational transparency about API calls
-            })
-        }
+        # Handle different endpoint types for uniform interface demonstration
+        if endpoint_type == 'contests':
+            year = query_params.get('year', '2024')
+            return handle_contests_endpoint(api_attempts, year)
+        elif endpoint_type == 'players':
+            return handle_players_endpoint(api_attempts, headers, make_request)
+        else:
+            # Default champions endpoint - add detailed API request information
+            champions_api_details = {
+                'expected_url': f'https://ddragon.leagueoflegends.com/cdn/{DATA_DRAGON_VERSION}/data/en_US/champion.json',
+                'expected_response': 'HTTP 200 OK with JSON containing champion metadata',
+                'actual_status': 'Success' if any(attempt['status'] == 'Success' and 'Data Dragon' in attempt['endpoint'] for attempt in api_attempts) else 'Failed',
+                'actual_response': next((attempt['result'] for attempt in api_attempts if 'Data Dragon' in attempt['endpoint']), 'No Data Dragon attempt found'),
+                'data_source': 'Riot Games Data Dragon CDN (Public API)',
+                'authentication': 'None required (public endpoint)',
+                'rate_limits': 'No rate limits (CDN cached)',
+                'response_format': 'JSON with champion objects containing id, name, title, stats'
+            }
+            
+            return {
+                'statusCode': 200,
+                'body': json.dumps({
+                    'data': live_data,
+                    'source': 'T1_CHAMPIONS',
+                    'api_attempts': api_attempts,
+                    'champions_api_details': champions_api_details
+                })
+            }
         
     except Exception as e:
         # Handle any unexpected errors gracefully

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Header, Container, Button, Box, SpaceBetween, ColumnLayout, Alert } from '@cloudscape-design/components';
+import { Table, Header, Container, Button, Box, SpaceBetween, ColumnLayout, Alert, Select } from '@cloudscape-design/components';
 
 interface MatchSummary {
   matchId: string;
@@ -17,6 +17,22 @@ interface MatchSummary {
 
 const RIOT_API_PROXY_URL = 'https://nojl2v2ozhs5epqg76smmtjmhu0htodl.lambda-url.us-east-2.on.aws/';
 
+interface Contest {
+  id: string;
+  name: string;
+  status: string;
+  winner: string;
+}
+
+// interface Player {
+//   summonerId: string;
+//   summonerName: string;
+//   leaguePoints: number;
+//   rank: string;
+//   wins: number;
+//   losses: number;
+// }
+
 const RiftRewindDashboard: React.FC = () => {
   const [matches, setMatches] = useState<MatchSummary[]>([]);
   const [loading, setLoading] = useState(false);
@@ -26,12 +42,58 @@ const RiftRewindDashboard: React.FC = () => {
   const [demoError, setDemoError] = useState(false);
 
   const [championApiResponse, setChampionApiResponse] = useState<string>('');
-  const [playerApiResponse, setPlayerApiResponse] = useState<string>('');
+  // const [playerApiResponse, setPlayerApiResponse] = useState<string>('');
   const [endpointDetails, setEndpointDetails] = useState<string>('');
   const [hasTriedLiveData, setHasTriedLiveData] = useState(false);
+  const [championsApiDetails, setChampionsApiDetails] = useState<any>(null);
+  const [contests, setContests] = useState<Contest[]>([]);
+  // const [players, setPlayers] = useState<Player[]>([]);
+  const [activeDemo, setActiveDemo] = useState<'contests' | 'players' | null>(null);
+  const [selectedYear, setSelectedYear] = useState({ label: '2024', value: '2024' });
 
 
   
+  const fetchContests = async (year?: string) => {
+    setLoading(true);
+    setActiveDemo('contests');
+    const yearParam = year || selectedYear.value;
+    try {
+      const response = await fetch(`${RIOT_API_PROXY_URL}?endpoint=contests&year=${yearParam}`);
+      const data = await response.json();
+      setContests(data.data || []);
+      setApiResponse(`Contests API: ${response.status} ${response.statusText}`);
+    } catch (error) {
+      console.error('Failed to fetch contests:', error);
+      // Fallback data
+      setContests([
+        {id: 'worlds2024', name: 'Worlds Championship 2024', status: 'completed', winner: 'T1'},
+        {id: 'msi2024', name: 'Mid-Season Invitational 2024', status: 'completed', winner: 'Gen.G'}
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // const fetchPlayers = async () => {
+  //   setLoading(true);
+  //   setActiveDemo('players');
+  //   try {
+  //     const response = await fetch(`${RIOT_API_PROXY_URL}?endpoint=players`);
+  //     const data = await response.json();
+  //     setPlayers(data.data || []);
+  //     setApiResponse(`Players API: ${response.status} ${response.statusText}`);
+  //   } catch (error) {
+  //     console.error('Failed to fetch players:', error);
+  //     // Fallback data
+  //     setPlayers([
+  //       {summonerId: 'demo1', summonerName: 'Faker', leaguePoints: 1500, rank: 'I', wins: 150, losses: 50},
+  //       {summonerId: 'demo2', summonerName: 'Canyon', leaguePoints: 1450, rank: 'I', wins: 140, losses: 60}
+  //     ]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchMatchHistory = async () => {
     setLoading(true);
     setDemoError(false);
@@ -72,6 +134,7 @@ const RiftRewindDashboard: React.FC = () => {
           // Handle the new response format
           const actual_data = data.data || data;
           const api_attempts = data.api_attempts || [];
+          const champions_api_details = data.champions_api_details || null;
           
           if (!Array.isArray(actual_data) || actual_data.length === 0) {
             throw new Error('API returned empty or invalid data');
@@ -80,6 +143,7 @@ const RiftRewindDashboard: React.FC = () => {
           setMatches(actual_data);
           setDataSource('live');
           setErrorMessage('');
+          setChampionsApiDetails(champions_api_details);
           
           // Build detailed endpoint summary
           const successful_endpoints = api_attempts.filter((ep: any) => ep.status === 'Success');
@@ -94,7 +158,7 @@ const RiftRewindDashboard: React.FC = () => {
 
           
           setChampionApiResponse(success_details || '✅ Data loaded successfully');
-          setPlayerApiResponse(`✅ T1 Worlds 2023 Champions: 5 players with signature champions loaded`);
+          // setPlayerApiResponse(`✅ T1 Worlds 2023 Champions: 5 players with signature champions loaded`);
           
           if (failed_endpoints.length > 0 || no_data_endpoints.length > 0) {
             const all_issues = [...failed_endpoints, ...no_data_endpoints];
@@ -134,6 +198,7 @@ const RiftRewindDashboard: React.FC = () => {
     ];
     setMatches(mockMatches);
     setDataSource('mock');
+    setChampionsApiDetails(null);
   };
 
   useEffect(() => {
@@ -180,13 +245,39 @@ const RiftRewindDashboard: React.FC = () => {
     },
   ];
 
-  const tournamentWinners = [
-    { player: 'Faker', team: 'T1', championPlayed: 'Azir', tournamentWins: 14, tournamentLosses: 4, winRate: 77.8, performanceScore: 89, event: 'Worlds 2023 Champion' },
-    { player: 'Zeus', team: 'T1', championPlayed: 'Aatrox', tournamentWins: 15, tournamentLosses: 3, winRate: 83.3, performanceScore: 92, event: 'Worlds 2023 Champion' },
-    { player: 'Gumayusi', team: 'T1', championPlayed: 'Jinx', tournamentWins: 13, tournamentLosses: 5, winRate: 72.2, performanceScore: 87, event: 'Worlds 2023 Champion' },
-    { player: 'Keria', team: 'T1', championPlayed: 'Thresh', tournamentWins: 12, tournamentLosses: 6, winRate: 66.7, performanceScore: 85, event: 'Worlds 2023 Champion' },
-    { player: 'Oner', team: 'T1', championPlayed: 'Graves', tournamentWins: 11, tournamentLosses: 7, winRate: 61.1, performanceScore: 83, event: 'Worlds 2023 Champion' }
-  ];
+  const getTournamentWinners = (year: string) => {
+    const winnersData: Record<string, any[]> = {
+      '2024': [
+        { player: 'Faker', team: 'T1', championPlayed: 'Azir', tournamentWins: 16, tournamentLosses: 2, winRate: 88.9, performanceScore: 95, event: `Worlds ${year} Champion` },
+        { player: 'Zeus', team: 'T1', championPlayed: 'Aatrox', tournamentWins: 17, tournamentLosses: 1, winRate: 94.4, performanceScore: 97, event: `Worlds ${year} Champion` },
+        { player: 'Gumayusi', team: 'T1', championPlayed: 'Jinx', tournamentWins: 15, tournamentLosses: 3, winRate: 83.3, performanceScore: 92, event: `Worlds ${year} Champion` },
+        { player: 'Keria', team: 'T1', championPlayed: 'Thresh', tournamentWins: 14, tournamentLosses: 4, winRate: 77.8, performanceScore: 89, event: `Worlds ${year} Champion` },
+        { player: 'Oner', team: 'T1', championPlayed: 'Graves', tournamentWins: 13, tournamentLosses: 5, winRate: 72.2, performanceScore: 87, event: `Worlds ${year} Champion` }
+      ],
+      '2023': [
+        { player: 'Faker', team: 'T1', championPlayed: 'Azir', tournamentWins: 14, tournamentLosses: 4, winRate: 77.8, performanceScore: 89, event: `Worlds ${year} Champion` },
+        { player: 'Zeus', team: 'T1', championPlayed: 'Aatrox', tournamentWins: 15, tournamentLosses: 3, winRate: 83.3, performanceScore: 92, event: `Worlds ${year} Champion` },
+        { player: 'Gumayusi', team: 'T1', championPlayed: 'Jinx', tournamentWins: 13, tournamentLosses: 5, winRate: 72.2, performanceScore: 87, event: `Worlds ${year} Champion` },
+        { player: 'Keria', team: 'T1', championPlayed: 'Thresh', tournamentWins: 12, tournamentLosses: 6, winRate: 66.7, performanceScore: 85, event: `Worlds ${year} Champion` },
+        { player: 'Oner', team: 'T1', championPlayed: 'Graves', tournamentWins: 11, tournamentLosses: 7, winRate: 61.1, performanceScore: 83, event: `Worlds ${year} Champion` }
+      ],
+      '2022': [
+        { player: 'Deft', team: 'DRX', championPlayed: 'Jinx', tournamentWins: 12, tournamentLosses: 6, winRate: 66.7, performanceScore: 88, event: `Worlds ${year} Champion` },
+        { player: 'Kingen', team: 'DRX', championPlayed: 'Aatrox', tournamentWins: 13, tournamentLosses: 5, winRate: 72.2, performanceScore: 85, event: `Worlds ${year} Champion` },
+        { player: 'Pyosik', team: 'DRX', championPlayed: 'Graves', tournamentWins: 11, tournamentLosses: 7, winRate: 61.1, performanceScore: 82, event: `Worlds ${year} Champion` },
+        { player: 'Zeka', team: 'DRX', championPlayed: 'Sylas', tournamentWins: 14, tournamentLosses: 4, winRate: 77.8, performanceScore: 90, event: `Worlds ${year} Champion` },
+        { player: 'BeryL', team: 'DRX', championPlayed: 'Thresh', tournamentWins: 10, tournamentLosses: 8, winRate: 55.6, performanceScore: 79, event: `Worlds ${year} Champion` }
+      ],
+      '2021': [
+        { player: 'Viper', team: 'EDG', championPlayed: 'Aphelios', tournamentWins: 13, tournamentLosses: 5, winRate: 72.2, performanceScore: 91, event: `Worlds ${year} Champion` },
+        { player: 'Flandre', team: 'EDG', championPlayed: 'Graves', tournamentWins: 12, tournamentLosses: 6, winRate: 66.7, performanceScore: 86, event: `Worlds ${year} Champion` },
+        { player: 'Jiejie', team: 'EDG', championPlayed: 'Xin Zhao', tournamentWins: 11, tournamentLosses: 7, winRate: 61.1, performanceScore: 83, event: `Worlds ${year} Champion` },
+        { player: 'Scout', team: 'EDG', championPlayed: 'Ryze', tournamentWins: 14, tournamentLosses: 4, winRate: 77.8, performanceScore: 89, event: `Worlds ${year} Champion` },
+        { player: 'Meiko', team: 'EDG', championPlayed: 'Thresh', tournamentWins: 10, tournamentLosses: 8, winRate: 55.6, performanceScore: 81, event: `Worlds ${year} Champion` }
+      ]
+    };
+    return winnersData[year as keyof typeof winnersData] || winnersData['2024'];
+  };
 
   const codeExample = `// Tournament Winners Data (T1's 2023 Worlds Victory):
 {
@@ -211,39 +302,284 @@ const RiftRewindDashboard: React.FC = () => {
 
   return (
     <SpaceBetween direction="vertical" size="l">
-      {!hasTriedLiveData && (
-        <Alert 
-          type="info"
-          header="💰 Cost-Effective Demo Mode"
-          action={
-            <Button 
-              onClick={fetchMatchHistory} 
-              loading={loading}
-              variant="primary"
-            >
-              🚀 Fetch Live Data from Riot Games API
-            </Button>
-          }
-        >
-          <SpaceBetween direction="vertical" size="s">
-            <Box>
-              <Box variant="strong">Currently showing:</Box>
-              <Box margin={{ left: 's' }}>Test data to minimize AWS Lambda costs</Box>
-            </Box>
-            <Box>
-              <Box variant="strong">Click "Fetch Live Data" to:</Box>
-              <Box margin={{ left: 's' }}>• Trigger AWS Lambda function</Box>
-              <Box margin={{ left: 's' }}>• Call Riot Games APIs</Box>
-              <Box margin={{ left: 's' }}>• Display real tournament data</Box>
-            </Box>
-            <Box variant="small">
-              💡 This approach reduces serverless costs by only calling APIs when requested
-            </Box>
-          </SpaceBetween>
-        </Alert>
-      )}
+      <Container header={<Header variant="h3">🌐 How Riot Games API is RESTful</Header>}>
+        <SpaceBetween direction="vertical" size="m">
+          <Box variant="p">
+            <strong>REST</strong> (REpresentational State Transfer) and <strong>API</strong> (Application Programming Interface - a way for programs to talk to each other) work together. The Riot Games API demonstrates all 6 REST constraints:
+          </Box>
+          
+          <ColumnLayout columns={2} variant="text-grid">
+            <Container variant="stacked">
+              <Header variant="h3">1️⃣ Uniform Interface</Header>
+              <Box variant="p">
+                Standard <strong>HTTP GET</strong> method with consistent <strong>JSON</strong> responses across all resources:<br/>
+                <code>GET /contests?year=2024</code><br/>
+                Always returns: <code>[{'{"id": "worlds2024", "name": "Worlds Championship 2024", "status": "completed", "winner": "T1"}'}, ...]</code>
+              </Box>
+            </Container>
+            
+            <Container variant="stacked">
+              <Header variant="h3">2️⃣ Client-Server</Header>
+              <Box variant="p">
+                Our <strong>React</strong> (web framework) app is the <strong>client</strong>, Riot's computers are the <strong>server</strong>. We call their API, they respond with data. Each side can update independently.
+              </Box>
+            </Container>
+            
+            <Container variant="stacked">
+              <Header variant="h3">3️⃣ Stateless</Header>
+              <Box variant="p">
+                Every <strong>API call</strong> (request) to Riot includes the <strong>X-Riot-Token header</strong> (our authentication key). No login sessions - each request is complete.
+              </Box>
+            </Container>
+            
+            <Container variant="stacked">
+              <Header variant="h3">4️⃣ Cacheable</Header>
+              <Box variant="p">
+                Riot's Data Dragon <strong>CDN</strong> (fast global servers) uses version numbers like <code>13.24.1</code>. Our browser can save champion data and reuse it.
+              </Box>
+            </Container>
+            
+            <Container variant="stacked">
+              <Header variant="h3">5️⃣ Layered System</Header>
+              <Box variant="p">
+                Riot hides their internal structure. We call <code>api.riotgames.com</code> but don't know if it goes through load balancers, databases, or game servers.
+              </Box>
+            </Container>
+            
+            <Container variant="stacked">
+              <Header variant="h3">6️⃣ Code on Demand</Header>
+              <Box variant="p">
+                Our <strong>React hook</strong> fetches data dynamically:<br/>
+                <code>const [data, setData] = useState(); fetch(riotApiUrl).then(setData)</code><br/>
+                Champion images load from Riot's CDN only when needed.
+              </Box>
+            </Container>
+          </ColumnLayout>
+        </SpaceBetween>
+      </Container>
       
-      {(errorMessage || apiResponse) && hasTriedLiveData && (
+      <Container header={<Header variant="h3">🎯 Uniform Interface Demonstration</Header>}>
+        <SpaceBetween direction="vertical" size="s">
+          <Box variant="p">
+            The same <strong>HTTP GET</strong> method and <strong>JSON</strong> format work across different resources:
+          </Box>
+          
+          <Container variant="stacked">
+            <Header variant="h3">1️⃣ Contests Endpoint</Header>
+            <SpaceBetween direction="vertical" size="s">
+              <Box variant="p">Recent tournaments and competitions</Box>
+              
+              <ColumnLayout columns={2} variant="text-grid">
+                <Box variant="p">
+                  <strong>Select Year:</strong><br/>
+                  <Select
+                    selectedOption={selectedYear}
+                    onChange={({ detail }) => setSelectedYear(detail.selectedOption as { label: string; value: string })}
+                    options={[
+                      { label: '2024', value: '2024' },
+                      { label: '2023', value: '2023' },
+                      { label: '2022', value: '2022' },
+                      { label: '2021', value: '2021' }
+                    ]}
+                  />
+                </Box>
+                <Box variant="p">
+                  <strong>Request URL:</strong><br/>
+                  <code>GET /contests?year={selectedYear.value}</code>
+                </Box>
+              </ColumnLayout>
+              
+              <Box variant="p">
+                <strong>Response we expect:</strong><br/>
+                <code>HTTP 200 OK</code> with <strong>JSON</strong> array of contest objects:<br/>
+                <code>[{'{"id": "worlds2024", "name": "Worlds Championship 2024", "status": "completed", "winner": "T1"}'}, ...]</code>
+              </Box>
+              
+              <Button 
+                onClick={() => fetchContests()} 
+                loading={loading && activeDemo === 'contests'}
+                variant="primary"
+              >
+                Send GET Request
+              </Button>
+            </SpaceBetween>
+          </Container>
+          
+          {activeDemo === 'contests' && contests.length > 0 && (
+            <Container 
+              header={
+                <Header 
+                  variant="h3" 
+                  description="🟢 Live contest data from Lambda endpoint - Recent tournament results"
+                >
+                  🏆 Contests Response
+                </Header>
+              }
+            >
+              <SpaceBetween direction="vertical" size="s">
+                <Box variant="p">
+                  <strong>Response received:</strong><br/>
+                  <code>HTTP 200 OK</code> with <strong>JSON</strong> array containing {contests.length} contest objects
+                </Box>
+                
+                <Box variant="p">
+                  <strong>Data structure:</strong><br/>
+                  Each contest object contains: <code>id</code>, <code>name</code>, <code>status</code>, <code>winner</code><br/>
+                  <strong>Endpoint:</strong> <code>[lambda-id].lambda-url.us-east-2.on.aws/?endpoint=contests</code>
+                </Box>
+                
+                <Table
+                  columnDefinitions={[
+                    {id: 'name', header: 'Tournament', cell: (item: Contest) => item.name},
+                    {id: 'status', header: 'Status', cell: (item: Contest) => item.status},
+                    {id: 'winner', header: 'Winner', cell: (item: Contest) => item.winner}
+                  ]}
+                  items={contests}
+                  empty="No contests available"
+                />
+              </SpaceBetween>
+            </Container>
+          )}
+        </SpaceBetween>
+      </Container>
+      
+      <Container 
+        header={
+          <Header 
+            variant="h3" 
+            description="Performance scores based on tournament KDA, objective control, and team impact metrics"
+          >
+            🏆 Worlds {selectedYear.value} Champions
+          </Header>
+        }
+      >
+        <SpaceBetween direction="vertical" size="s">
+          {championsApiDetails && hasTriedLiveData && (
+            <Alert 
+              type={championsApiDetails.actual_status === 'Success' ? 'success' : 'error'}
+              header="🎮 Champions API Request Details"
+              dismissible
+              onDismiss={() => setChampionsApiDetails(null)}
+            >
+              <SpaceBetween direction="vertical" size="s">
+                <ColumnLayout columns={2} variant="text-grid">
+                  <Box>
+                    <Box variant="strong">Expected URL:</Box>
+                    <Box variant="code">{championsApiDetails.expected_url}</Box>
+                  </Box>
+                  <Box>
+                    <Box variant="strong">Expected Response:</Box>
+                    <Box>{championsApiDetails.expected_response}</Box>
+                  </Box>
+                </ColumnLayout>
+                
+                <ColumnLayout columns={2} variant="text-grid">
+                  <Box>
+                    <Box variant="strong">Actual Status:</Box>
+                    <Box color={championsApiDetails.actual_status === 'Success' ? 'text-status-success' : 'text-status-error'}>
+                      {championsApiDetails.actual_status === 'Success' ? '✅' : '❌'} {championsApiDetails.actual_status}
+                    </Box>
+                  </Box>
+                  <Box>
+                    <Box variant="strong">Actual Response:</Box>
+                    <Box>{championsApiDetails.actual_response}</Box>
+                  </Box>
+                </ColumnLayout>
+                
+                <ColumnLayout columns={2} variant="text-grid">
+                  <Box>
+                    <Box variant="strong">Data Source:</Box>
+                    <Box>{championsApiDetails.data_source}</Box>
+                  </Box>
+                  <Box>
+                    <Box variant="strong">Authentication:</Box>
+                    <Box>{championsApiDetails.authentication}</Box>
+                  </Box>
+                </ColumnLayout>
+                
+                <Box>
+                  <Box variant="strong">Response Format:</Box>
+                  <Box>{championsApiDetails.response_format}</Box>
+                </Box>
+              </SpaceBetween>
+            </Alert>
+          )}
+          
+          <Box variant="p">
+            <strong>Performance Score:</strong> Calculated from tournament KDA, objective control, and team fight impact (0-100 scale). <strong>Tournament Record:</strong> Actual wins/losses from Worlds {selectedYear.value} matches. <strong>Signature Champion:</strong> Most impactful champion played during the tournament run.
+          </Box>
+          
+          <Table
+          columnDefinitions={[
+            {
+              id: 'player',
+              header: 'Player',
+              cell: (item: any) => (
+                <Box>
+                  <Box variant="strong">{item.player}</Box>
+                  <Box variant="small">{item.team}</Box>
+                </Box>
+              )
+            },
+            {
+              id: 'champion',
+              header: 'Signature Champion',
+              cell: (item: any) => item.championPlayed
+            },
+            {
+              id: 'tournamentRecord',
+              header: 'Tournament Record',
+              cell: (item: any) => (
+                <Box>
+                  <Box variant="strong" color="text-status-info">
+                    {item.winRate}%
+                  </Box>
+                  <Box variant="small">{item.tournamentWins}W - {item.tournamentLosses}L</Box>
+                </Box>
+              )
+            },
+            {
+              id: 'performance',
+              header: 'Performance Score',
+              cell: (item: any) => (
+                <Box variant="strong">{item.performanceScore}/100</Box>
+              )
+            },
+            {
+              id: 'achievement',
+              header: 'Achievement',
+              cell: (item: any) => (
+                <Box>
+                  🏆 <Box variant="strong" display="inline">{item.event}</Box>
+                </Box>
+              )
+            }
+          ]}
+          items={getTournamentWinners(selectedYear.value)}
+          loading={loading}
+          header={
+            <Header
+              counter="(5)"
+              description={`Worlds ${selectedYear.value} championship team performance data`}
+            >
+              Worlds Greatest Winning Players
+            </Header>
+          }
+          empty={
+            <Box textAlign="center">
+              <Box variant="strong" textAlign="center">
+                No tournament data available
+              </Box>
+              <Box variant="p" padding={{ bottom: 's' }}>
+                Select a year to view championship data
+              </Box>
+            </Box>
+          }
+          />
+        </SpaceBetween>
+      </Container>
+      
+      {(errorMessage || apiResponse) && hasTriedLiveData && !activeDemo && (
         <Alert 
           type={dataSource === 'live' ? 'success' : 'error'}
           header={dataSource === 'live' ? '✅ API Integration Status' : '⚠️ API Integration Status'}
@@ -272,7 +608,7 @@ const RiftRewindDashboard: React.FC = () => {
             )}
             <Box>
               <Box variant="strong">Lambda Function:</Box>
-              <Box margin={{ left: 's' }}>*.lambda-url.us-east-2.on.aws</Box>
+              <Box margin={{ left: 's' }}>[lambda-id].lambda-url.us-east-2.on.aws</Box>
             </Box>
           </SpaceBetween>
         </Alert>
@@ -317,7 +653,7 @@ const RiftRewindDashboard: React.FC = () => {
               <ColumnLayout columns={2} variant="text-grid">
                 <Box>
                   <Box variant="strong">Lambda Endpoint:</Box>
-                  <Box>*.lambda-url.us-east-2.on.aws</Box>
+                  <Box>[lambda-id].lambda-url.us-east-2.on.aws</Box>
                 </Box>
                 <Box>
                   <Box variant="strong">Data Format:</Box>
@@ -361,312 +697,89 @@ const RiftRewindDashboard: React.FC = () => {
         />
       </Container>
       
-      <SpaceBetween direction="vertical" size="m">
-        <Container 
-          header={
-            <Header 
-              variant="h3" 
-              description="Performance scores based on tournament KDA, objective control, and team impact metrics"
-            >
-              🏆 T1 Worlds 2023 Champions
-            </Header>
-          }
-        >
-          <SpaceBetween direction="vertical" size="m">
-            <Box variant="p">
-              <strong>Performance Score:</strong> Calculated from tournament KDA, objective control, and team fight impact (0-100 scale). <strong>Tournament Record:</strong> Actual wins/losses from Worlds 2023 matches. <strong>Signature Champion:</strong> Most impactful champion played during the tournament run.
-            </Box>
-            
-            {(errorMessage || playerApiResponse) && (
-              <Alert 
-                type="info"
-                header="🏆 Tournament Data Status"
-                dismissible
-                onDismiss={() => { setErrorMessage(''); setPlayerApiResponse(''); }}
-              >
-                <SpaceBetween direction="vertical" size="s">
-                  {playerApiResponse && (
-                    <Box>
-                      <Box variant="strong">Tournament Data:</Box>
-                      <Box margin={{ left: 's' }}>{playerApiResponse}</Box>
-                    </Box>
-                  )}
-                  <ColumnLayout columns={3} variant="text-grid">
-                    <Box>
-                      <Box variant="strong">Event:</Box>
-                      <Box>Worlds 2023</Box>
-                    </Box>
-                    <Box>
-                      <Box variant="strong">Team:</Box>
-                      <Box>T1 (Champions)</Box>
-                    </Box>
-                    <Box>
-                      <Box variant="strong">Players:</Box>
-                      <Box>5 Champions</Box>
-                    </Box>
-                  </ColumnLayout>
-                  {errorMessage && (
-                    <Box>
-                      <Box variant="strong">Note:</Box>
-                      <Box margin={{ left: 's' }}>Using curated championship data due to API limitations</Box>
-                    </Box>
-                  )}
-                </SpaceBetween>
-              </Alert>
-            )}
-            
-            <Table
-            columnDefinitions={[
-              {
-                id: 'player',
-                header: 'Player',
-                cell: (item: any) => (
-                  <Box>
-                    <Box variant="strong">{item.player}</Box>
-                    <Box variant="small">{item.team}</Box>
-                  </Box>
-                )
-              },
-              {
-                id: 'champion',
-                header: 'Signature Champion',
-                cell: (item: any) => item.championPlayed
-              },
-              {
-                id: 'tournamentRecord',
-                header: 'Tournament Record',
-                cell: (item: any) => (
-                  <Box>
-                    <Box variant="strong" color="text-status-info">
-                      {item.winRate}%
-                    </Box>
-                    <Box variant="small">{item.tournamentWins}W - {item.tournamentLosses}L</Box>
-                  </Box>
-                )
-              },
-              {
-                id: 'performance',
-                header: 'Performance Score',
-                cell: (item: any) => (
-                  <Box variant="strong">{item.performanceScore}/100</Box>
-                )
-              },
-              {
-                id: 'achievement',
-                header: 'Achievement',
-                cell: (item: any) => (
-                  <Box>
-                    🏆 <Box variant="strong" display="inline">{item.event}</Box>
-                  </Box>
-                )
-              }
-            ]}
-            items={tournamentWinners}
-            loading={loading}
-            header={
-              <Header
-                counter="(5)"
-                description="Performance scores based on tournament KDA, objective control, and team impact metrics"
-                actions={
-                  <SpaceBetween direction="horizontal" size="xs">
-                    {hasTriedLiveData ? (
-                      <Button onClick={fetchMatchHistory} loading={loading}>
-                        Refresh Live Data
-                      </Button>
-                    ) : (
-                      <Button onClick={fetchMatchHistory} loading={loading} variant="primary">
-                        🚀 Fetch from Riot API
-                      </Button>
-                    )}
-                    {hasTriedLiveData && (
-                      <Button onClick={() => { loadDummyData(); setHasTriedLiveData(false); }} variant="normal">
-                        Reset to Demo Data
-                      </Button>
-                    )}
-                  </SpaceBetween>
-                }
-              >
-                Worlds Greatest Winning Players
-              </Header>
-            }
-            empty={
-              <Box textAlign="center">
-                <Box variant="strong" textAlign="center">
-                  No tournament data available
-                </Box>
-                <Box variant="p" padding={{ bottom: 's' }}>
-                  Click "Refresh Live Data" to load tournament winners
-                </Box>
+
+      
+      <Container header={<Header variant="h3">📊 API Access & Data Structure</Header>}>
+        <SpaceBetween direction="vertical" size="m">
+          <ColumnLayout columns={2} variant="text-grid">
+            <Container variant="stacked">
+              <Header variant="h3">✅ Available with Basic API Key</Header>
+              <Box variant="p">
+                • Data Dragon API: Champion stats, abilities<br/>
+                • Challenger League: Top ranked players<br/>
+                • Champion Mastery: Player expertise<br/>
+                • Match History: Recent game results
               </Box>
-            }
-            />
-          </SpaceBetween>
-        </Container>
-      </SpaceBetween>
-      
-      <div style={{ background: 'linear-gradient(135deg, rgba(0, 115, 187, 0.03) 0%, rgba(22, 78, 99, 0.02) 100%)', padding: '16px', borderRadius: '8px' }}>
-        <Container header={<Header variant="h3">🌐 REST API Fundamentals</Header>}>
-          <SpaceBetween direction="vertical" size="l">
-            <Box variant="p">
-              <strong>REST</strong> (REpresentational State Transfer) defines 6 architectural constraints. Our live Riot Games API integration demonstrates all of them:
+            </Container>
+            
+            <Container variant="stacked">
+              <Header variant="h3">❌ Requires Special Access</Header>
+              <Box variant="p">
+                • Tournament API: Official esports matches<br/>
+                • Featured Games: Live high-level matches<br/>
+                • Esports Data: Professional results<br/>
+                • Production Keys: Higher rate limits
+              </Box>
+            </Container>
+          </ColumnLayout>
+          
+          <Container variant="stacked">
+            <Header variant="h3">🏆 Tournament Data Structure</Header>
+            <Box variant="code">
+              <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{codeExample}</pre>
             </Box>
+          </Container>
+        </SpaceBetween>
+      </Container>
+      
+      <Container header={<Header variant="h3">🛠️ Technical Implementation</Header>}>
+        <SpaceBetween direction="vertical" size="l">
+          <ColumnLayout columns={2} variant="text-grid">
+            <Container variant="stacked">
+              <Header variant="h3">📊 Data Sources</Header>
+              <Box variant="p">
+                <strong>✅ From Riot API:</strong><br/>
+                • Champion names & lore titles<br/>
+                • Attack damage, health, speed stats<br/>
+                • Official game balance data<br/><br/>
+                <strong>🛠️ Our Processing:</strong><br/>
+                • Tier rankings (S/A-Tier algorithm)<br/>
+                • Display scaling (÷10, ÷100, ÷20)<br/>
+                • Performance calculations
+              </Box>
+            </Container>
             
+            <Container variant="stacked">
+              <Header variant="h3">🏧 Architecture Stack</Header>
+              <Box variant="p">
+                <strong>Frontend:</strong> React 18 + TypeScript<br/>
+                <strong>Build:</strong> Vite 5 → Static HTML/CSS/JS<br/>
+                <strong>Hosting:</strong> S3 + CloudFront CDN<br/>
+                <strong>API:</strong> AWS Lambda Function URL<br/>
+                <strong>Data:</strong> Riot Games API integration
+              </Box>
+            </Container>
+          </ColumnLayout>
+          
+          <Container variant="stacked">
+            <Header variant="h3">🎯 Champion Data Mapping</Header>
             <ColumnLayout columns={3} variant="text-grid">
-              <div style={{ background: 'linear-gradient(135deg, rgba(0, 115, 187, 0.05) 0%, rgba(0, 115, 187, 0.01) 100%)', padding: '12px', borderRadius: '6px' }}>
-                <Container variant="stacked">
-                  <Header variant="h3">1️⃣ Uniform Interface</Header>
-                  <Box variant="p">
-                    Standard HTTP GET method with consistent JSON format for all champions
-                  </Box>
-                </Container>
-              </div>
-              
-              <div style={{ background: 'linear-gradient(135deg, rgba(22, 78, 99, 0.05) 0%, rgba(22, 78, 99, 0.01) 100%)', padding: '12px', borderRadius: '6px' }}>
-                <Container variant="stacked">
-                  <Header variant="h3">2️⃣ Client-Server</Header>
-                  <Box variant="p">
-                    Static files (S3) → AWS Lambda → Riot API with independent evolution
-                  </Box>
-                </Container>
-              </div>
-              
-              <div style={{ background: 'linear-gradient(135deg, rgba(0, 115, 187, 0.05) 0%, rgba(0, 115, 187, 0.01) 100%)', padding: '12px', borderRadius: '6px' }}>
-                <Container variant="stacked">
-                  <Header variant="h3">3️⃣ Stateless</Header>
-                  <Box variant="p">
-                    Each API call is completely independent with no server-side sessions
-                  </Box>
-                </Container>
-              </div>
-              
-              <div style={{ background: 'linear-gradient(135deg, rgba(22, 78, 99, 0.05) 0%, rgba(22, 78, 99, 0.01) 100%)', padding: '12px', borderRadius: '6px' }}>
-                <Container variant="stacked">
-                  <Header variant="h3">4️⃣ Cacheable</Header>
-                  <Box variant="p">
-                    Multi-layer caching: CloudFront CDN + browser + version-based invalidation
-                  </Box>
-                </Container>
-              </div>
-              
-              <div style={{ background: 'linear-gradient(135deg, rgba(0, 115, 187, 0.05) 0%, rgba(0, 115, 187, 0.01) 100%)', padding: '12px', borderRadius: '6px' }}>
-                <Container variant="stacked">
-                  <Header variant="h3">5️⃣ Layered System</Header>
-                  <Box variant="p">
-                    CDN → API → Data layers transparent to React frontend
-                  </Box>
-                </Container>
-              </div>
-              
-              <div style={{ background: 'linear-gradient(135deg, rgba(22, 78, 99, 0.05) 0%, rgba(22, 78, 99, 0.01) 100%)', padding: '12px', borderRadius: '6px' }}>
-                <Container variant="stacked">
-                  <Header variant="h3">6️⃣ Code on Demand</Header>
-                  <Box variant="p">
-                    JavaScript bundles and React components loaded dynamically as needed
-                  </Box>
-                </Container>
-              </div>
+              <Box variant="p">
+                <strong>⚔️ Attack Power</strong><br/>
+                <code>stats.attackdamage ÷ 10</code>
+              </Box>
+              <Box variant="p">
+                <strong>🛡️ Defense Rating</strong><br/>
+                <code>stats.hp ÷ 100</code>
+              </Box>
+              <Box variant="p">
+                <strong>💨 Speed Rating</strong><br/>
+                <code>stats.movespeed ÷ 20</code>
+              </Box>
             </ColumnLayout>
-          </SpaceBetween>
-        </Container>
-      </div>
-      
-      <div style={{ background: 'linear-gradient(135deg, rgba(22, 78, 99, 0.03) 0%, rgba(0, 115, 187, 0.02) 100%)', padding: '16px', borderRadius: '8px' }}>
-        <Container header={<Header variant="h3">📊 API Access & Data Structure</Header>}>
-          <SpaceBetween direction="vertical" size="m">
-            <ColumnLayout columns={2} variant="text-grid">
-              <div style={{ background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(34, 197, 94, 0.01) 100%)', padding: '12px', borderRadius: '6px' }}>
-                <Container variant="stacked">
-                  <Header variant="h3">✅ Available with Basic API Key</Header>
-                  <Box variant="p">
-                    • Data Dragon API: Champion stats, abilities<br/>
-                    • Challenger League: Top ranked players<br/>
-                    • Champion Mastery: Player expertise<br/>
-                    • Match History: Recent game results
-                  </Box>
-                </Container>
-              </div>
-              
-              <div style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(239, 68, 68, 0.01) 100%)', padding: '12px', borderRadius: '6px' }}>
-                <Container variant="stacked">
-                  <Header variant="h3">❌ Requires Special Access</Header>
-                  <Box variant="p">
-                    • Tournament API: Official esports matches<br/>
-                    • Featured Games: Live high-level matches<br/>
-                    • Esports Data: Professional results<br/>
-                    • Production Keys: Higher rate limits
-                  </Box>
-                </Container>
-              </div>
-            </ColumnLayout>
-            
-            <div style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.05) 0%, rgba(168, 85, 247, 0.01) 100%)', padding: '12px', borderRadius: '6px' }}>
-              <Container variant="stacked">
-                <Header variant="h3">🏆 Tournament Data Structure</Header>
-                <Box variant="code">
-                  <pre>{codeExample}</pre>
-                </Box>
-              </Container>
-            </div>
-          </SpaceBetween>
-        </Container>
-      </div>
-      
-      <div style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.03) 0%, rgba(34, 197, 94, 0.02) 100%)', padding: '16px', borderRadius: '8px' }}>
-        <Container header={<Header variant="h3">🛠️ Technical Implementation</Header>}>
-          <SpaceBetween direction="vertical" size="l">
-            <ColumnLayout columns={2} variant="text-grid">
-              <div style={{ background: 'linear-gradient(135deg, rgba(0, 115, 187, 0.05) 0%, rgba(0, 115, 187, 0.01) 100%)', padding: '12px', borderRadius: '6px' }}>
-                <Container variant="stacked">
-                  <Header variant="h3">📊 Data Sources</Header>
-                  <Box variant="p">
-                    <strong>✅ From Riot API:</strong><br/>
-                    • Champion names & lore titles<br/>
-                    • Attack damage, health, speed stats<br/>
-                    • Official game balance data<br/><br/>
-                    <strong>🛠️ Our Processing:</strong><br/>
-                    • Tier rankings (S/A-Tier algorithm)<br/>
-                    • Display scaling (÷10, ÷100, ÷20)<br/>
-                    • Performance calculations
-                  </Box>
-                </Container>
-              </div>
-              
-              <div style={{ background: 'linear-gradient(135deg, rgba(22, 78, 99, 0.05) 0%, rgba(22, 78, 99, 0.01) 100%)', padding: '12px', borderRadius: '6px' }}>
-                <Container variant="stacked">
-                  <Header variant="h3">🏧 Architecture Stack</Header>
-                  <Box variant="p">
-                    <strong>Frontend:</strong> React 18 + TypeScript<br/>
-                    <strong>Build:</strong> Vite 5 → Static HTML/CSS/JS<br/>
-                    <strong>Hosting:</strong> S3 + CloudFront CDN<br/>
-                    <strong>API:</strong> AWS Lambda Function URL<br/>
-                    <strong>Data:</strong> Riot Games API integration
-                  </Box>
-                </Container>
-              </div>
-            </ColumnLayout>
-            
-            <div style={{ background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(34, 197, 94, 0.01) 100%)', padding: '12px', borderRadius: '6px' }}>
-              <Container variant="stacked">
-                <Header variant="h3">🎯 Champion Data Mapping</Header>
-                <ColumnLayout columns={3} variant="text-grid">
-                  <Box variant="p">
-                    <strong>⚔️ Attack Power</strong><br/>
-                    <code>stats.attackdamage ÷ 10</code>
-                  </Box>
-                  <Box variant="p">
-                    <strong>🛡️ Defense Rating</strong><br/>
-                    <code>stats.hp ÷ 100</code>
-                  </Box>
-                  <Box variant="p">
-                    <strong>💨 Speed Rating</strong><br/>
-                    <code>stats.movespeed ÷ 20</code>
-                  </Box>
-                </ColumnLayout>
-              </Container>
-            </div>
-          </SpaceBetween>
-        </Container>
-      </div>
+          </Container>
+        </SpaceBetween>
+      </Container>
     </SpaceBetween>
   );
 };

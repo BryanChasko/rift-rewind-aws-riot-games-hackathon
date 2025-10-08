@@ -265,6 +265,7 @@ aws s3 sync dist/ s3://your-bucket-name/path/ --profile your-aws-profile
 - **6 REST Constraints Demo** - Live examples of uniform interface, stateless, cacheable, etc.
 - **API Endpoint Education** - Shows which Riot APIs work with basic vs production keys
 - **Error Handling Patterns** - Demonstrates proper fallback and retry strategies
+- **Champions API Request Details** - Enhanced Worlds Champions section with detailed API request status showing expected vs actual results, authentication requirements, and response formats
 
 ### 🛠️ Technical Excellence
 - **Modern React Stack** - React 18 + Vite 5 + TypeScript for optimal performance
