@@ -34,37 +34,16 @@ DATA_DRAGON_VERSION = '15.20.1'
 
 def handle_contests_endpoint(api_attempts: List[Dict[str, Any]], year: str = '2024') -> Dict[str, Any]:
     """
-    Handle contests endpoint - demonstrates uniform interface for tournament data.
+    Handle contests endpoint - no dummy data, frontend handles fallbacks.
     """
-    all_contests = {
-        '2024': [
-            {'id': 'worlds2024', 'name': 'Worlds Championship 2024', 'status': 'completed', 'winner': 'T1'},
-            {'id': 'msi2024', 'name': 'Mid-Season Invitational 2024', 'status': 'completed', 'winner': 'Gen.G'}
-        ],
-        '2023': [
-            {'id': 'worlds2023', 'name': 'Worlds Championship 2023', 'status': 'completed', 'winner': 'T1'},
-            {'id': 'msi2023', 'name': 'Mid-Season Invitational 2023', 'status': 'completed', 'winner': 'JDG'}
-        ],
-        '2022': [
-            {'id': 'worlds2022', 'name': 'Worlds Championship 2022', 'status': 'completed', 'winner': 'DRX'},
-            {'id': 'msi2022', 'name': 'Mid-Season Invitational 2022', 'status': 'completed', 'winner': 'RNG'}
-        ],
-        '2021': [
-            {'id': 'worlds2021', 'name': 'Worlds Championship 2021', 'status': 'completed', 'winner': 'EDG'},
-            {'id': 'msi2021', 'name': 'Mid-Season Invitational 2021', 'status': 'completed', 'winner': 'DK'}
-        ]
-    }
-    
-    contests_data = all_contests.get(year, all_contests['2024'])
-    
     api_attempts.append({
         'endpoint': 'Contests API',
-        'status': 'Success',
+        'status': 'Not Implemented',
         'method': 'GET',
-        'url': 'lambda://contests',
-        'auth': 'None (demo data)',
-        'result': 'Recent contests loaded',
-        'data_count': len(contests_data)
+        'url': 'No real contests API available',
+        'auth': 'N/A',
+        'result': 'Contests endpoint not implemented - use frontend test data',
+        'data_count': 0
     })
     
     trace_id = xray_recorder.get_trace_entity().trace_id if xray_recorder.get_trace_entity() else 'unknown'
@@ -77,8 +56,8 @@ def handle_contests_endpoint(api_attempts: List[Dict[str, Any]], year: str = '20
             'X-Trace-Id': trace_id
         },
         'body': json.dumps({
-            'data': contests_data,
-            'source': 'CONTESTS',
+            'data': [],
+            'source': 'EMPTY',
             'api_attempts': api_attempts,
             'xray_trace_id': trace_id
         })
@@ -86,21 +65,34 @@ def handle_contests_endpoint(api_attempts: List[Dict[str, Any]], year: str = '20
 
 def handle_players_endpoint(api_attempts: List[Dict[str, Any]], headers: Dict[str, str], make_request) -> Dict[str, Any]:
     """
-    Handle players endpoint - demonstrates uniform interface for player data.
+    Handle players endpoint - get real challenger league data.
     """
     challenger_url = "https://na1.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5"
     challenger_data, status_code, error_details = make_request(challenger_url, headers)
     
     if challenger_data and 'entries' in challenger_data:
-        top_players = challenger_data['entries'][:15]  # Limit to top 15 to be discrete with API requests
-        players_data = [{
-            'summonerId': player.get('summonerId', 'unknown'),
-            'summonerName': player.get('summonerName', 'Unknown'),
-            'leaguePoints': player.get('leaguePoints', 0),
-            'rank': player.get('rank', 'I'),
-            'wins': player.get('wins', 0),
-            'losses': player.get('losses', 0)
-        } for player in top_players]
+        # Get top 10 players and transform to our format
+        top_players = challenger_data['entries'][:10]
+        players_data = []
+        
+        for i, player in enumerate(top_players):
+            win_rate = round((player.get('wins', 0) / max(1, player.get('wins', 0) + player.get('losses', 0))) * 100)
+            
+            # Assign signature champions based on ranking (top players get meta champions)
+            signature_champions = ['Azir', 'Aatrox', 'Jinx', 'Thresh', 'Graves', 'Orianna', 'Gnar', 'Kai\'Sa', 'Nautilus', 'Nidalee']
+            
+            players_data.append({
+                'puuid': player.get('puuid', f'challenger_{i}'),
+                'rank': i + 1,  # Challenger ranking
+                'leaguePoints': player.get('leaguePoints', 0),
+                'wins': player.get('wins', 0),
+                'losses': player.get('losses', 0),
+                'winRate': win_rate,
+                'veteran': player.get('veteran', False),
+                'hotStreak': player.get('hotStreak', False),
+                'freshBlood': player.get('freshBlood', False),
+                'signatureChampion': signature_champions[i]
+            })
         
         api_attempts.append({
             'endpoint': 'Challenger League API',
@@ -108,7 +100,7 @@ def handle_players_endpoint(api_attempts: List[Dict[str, Any]], headers: Dict[st
             'method': 'GET',
             'url': challenger_url,
             'auth': 'X-Riot-Token required',
-            'result': f'Retrieved {len(players_data)} challenger players',
+            'result': f'Retrieved top {len(players_data)} challenger players from {challenger_data.get("name", "Challenger League")}',
             'status_code': status_code,
             'data_count': len(players_data)
         })
@@ -280,9 +272,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if endpoint_type == 'contests':
             year = query_params.get('year', '2024')
             return handle_contests_endpoint(api_attempts, year)
-        elif endpoint_type == 'players':
-            return handle_players_endpoint(api_attempts, headers, make_request)
-        elif endpoint_type == 'challenger-league':
+        elif endpoint_type in ['players', 'challenger-league']:
             return handle_players_endpoint(api_attempts, headers, make_request)
         else:
             # Default endpoint - no dummy data, just return empty with API attempts

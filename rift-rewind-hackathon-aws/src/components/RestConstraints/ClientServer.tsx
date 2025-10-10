@@ -94,23 +94,23 @@ export class ClientServer extends RestConstraintBase {
         this.setState({ xrayTraceId });
       }
       
-      // Check if Lambda got real data (not fallback)
+      // Check if Lambda got real data
       const challengerAttempt = data.api_attempts?.find((attempt: any) => 
         attempt.endpoint === 'Challenger League API'
       );
       
       if (challengerAttempt?.status === 'Success' && data.data?.length > 0) {
-        // Use real API data
+        // Transform real challenger data to our format
         this.setState({ error: null });
-        return data.data.slice(0, 5).map((entry: any, index: number) => ({
-          player: entry.summonerName || `Player ${index + 1}`,
-          team: 'Challenger',
-          championPlayed: ['Azir', 'Aatrox', 'Jinx', 'Thresh', 'Graves'][index],
-          tournamentWins: entry.wins || 0,
-          tournamentLosses: entry.losses || 0,
-          winRate: entry.wins && entry.losses ? Math.round((entry.wins / (entry.wins + entry.losses)) * 100) : 0,
-          performanceScore: entry.leaguePoints ? Math.min(100, Math.round(entry.leaguePoints / 10)) : 0,
-          event: 'Challenger League'
+        return data.data.map((player: any) => ({
+          player: `Rank ${player.rank} (${player.leaguePoints} LP)`,
+          team: `${player.veteran ? 'Veteran' : player.freshBlood ? 'Rising Star' : 'Challenger'}${player.hotStreak ? ' 🔥' : ''}`,
+          championPlayed: player.signatureChampion,
+          tournamentWins: player.wins,
+          tournamentLosses: player.losses,
+          winRate: player.winRate,
+          performanceScore: Math.min(100, Math.round(player.leaguePoints / 25)), // Scale LP to 0-100
+          event: 'Live Challenger League'
         }));
       } else {
         // API failed, show diagnostic info and use local fallback
@@ -128,11 +128,11 @@ export class ClientServer extends RestConstraintBase {
   
   private getLocalFallbackSummoners(): TournamentWinner[] {
     return [
-      { player: 'Faker', team: 'T1', championPlayed: 'Azir', tournamentWins: 150, tournamentLosses: 50, winRate: 75, performanceScore: 95, event: 'Local Demo Data' },
-      { player: 'Canyon', team: 'Gen.G', championPlayed: 'Aatrox', tournamentWins: 140, tournamentLosses: 60, winRate: 70, performanceScore: 92, event: 'Local Demo Data' },
-      { player: 'Showmaker', team: 'DK', championPlayed: 'Jinx', tournamentWins: 130, tournamentLosses: 70, winRate: 65, performanceScore: 88, event: 'Local Demo Data' },
-      { player: 'Chovy', team: 'HLE', championPlayed: 'Thresh', tournamentWins: 125, tournamentLosses: 75, winRate: 63, performanceScore: 85, event: 'Local Demo Data' },
-      { player: 'Ruler', team: 'JDG', championPlayed: 'Graves', tournamentWins: 120, tournamentLosses: 80, winRate: 60, performanceScore: 83, event: 'Local Demo Data' }
+      { player: 'Rank 1 (2040 LP)', team: 'Veteran 🔥', championPlayed: 'Azir', tournamentWins: 493, tournamentLosses: 362, winRate: 58, performanceScore: 82, event: 'Demo Challenger Data' },
+      { player: 'Rank 2 (2007 LP)', team: 'Veteran', championPlayed: 'Aatrox', tournamentWins: 525, tournamentLosses: 430, winRate: 55, performanceScore: 80, event: 'Demo Challenger Data' },
+      { player: 'Rank 3 (1680 LP)', team: 'Veteran', championPlayed: 'Jinx', tournamentWins: 366, tournamentLosses: 298, winRate: 55, performanceScore: 67, event: 'Demo Challenger Data' },
+      { player: 'Rank 4 (1650 LP)', team: 'Veteran', championPlayed: 'Thresh', tournamentWins: 268, tournamentLosses: 168, winRate: 61, performanceScore: 66, event: 'Demo Challenger Data' },
+      { player: 'Rank 5 (1639 LP)', team: 'Veteran', championPlayed: 'Graves', tournamentWins: 242, tournamentLosses: 149, winRate: 62, performanceScore: 66, event: 'Demo Challenger Data' }
     ];
   }
 
