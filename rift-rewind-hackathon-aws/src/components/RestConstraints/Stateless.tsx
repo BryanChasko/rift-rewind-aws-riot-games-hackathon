@@ -25,7 +25,9 @@ export class Stateless extends RestConstraintBase {
     if (this.props.selectedChampion) {
       const championData = await this.getChampionData(this.props.selectedChampion.label);
       this.setState({ championData });
-      await this.props.apiService.fetchChampionProficiency(this.props.selectedChampion.value);
+      if (this.props.apiService) {
+        await this.props.apiService.fetchChampionProficiency(this.props.selectedChampion.value);
+      }
       this.props.stateManager.setDataMode(this.section, 'live');
       this.forceUpdate();
     }
@@ -137,7 +139,7 @@ export class Stateless extends RestConstraintBase {
         </Alert>
         
         {hasContext && (
-          <Alert type="success" header={`🔗 Data Context from Previous Steps: ${this.props.selectedYear.value} Tournament`}>
+          <Alert type="success" header={`🔗 Data Context from Previous Steps: ${this.props.selectedYear?.value || '2024'} Tournament`}>
             <Box variant="p">
               Champion data inherited from client-server demo. Each new API call will include complete authentication context - no server session memory.
             </Box>
@@ -159,7 +161,7 @@ export class Stateless extends RestConstraintBase {
               <Box variant="p">
                 <strong>Select Champion:</strong><br/>
                 <Select
-                  selectedOption={this.props.selectedChampion}
+                  selectedOption={this.props.selectedChampion || null}
                   onChange={({ detail }) => {
                     const champion = detail.selectedOption as { label: string; value: string };
                     if (this.props.onChampionChange) {

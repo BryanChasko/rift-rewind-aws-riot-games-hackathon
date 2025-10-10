@@ -2,20 +2,22 @@ import React from 'react';
 import { Header, Button, Box, SpaceBetween, Container, Grid } from '@cloudscape-design/components';
 import { ApiService } from '../../services/ApiService';
 import { StateManager } from '../../services/StateManager';
-import type { ConstraintSection } from '../../services/types';
+import type { ConstraintSection, Contest } from '../../services/types';
 import { focusElement, announceToScreenReader } from '../../utils/accessibility';
 // import { useResponsive } from '../../utils/responsive';
 
 export interface RestConstraintBaseProps {
-  apiService: ApiService;
+  apiService?: ApiService;
   stateManager: StateManager;
   onNavigate: (page: string) => void;
   selectedYear: { label: string; value: string };
-  selectedChampion: { label: string; value: string } | null;
-  loading: boolean;
-  activeDemo: ConstraintSection | null;
+  selectedChampion?: { label: string; value: string } | null;
+  selectedContest?: Contest | null;
+  loading?: boolean;
+  activeDemo?: ConstraintSection | null;
   onYearChange?: (year: { label: string; value: string }) => void;
   onChampionChange?: (champion: { label: string; value: string } | null) => void;
+  onContestChange?: (contest: Contest | null) => void;
 }
 
 export abstract class RestConstraintBase extends React.Component<RestConstraintBaseProps> {

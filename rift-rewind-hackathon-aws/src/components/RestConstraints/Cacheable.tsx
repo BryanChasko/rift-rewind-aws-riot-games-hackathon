@@ -20,7 +20,7 @@ export class Cacheable extends RestConstraintBase {
   protected section = 'data-dragon' as const;
 
   private async fetchDataDragon() {
-    if (this.props.selectedChampion) {
+    if (this.props.selectedChampion && this.props.apiService) {
       await this.props.apiService.fetchDataDragon(this.props.selectedChampion.value);
       this.props.stateManager.setDataMode(this.section, 'live');
       this.forceUpdate();
@@ -110,13 +110,12 @@ export class Cacheable extends RestConstraintBase {
                 <strong>Select Champion:</strong><br/>
                 <div style={{ zIndex: 1000, position: 'relative' }}>
                   <Select
-                    selectedOption={this.props.selectedChampion}
+                    selectedOption={this.props.selectedChampion || null}
                     onChange={({ detail }) => {
                       const champion = detail.selectedOption as { label: string; value: string };
                       if (this.props.onChampionChange) {
                         this.props.onChampionChange(champion);
                       }
-
                     }}
                     options={ALL_CHAMPIONS.map(champion => ({
                       label: champion,

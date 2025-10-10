@@ -35,7 +35,9 @@ export class CodeOnDemand extends RestConstraintBase {
         ]
       });
       
-      await this.props.apiService.fetchDynamicConfig();
+      if (this.props.apiService) {
+        await this.props.apiService.fetchDynamicConfig();
+      }
       this.props.stateManager.setDataMode(this.section, 'live');
       this.forceUpdate();
     } catch (error) {

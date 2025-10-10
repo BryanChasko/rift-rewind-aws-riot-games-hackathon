@@ -12,7 +12,9 @@ export class LayeredSystem extends RestConstraintBase {
   protected section = 'challenger' as const;
 
   private async fetchLayeredSystem() {
-    await this.props.apiService.fetchLayeredSystem();
+    if (this.props.apiService) {
+      await this.props.apiService.fetchLayeredSystem();
+    }
     this.props.stateManager.setDataMode(this.section, 'live');
     this.forceUpdate();
   }

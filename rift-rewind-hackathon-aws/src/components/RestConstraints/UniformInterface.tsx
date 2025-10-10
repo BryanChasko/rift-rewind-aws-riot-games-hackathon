@@ -209,9 +209,12 @@ export class UniformInterface extends RestConstraintBase {
                 selectionType="single"
                 selectedItems={this.state.selectedContest ? [this.state.selectedContest] : []}
                 onSelectionChange={(selectedItems: Contest[]) => {
-                  this.setState({ 
-                    selectedContest: selectedItems.length > 0 ? selectedItems[0] : null 
-                  });
+                  const contest = selectedItems.length > 0 ? selectedItems[0] : null;
+                  this.setState({ selectedContest: contest });
+                  // Pass selected contest to parent
+                  if (this.props.onContestChange) {
+                    this.props.onContestChange(contest);
+                  }
                 }}
                 trackBy="id"
               />

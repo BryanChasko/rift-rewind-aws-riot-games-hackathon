@@ -56,6 +56,28 @@ export class ClientServer extends RestConstraintBase {
     }
   };
 
+  componentDidMount() {
+    // Auto-lookup selected contest winner if available
+    if (this.props.selectedContest) {
+      const winner = this.props.selectedContest.winner || '';
+      // Extract player name and convert to Riot ID format
+      const nameMatch = winner.match(/^([^(]+)\s*\(/);
+      if (nameMatch) {
+        const playerName = nameMatch[1].trim();
+        // Convert "#1 Player" to "Player1#NA1" format for demo
+        const riotId = playerName.replace('#', '').replace(' ', '') + '#NA1';
+        this.setState({
+          summonerLookup: {
+            ...this.state.summonerLookup,
+            riotId: riotId
+          }
+        });
+        // Auto-trigger lookup
+        setTimeout(() => this.lookupSummoner(), 500);
+      }
+    }
+  }
+
   private async fetchSummoners() {
     try {
       this.setState({ error: null, xrayTraceId: undefined, errorDetails: undefined });
@@ -479,20 +501,22 @@ export class ClientServer extends RestConstraintBase {
           </Alert>
         )}
         
-        {(this.props.stateManager.getDataMode('contests') === 'live' || this.props.stateManager.getDataMode('contests') === 'demo') && (
-          <Alert type="success" header={`🔗 Data Context from Step 1: ${this.props.selectedYear.value} Tournament Data`}>
+        {this.props.selectedContest && (
+          <Alert type="success" header={`🔗 Contest Winner from Step 1: ${this.props.selectedContest.name}`}>
             <SpaceBetween direction="vertical" size="s">
               <div>
-                <strong>Year Filter Applied:</strong> {this.props.selectedYear.value} selection automatically carried forward from Uniform Interface demo. This shows how client-server architecture maintains state across different API endpoints while allowing independent evolution.
+                <strong>Selected Winner:</strong> {this.props.selectedContest.winner} from {this.props.selectedYear.value}<br/>
+                <strong>Contest:</strong> {this.props.selectedContest.name} ({this.props.selectedContest.difficulty} difficulty)<br/>
+                <strong>Auto-Lookup:</strong> Automatically converted to Riot ID format for summoner lookup
               </div>
               <div style={{backgroundColor: '#e8f5e8', padding: '12px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '12px'}}>
                 <strong>🔍 Data Flow Connection:</strong><br/>
-                Step 1 (Uniform Interface) → Year: {this.props.selectedYear.value} → Step 2 (Client-Server)<br/>
+                Step 1 Contest Selection → Winner: {this.props.selectedContest.winner} → Step 2 Summoner Lookup<br/>
                 ┌─────────┐    ┌─────────┐    ┌─────────┐<br/>
-                │Contests │───▶│ Filter  │───▶│Summoners│<br/>
-                │API Call │    │ Year    │    │ for Year │<br/>
+                │Contest  │───▶│ Winner  │───▶│Summoner │<br/>
+                │Selected │    │ Extract │    │ Lookup  │<br/>
                 └─────────┘    └─────────┘    └─────────┘<br/>
-                &nbsp;&nbsp;{this.props.selectedYear.value}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Context&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{this.props.selectedYear.value} data
+                &nbsp;&nbsp;{this.props.selectedContest.name.substring(0, 8)}...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{this.props.selectedContest.winner.substring(0, 8)}...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;API call
               </div>
             </SpaceBetween>
           </Alert>
@@ -554,13 +578,13 @@ export class ClientServer extends RestConstraintBase {
                         {this.state.summonerLookup.loading ? 'Looking up...' : `${this.state.dataSourceStatus.summoner === true ? '✅' : this.state.dataSourceStatus.summoner === false ? '❌' : '🔍'} Look Up Summoner`}
                       </button>
                       <Box variant="small" color={this.state.dataSourceStatus.summoner === true ? 'text-status-success' : this.state.dataSourceStatus.summoner === false ? 'text-status-error' : 'text-body-secondary'}>
-                        {this.state.dataSourceStatus.summoner === true ? '✅ Individual lookup' : this.state.dataSourceStatus.summoner === false ? '❌ Failed lookup' : 'Individual lookup'}
+                        {this.state.dataSourceStatus.summoner === true ? '✅ Contest winner lookup' : this.state.dataSourceStatus.summoner === false ? '❌ Failed lookup' : this.props.selectedContest ? 'Contest winner lookup' : 'Individual lookup'}
                       </Box>
                       
                       <SpaceBetween direction="vertical" size="xs">
                         <input 
                           type="text" 
-                          placeholder="Doublelift#NA1" 
+                          placeholder={this.props.selectedContest ? `Auto-filled from ${this.props.selectedContest.winner}` : "Doublelift#NA1"}
                           value={this.state.summonerLookup.riotId}
                           onChange={(e) => this.setState({
                             summonerLookup: {...this.state.summonerLookup, riotId: (e.target as HTMLInputElement).value}
@@ -571,7 +595,8 @@ export class ClientServer extends RestConstraintBase {
                             border: '1px solid #d5dbdb', 
                             width: '100%',
                             fontSize: '12px',
-                            boxSizing: 'border-box'
+                            boxSizing: 'border-box',
+                            backgroundColor: this.props.selectedContest ? '#f0f8ff' : 'white'
                           }}
                         />
                         <select 

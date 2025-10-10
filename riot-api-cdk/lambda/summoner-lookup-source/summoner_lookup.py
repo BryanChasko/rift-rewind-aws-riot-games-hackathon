@@ -85,26 +85,43 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         game_name = urllib.parse.quote(game_name, safe='')
         tag_line = urllib.parse.quote(tag_line, safe='')
         
-        # For demonstration purposes, use test data since API has Lambda restrictions
-        # In production, this would call the actual Riot API
-        account_data = {
-            'gameName': game_name.replace('%20', ' '),
-            'tagLine': tag_line,
-            'puuid': 'demo-puuid-12345'
-        }
+        # Step 1: Get account by Riot ID
+        routing_value = get_routing_value(region)
+        account_url = f'https://{routing_value}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}'
         
-        # Demo summoner data (in production this would come from Riot API)
-        summoner_data = {
-            'summonerLevel': 150 + hash(summoner_name) % 300,  # Random level 150-450
-            'puuid': account_data['puuid']
-        }
+        with xray_recorder.capture('riot_account_api'):
+            try:
+                req = urllib.request.Request(account_url, headers=headers)
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    account_data = json.loads(response.read().decode())
+            except urllib.error.HTTPError as e:
+                if e.code == 404:
+                    return {
+                        'statusCode': 404,
+                        'headers': {'Content-Type': 'application/json'},
+                        'body': json.dumps({'error': f'Summoner "{summoner_name}" not found'})
+                    }
+                raise
         
-        # Demo champion mastery data
-        mastery_data = [
-            {'championId': 157, 'championLevel': 7, 'championPoints': 234567},
-            {'championId': 238, 'championLevel': 6, 'championPoints': 156789},
-            {'championId': 64, 'championLevel': 5, 'championPoints': 98765}
-        ]
+        # Step 2: Get summoner data by puuid
+        summoner_url = f'https://{region}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{account_data["puuid"]}'
+        
+        with xray_recorder.capture('riot_summoner_api'):
+            req = urllib.request.Request(summoner_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=10) as response:
+                summoner_data = json.loads(response.read().decode())
+        
+        # Step 3: Get champion mastery data
+        mastery_url = f'https://{region}.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/{account_data["puuid"]}/top?count=3'
+        
+        with xray_recorder.capture('riot_mastery_api'):
+            try:
+                req = urllib.request.Request(mastery_url, headers=headers)
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    mastery_data = json.loads(response.read().decode())
+            except urllib.error.HTTPError as e:
+                # If mastery data fails, continue with empty array
+                mastery_data = []
         
         # Get X-Ray trace ID
         trace_id = xray_recorder.get_trace_entity().trace_id if xray_recorder.get_trace_entity() else 'unknown'
@@ -116,7 +133,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'level': summoner_data['summonerLevel'],
                 'puuid': account_data['puuid']
             },
-            'topChampions': mastery_data[:3],
+            'topChampions': mastery_data[:3] if mastery_data else [],
             'xray_trace_id': trace_id
         }
         
