@@ -1,18 +1,47 @@
 
-import { Container, Alert, ColumnLayout, Box, Select, SpaceBetween } from '@cloudscape-design/components';
+import React from 'react';
+import { Container, Alert, ColumnLayout, Box, Select, SpaceBetween, Button } from '@cloudscape-design/components';
 import { RestConstraintBase } from '../shared/RestConstraintBase';
 import { DataTable, type TableColumn } from '../shared/DataTable';
 import type { ConfigData } from '../../services/types';
+
+interface CodeOnDemandState {
+  configData: any[];
+}
 
 export class CodeOnDemand extends RestConstraintBase {
   protected constraintNumber = 6;
   protected title = "Code on Demand Pattern";
   protected description = "Watch runtime adaptation and dynamic UI behavior. See how server-sent instructions create responsive interfaces that adapt to data.";
   protected section = 'dynamic' as const;
+  
+  state: CodeOnDemandState = {
+    configData: []
+  };
 
   private async fetchDynamicConfig() {
-    await this.props.apiService.fetchDynamicConfig();
-    this.props.stateManager.setDataMode(this.section, 'live');
+    try {
+      // Fetch real champion rotation data
+      const response = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
+      const versions = await response.json();
+      const latestVersion = versions[0];
+      
+      this.setState({ 
+        configData: [
+          { config: 'Game Version', description: 'Current patch version', instruction: `Set version to ${latestVersion}`, behavior: 'Update UI for current patch', adapted: true },
+          { config: 'Champion Data', description: 'Available champions', instruction: 'Load champion roster', behavior: 'Dynamic champion selection', adapted: true },
+          { config: 'Asset URLs', description: 'Image and data paths', instruction: `Use CDN path /cdn/${latestVersion}/`, behavior: 'Version-based asset loading', adapted: true },
+          { config: 'API Endpoints', description: 'Available services', instruction: 'Configure endpoint URLs', behavior: 'Dynamic service discovery', adapted: true }
+        ]
+      });
+      
+      await this.props.apiService.fetchDynamicConfig();
+      this.props.stateManager.setDataMode(this.section, 'live');
+      this.forceUpdate();
+    } catch (error) {
+      console.error('Failed to fetch dynamic config:', error);
+      this.forceUpdate();
+    }
   }
 
   renderContent(): React.JSX.Element {
@@ -135,7 +164,7 @@ export class CodeOnDemand extends RestConstraintBase {
               className="rest-constraint-6"
             >
               <DataTable
-                items={[]} // Will be populated by parent with config data
+                items={this.state.configData}
                 columns={configColumns}
                 header="💻 Runtime UI Configuration (Code on Demand)"
                 description="Server metadata dynamically configures client UI behavior at runtime"
@@ -147,13 +176,22 @@ export class CodeOnDemand extends RestConstraintBase {
               <SpaceBetween direction="vertical" size="s">
                 <Box variant="h3">🎉 REST Constraints Complete!</Box>
                 <Box variant="p">
-                  You've experienced all 6 REST architectural constraints in action. Ready to explore more API patterns?
+                  You've experienced all 6 REST architectural constraints in action. Explore more resources:
                 </Box>
-                {this.renderNextStep(
-                  'overview',
-                  'REST Overview',
-                  ''
-                )}
+                <SpaceBetween direction="horizontal" size="s">
+                  <Button variant="primary" onClick={() => this.props.onNavigate('overview')}>
+                    ➡️ REST Overview
+                  </Button>
+                  <Button variant="normal" onClick={() => this.props.onNavigate('cheat-sheet')}>
+                    📋 API Cheat Sheet
+                  </Button>
+                  <Button variant="normal" onClick={() => this.props.onNavigate('how-it-works')}>
+                    🔧 How It Works
+                  </Button>
+                  <Button variant="normal" onClick={() => this.props.onNavigate('resources')}>
+                    📚 Project Resources
+                  </Button>
+                </SpaceBetween>
               </SpaceBetween>
             </Container>
           </>

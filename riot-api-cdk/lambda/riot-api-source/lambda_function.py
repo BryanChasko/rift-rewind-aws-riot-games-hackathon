@@ -19,6 +19,13 @@ import boto3
 import urllib.request
 import urllib.parse
 from typing import Dict, Any, List, Optional
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.core import patch_all
+import traceback
+import time
+
+# Enable X-Ray tracing for all AWS SDK calls
+patch_all()
 
 # Constants for better maintainability
 SSM_PARAMETER_NAME = '/rift-rewind/riot-api-key'
@@ -147,6 +154,7 @@ def get_endpoint_url(source: str) -> str:
     }
     return endpoints.get(source, 'Unknown endpoint')
 
+@xray_recorder.capture('lambda_handler')
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
     AWS Lambda handler function for Riot Games API integration.
@@ -175,15 +183,22 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print(f"Lambda invoked with endpoint: {endpoint_type}")
         # Retrieve encrypted API key from AWS Systems Manager Parameter Store
         # This follows AWS security best practices by not hardcoding secrets
-        ssm = boto3.client('ssm')
-        api_key = ssm.get_parameter(
-            Name=SSM_PARAMETER_NAME,
-            WithDecryption=True
-        )['Parameter']['Value']
+        with xray_recorder.capture('ssm_get_parameter'):
+            ssm = boto3.client('ssm')
+            try:
+                api_key = ssm.get_parameter(
+                    Name=SSM_PARAMETER_NAME,
+                    WithDecryption=True
+                )['Parameter']['Value']
+                xray_recorder.put_annotation('api_key_status', 'retrieved')
+            except Exception as ssm_error:
+                xray_recorder.put_annotation('api_key_status', 'failed')
+                raise Exception(f'Failed to retrieve API key from SSM: {str(ssm_error)}')
         
         # Prepare headers for Riot API authentication
         headers = {RIOT_API_HEADER: api_key}
         
+        @xray_recorder.capture('make_request')
         def make_request(url: str, headers: Optional[Dict[str, str]] = None) -> Optional[Dict[str, Any]]:
             """
             Helper function to make HTTP requests with proper error handling.
@@ -355,6 +370,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return handle_contests_endpoint(api_attempts, year)
         elif endpoint_type == 'players':
             return handle_players_endpoint(api_attempts, headers, make_request)
+        elif endpoint_type == 'challenger-league':
+            return handle_players_endpoint(api_attempts, headers, make_request)
         else:
             # Default champions endpoint - add detailed API request information
             champions_api_details = {
@@ -379,13 +396,50 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
     except Exception as e:
-        # Handle any unexpected errors gracefully
-        # Log error for CloudWatch monitoring and debugging
-        print(f"Lambda function error: {str(e)}")
+        # Handle any unexpected errors gracefully with detailed diagnostics
+        error_details = {
+            'error_type': type(e).__name__,
+            'error_message': str(e),
+            'traceback': traceback.format_exc(),
+            'timestamp': int(time.time()),
+            'lambda_request_id': context.aws_request_id if context else 'unknown',
+            'event_details': {
+                'query_params': event.get('queryStringParameters', {}),
+                'headers': event.get('headers', {}),
+                'method': event.get('httpMethod', 'unknown')
+            },
+            'troubleshooting': {
+                'github_repo': 'https://github.com/BryanChasko/rift-rewind-aws-riot-games-hackathon',
+                'common_causes': [
+                    'API key expired or invalid in SSM Parameter Store',
+                    'Riot API rate limits exceeded',
+                    'Network connectivity issues',
+                    'Lambda timeout or memory limits'
+                ],
+                'next_steps': [
+                    'Check CloudWatch logs for detailed error traces',
+                    'Verify API key in SSM Parameter Store',
+                    'Check X-Ray traces for request flow analysis',
+                    'Contact Bryan Chasko via GitHub issues'
+                ]
+            }
+        }
+        
+        # Log comprehensive error details for CloudWatch
+        print(f"LAMBDA ERROR: {json.dumps(error_details, indent=2)}")
+        
+        # Add X-Ray annotation for error tracking
+        xray_recorder.put_annotation('error_type', type(e).__name__)
+        xray_recorder.put_annotation('endpoint', event.get('queryStringParameters', {}).get('endpoint', 'unknown'))
+        
         return {
             'statusCode': 500,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
             'body': json.dumps({
-                'error': str(e),
-                'message': 'Internal server error - check CloudWatch logs for details'
+                'error': error_details,
+                'message': 'Lambda function encountered an error - detailed diagnostics included'
             })
         }

@@ -20,7 +20,8 @@ export class RiotApiCdkStack extends cdk.Stack {
     const lambdaRole = new iam.Role(this, 'RiotApiLambdaRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AWSXRayDaemonWriteAccess')
       ]
     });
 
@@ -34,6 +35,7 @@ export class RiotApiCdkStack extends cdk.Stack {
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/riot-api-source')),
       role: lambdaRole,
       timeout: cdk.Duration.seconds(30),
+      tracing: lambda.Tracing.ACTIVE,
       environment: {
         PARAMETER_NAME: apiKeyParameter.parameterName
       }
@@ -51,9 +53,10 @@ export class RiotApiCdkStack extends cdk.Stack {
     });
 
     // Output the Function URL
-    new cdk.CfnOutput(this, 'RiotApiFunctionUrl', {
+    new cdk.CfnOutput(this, 'LambdaFunctionUrl', {
       value: functionUrl.url,
-      description: 'URL for the Riot API Lambda Function'
+      description: 'URL for the Riot API Lambda Function',
+      exportName: 'RiotApiLambdaUrl'
     });
   }
 }

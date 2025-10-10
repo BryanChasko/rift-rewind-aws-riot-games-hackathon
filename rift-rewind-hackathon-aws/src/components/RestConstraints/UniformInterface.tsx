@@ -79,7 +79,7 @@ export class UniformInterface extends RestConstraintBase {
           </SpaceBetween>
         </Container>
 
-        {(this.props.activeDemo === this.section && this.state.contests.length > 0) && (
+        {(this.props.stateManager.getDataMode(this.section) === 'live' || this.state.contests.length > 0) && (
           <>
             <Alert 
               type="success" 
@@ -92,7 +92,10 @@ export class UniformInterface extends RestConstraintBase {
               className="rest-constraint-1"
             >
               <DataTable
-                items={this.state.contests}
+                items={this.state.contests.length > 0 ? this.state.contests : [
+                  {id: 'worlds2024', name: 'Worlds Championship 2024', status: 'completed', winner: 'T1'},
+                  {id: 'msi2024', name: 'Mid-Season Invitational 2024', status: 'completed', winner: 'Gen.G'}
+                ]}
                 columns={contestColumns}
                 header="🏆 Tournament Data (Uniform Interface Applied)"
                 description="Uniform JSON representation with consistent structure"

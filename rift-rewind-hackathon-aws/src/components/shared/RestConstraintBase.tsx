@@ -1,8 +1,10 @@
 import React from 'react';
-import { Header, Button, Box, SpaceBetween, Container } from '@cloudscape-design/components';
+import { Header, Button, Box, SpaceBetween, Container, Grid } from '@cloudscape-design/components';
 import { ApiService } from '../../services/ApiService';
 import { StateManager } from '../../services/StateManager';
 import type { ConstraintSection } from '../../services/types';
+import { focusElement, announceToScreenReader } from '../../utils/accessibility';
+import { useResponsive } from '../../utils/responsive';
 
 export interface RestConstraintBaseProps {
   apiService: ApiService;
@@ -12,6 +14,8 @@ export interface RestConstraintBaseProps {
   selectedChampion: { label: string; value: string } | null;
   loading: boolean;
   activeDemo: ConstraintSection | null;
+  onYearChange?: (year: { label: string; value: string }) => void;
+  onChampionChange?: (champion: { label: string; value: string } | null) => void;
 }
 
 export abstract class RestConstraintBase extends React.Component<RestConstraintBaseProps> {
@@ -27,6 +31,8 @@ export abstract class RestConstraintBase extends React.Component<RestConstraintB
       <Header
         variant="h1"
         description={this.description}
+        headingIdentifier={`constraint-${this.constraintNumber}`}
+        info={<span className="sr-only">REST constraint {this.constraintNumber} of 6</span>}
       >
         {this.constraintNumber}️⃣ {this.title}
       </Header>
@@ -44,25 +50,15 @@ export abstract class RestConstraintBase extends React.Component<RestConstraintB
     
     return (
       <SpaceBetween direction="vertical" size="s">
-        <SpaceBetween direction="horizontal" size="s">
-          <Button 
-            onClick={onFetch}
-            loading={this.props.loading && this.props.activeDemo === this.section}
-            variant="primary"
-            className={`button-color-${this.constraintNumber}`}
-            disabled={disabled}
-          >
-            {dataMode === 'live' ? `✅ ${liveText}` : `🚀 ${buttonText}`}
-          </Button>
-          {dataMode === 'live' && (
-            <Button 
-              onClick={() => this.props.stateManager.resetToDemo(this.section)}
-              variant="normal"
-            >
-              🔄 Reset to Demo Data
-            </Button>
-          )}
-        </SpaceBetween>
+        <Button 
+          onClick={onFetch}
+          loading={this.props.loading && this.props.activeDemo === this.section}
+          variant="primary"
+          className={`button-color-${this.constraintNumber}`}
+          disabled={disabled}
+        >
+          {dataMode === 'live' ? `✅ ${liveText}` : `🚀 ${buttonText}`}
+        </Button>
         
         {lastUpdated && (
           <Box variant="small" color="text-body-secondary">
@@ -74,14 +70,29 @@ export abstract class RestConstraintBase extends React.Component<RestConstraintB
   }
 
   protected renderNextStep(nextPage: string, nextTitle: string, description?: string): React.JSX.Element {
+    const handleNavigation = () => {
+      announceToScreenReader(`Navigating to ${nextTitle}`, 'polite');
+      this.props.onNavigate(nextPage);
+      // Focus management following Cloudscape patterns
+      setTimeout(() => {
+        focusElement(`[data-testid="constraint-${this.constraintNumber + 1}-header"]`);
+        announceToScreenReader(`Now viewing: ${nextTitle}`, 'polite');
+      }, 300);
+    };
+    
     return (
-      <Container variant="stacked">
+      <Container 
+        variant="stacked" 
+        role="navigation" 
+        aria-label="Navigate to next REST constraint"
+      >
         <Header variant="h3">🚀 Next Step: {nextTitle}</Header>
         <SpaceBetween direction="vertical" size="s">
           {description && <Box variant="p">{description}</Box>}
           <Button 
             variant="primary" 
-            onClick={() => this.props.onNavigate(nextPage)}
+            onClick={handleNavigation}
+            ariaLabel={`Continue to ${nextTitle} - REST constraint ${this.constraintNumber + 1}`}
           >
             ➡️ Continue to {nextTitle}
           </Button>
@@ -92,10 +103,21 @@ export abstract class RestConstraintBase extends React.Component<RestConstraintB
 
   render(): React.JSX.Element {
     return (
-      <SpaceBetween direction="vertical" size="l">
-        {this.renderHeader()}
-        {this.renderContent()}
-      </SpaceBetween>
+      <section 
+        aria-labelledby={`constraint-${this.constraintNumber}`} 
+        role="region"
+        data-testid={`constraint-${this.constraintNumber}`}
+        className="responsive-container"
+      >
+        <Grid gridDefinition={[{ colspan: { default: 12, xs: 12 } }]}>
+          <SpaceBetween direction="vertical" size="l" className="responsive-stack">
+            <div data-testid={`constraint-${this.constraintNumber}-header`}>
+              {this.renderHeader()}
+            </div>
+            {this.renderContent()}
+          </SpaceBetween>
+        </Grid>
+      </section>
     );
   }
 }

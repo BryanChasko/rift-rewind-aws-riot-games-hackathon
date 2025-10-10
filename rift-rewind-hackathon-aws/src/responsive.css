@@ -1,0 +1,76 @@
+/* Cloudscape-aligned responsive design */
+
+/* Mobile-first approach - 320px baseline */
+.responsive-container {
+  width: 100%;
+  max-width: 100%;
+  padding-inline: 16px;
+  box-sizing: border-box;
+}
+
+/* Responsive tables */
+.responsive-table {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Responsive images and media */
+.responsive-media {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Touch-friendly interactive elements */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive text scaling */
+@media (max-width: 768px) {
+  .responsive-text {
+    font-size: clamp(14px, 4vw, 16px);
+    line-height: 1.5;
+  }
+}
+
+/* High zoom support (400% zoom = 320px effective width) */
+@media (max-width: 320px) {
+  .responsive-container {
+    padding-inline: 8px;
+  }
+  
+  .responsive-stack {
+    gap: 8px;
+  }
+}
+
+/* Bidirectional support */
+[dir="rtl"] .directional-icon {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .breadcrumb-separator::before {
+  content: "‹";
+}
+
+[dir="ltr"] .breadcrumb-separator::before {
+  content: "›";
+}
+
+/* Logical properties for bidirectional layouts */
+.logical-spacing {
+  margin-block: 16px;
+  margin-inline: 12px;
+  padding-block: 8px;
+  padding-inline: 16px;
+}
+
+.logical-border {
+  border-inline-start: 2px solid #0073bb;
+  border-block-end: 1px solid #e9ebed;
+}

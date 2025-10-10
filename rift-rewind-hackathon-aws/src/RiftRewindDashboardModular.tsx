@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Header, SpaceBetween, Alert } from '@cloudscape-design/components';
+import { Header, SpaceBetween, Alert, Grid } from '@cloudscape-design/components';
 import './rest-constraints.css';
+import './accessibility.css';
+import './responsive.css';
 
 // Services
 import { ApiService } from './services/ApiService';
@@ -38,7 +40,7 @@ const RiftRewindDashboardModular: React.FC = () => {
   const [activeDemo] = useState<ConstraintSection | null>(null);
 
   // Custom hooks
-  const { selectedChampion } = useChampionSelection();
+  const { selectedChampion, setSelectedChampion } = useChampionSelection();
 
   const handleNavigation = (page: string) => {
     // Check if page contains year parameter
@@ -89,7 +91,9 @@ const RiftRewindDashboardModular: React.FC = () => {
       selectedYear,
       selectedChampion,
       loading,
-      activeDemo
+      activeDemo,
+      onYearChange: setSelectedYear,
+      onChampionChange: setSelectedChampion
     };
 
     switch (currentPage) {
@@ -117,7 +121,8 @@ const RiftRewindDashboardModular: React.FC = () => {
   };
 
   return (
-    <SpaceBetween direction="vertical" size="l">
+    <main id="main-content" role="main" className="responsive-container">
+      <SpaceBetween direction="vertical" size="l" className="responsive-stack">
       {currentPage === 'overview' && (
         <>
           <Header
@@ -131,13 +136,18 @@ const RiftRewindDashboardModular: React.FC = () => {
             statusIconAriaLabel="Info"
             header="🚀 Live REST API Integration"
           >
-            Cloudscape Design System → AWS Lambda → Riot Data Dragon API | Demonstrating REST principles with real League of Legends champion data
+            <Grid gridDefinition={[{ colspan: { default: 12, xs: 12 } }]}>
+              <div className="responsive-text">
+                Cloudscape Design System → AWS Lambda → Riot Data Dragon API | Demonstrating REST principles with real League of Legends champion data
+              </div>
+            </Grid>
           </Alert>
         </>
       )}
       
-      {renderCurrentPage()}
-    </SpaceBetween>
+        {renderCurrentPage()}
+      </SpaceBetween>
+    </main>
   );
 };
 

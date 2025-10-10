@@ -1,5 +1,7 @@
 import React from 'react';
 import { Table, Header, Box } from '@cloudscape-design/components';
+import { announceToScreenReader } from '../../utils/accessibility';
+import { useResponsive } from '../../utils/responsive';
 
 export interface TableColumn<T> {
   id: string;
@@ -34,6 +36,17 @@ export function DataTable<T>({
   selectionType,
   trackBy
 }: DataTableProps<T>) {
+  const { isMobile } = useResponsive();
+  React.useEffect(() => {
+    if (!loading && items.length > 0) {
+      announceToScreenReader(
+        `Table updated: ${items.length} ${items.length === 1 ? 'item' : 'items'} available`,
+        'polite'
+      );
+    } else if (!loading && items.length === 0) {
+      announceToScreenReader('Table is empty', 'polite');
+    }
+  }, [loading, items.length]);
   const columnDefinitions = columns.map(col => ({
     id: col.id,
     header: col.header,
@@ -41,7 +54,9 @@ export function DataTable<T>({
   }));
 
   return (
+    <div className="responsive-table">
     <Table
+      variant={isMobile ? 'borderless' : 'container'}
       columnDefinitions={columnDefinitions}
       items={items}
       loading={loading}
@@ -58,12 +73,24 @@ export function DataTable<T>({
         </Header>
       ) : undefined}
       empty={
-        <Box textAlign="center">
+        <Box textAlign="center" role="status" aria-live="polite">
           <Box variant="strong" textAlign="center">
             {emptyMessage}
           </Box>
         </Box>
       }
+      ariaLabels={{
+        tableLabel: header || 'Data table',
+        selectionGroupLabel: 'Item selection',
+        itemSelectionLabel: ({ selectedItems }, item) => {
+          const isSelected = selectedItems.indexOf(item) >= 0;
+          return `${isSelected ? 'Selected' : 'Not selected'} item`;
+        },
+        allItemsSelectionLabel: ({ selectedItems }) => 
+          `${selectedItems.length} of ${items.length} items selected`,
+        resizerRoleDescription: 'Column resizer'
+      }}
     />
+    </div>
   );
 }

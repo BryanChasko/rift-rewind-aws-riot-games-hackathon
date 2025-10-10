@@ -20,7 +20,8 @@ export function useChampionSelection() {
   };
 
   return { 
-    selectedChampion, 
+    selectedChampion,
+    setSelectedChampion,
     selectionSource, 
     selectFromTable, 
     selectFromDropdown,

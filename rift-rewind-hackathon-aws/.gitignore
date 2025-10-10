@@ -28,6 +28,11 @@ dist-ssr
 .eslintcache
 .prettiercache
 
+# Environment variables
+.env
+.env.local
+.env.production
+
 # Test files
 MinimalDashboard.tsx
 SimpleApp.tsx

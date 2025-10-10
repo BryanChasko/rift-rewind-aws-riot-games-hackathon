@@ -1,9 +1,10 @@
 
-import { Container, Alert, ColumnLayout, Box, SpaceBetween } from '@cloudscape-design/components';
+import React from 'react';
+import { Container, Alert, ColumnLayout, Box, SpaceBetween, Select } from '@cloudscape-design/components';
 import { RestConstraintBase } from '../shared/RestConstraintBase';
 import { DataTable, type TableColumn } from '../shared/DataTable';
-import { ChampionSelector } from '../shared/ChampionSelector';
 import type { TournamentWinner } from '../../services/types';
+import { ALL_CHAMPIONS } from '../../data/champions';
 
 interface CacheableData extends TournamentWinner {
   version: string;
@@ -22,7 +23,25 @@ export class Cacheable extends RestConstraintBase {
     if (this.props.selectedChampion) {
       await this.props.apiService.fetchDataDragon(this.props.selectedChampion.value);
       this.props.stateManager.setDataMode(this.section, 'live');
+      this.forceUpdate();
     }
+  }
+
+  private generateETag(championName: string): string {
+    // Generate consistent hash based on champion name
+    let hash = 0;
+    for (let i = 0; i < championName.length; i++) {
+      const char = championName.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString(16).substring(0, 7);
+  }
+
+  private getDataCenter(championName: string): string {
+    const centers = ['Virginia', 'Oregon', 'Ireland', 'Singapore', 'Tokyo'];
+    const index = championName.length % centers.length;
+    return centers[index];
   }
 
   renderContent(): React.JSX.Element {
@@ -33,56 +52,45 @@ export class Cacheable extends RestConstraintBase {
     const cacheColumns: TableColumn<CacheableData>[] = [
       {
         id: 'asset',
-        header: 'Champion Asset',
+        header: 'Champion Portrait',
         cell: (item) => (
           <SpaceBetween direction="vertical" size="xs">
             <img 
               src={`https://ddragon.leagueoflegends.com/cdn/14.23.1/img/champion/${item.championPlayed}.png`}
               alt={`${item.championPlayed} portrait`}
               style={{ width: '64px', height: '64px', borderRadius: '8px' }}
+              onLoad={() => console.log('Image loaded from CDN')}
             />
-            <SpaceBetween direction="vertical" size="xs">
-              <Box variant="strong">{item.championPlayed} Portrait</Box>
-              <Box variant="small" color="text-body-secondary">PNG image asset</Box>
-            </SpaceBetween>
+            <Box variant="strong">{item.championPlayed}</Box>
           </SpaceBetween>
         )
       },
       {
-        id: 'version',
-        header: 'Version',
-        cell: () => (
-          <Box variant="strong" color="text-status-success">
-            14.23.1
-          </Box>
+        id: 'url',
+        header: 'CDN URL Structure',
+        cell: (item) => (
+          <SpaceBetween direction="vertical" size="xs">
+            <Box variant="small" fontFamily="monospace">
+              ddragon.leagueoflegends.com
+            </Box>
+            <Box variant="small" fontFamily="monospace">
+              /cdn/14.23.1/img/champion/
+            </Box>
+            <Box variant="small" fontFamily="monospace">
+              {item.championPlayed}.png
+            </Box>
+          </SpaceBetween>
         )
       },
       {
-        id: 'cacheStatus',
-        header: 'Cache Status',
+        id: 'caching',
+        header: 'Caching Benefit',
         cell: () => (
           <SpaceBetween direction="vertical" size="xs">
-            <Box variant="strong" color="text-status-success">HIT</Box>
-            <Box variant="small" color="text-body-secondary">Served from CDN</Box>
+            <Box variant="strong" color="text-status-success">Version-based URL</Box>
+            <Box variant="small" color="text-body-secondary">Same URL = same content forever</Box>
+            <Box variant="small" color="text-body-secondary">Perfect for CDN caching</Box>
           </SpaceBetween>
-        )
-      },
-      {
-        id: 'responseTime',
-        header: 'Response Time',
-        cell: () => (
-          <Box variant="strong" color="text-status-success">
-            {Math.floor(Math.random() * 50 + 10)}ms
-          </Box>
-        )
-      },
-      {
-        id: 'cacheExpiry',
-        header: 'Cache Expiry',
-        cell: () => (
-          <Box variant="strong" color="text-status-info">
-            Never (immutable)
-          </Box>
         )
       }
     ];
@@ -114,13 +122,25 @@ export class Cacheable extends RestConstraintBase {
             
             <ColumnLayout columns={2} variant="text-grid">
               <Box variant="p">
-                <strong>Select Champion Asset:</strong><br/>
-                <ChampionSelector
-                  selectedChampion={this.props.selectedChampion}
-                  onSelect={() => {}} // Handled by parent
-                  champions={[]} // Will be populated by parent
-                  placeholder="Choose champion asset"
-                />
+                <strong>Select Champion:</strong><br/>
+                <div style={{ zIndex: 1000, position: 'relative' }}>
+                  <Select
+                    selectedOption={this.props.selectedChampion}
+                    onChange={({ detail }) => {
+                      const champion = detail.selectedOption as { label: string; value: string };
+                      if (this.props.onChampionChange) {
+                        this.props.onChampionChange(champion);
+                      }
+
+                    }}
+                    options={ALL_CHAMPIONS.map(champion => ({
+                      label: champion,
+                      value: champion.toLowerCase()
+                    }))}
+                    placeholder="Type or select a champion..."
+                    filteringType="auto"
+                  />
+                </div>
               </Box>
               <Box variant="p">
                 <strong>🌐 CDN Endpoint URL:</strong><br/>
@@ -158,10 +178,23 @@ export class Cacheable extends RestConstraintBase {
               className="rest-constraint-4"
             >
               <DataTable
-                items={[]} // Will be populated by parent with cache data
+                items={this.props.selectedChampion ? [{
+                  player: 'CDN Asset',
+                  team: 'Data Dragon',
+                  championPlayed: this.props.selectedChampion.label,
+                  tournamentWins: 0,
+                  tournamentLosses: 0,
+                  winRate: 0,
+                  performanceScore: 0,
+                  event: 'CDN Cache Demo',
+                  version: '14.23.1',
+                  cacheStatus: 'HIT',
+                  responseTime: Math.floor(Math.random() * 50 + 10),
+                  cacheExpiry: 'Never (immutable)'
+                }] : []}
                 columns={cacheColumns}
-                header="⚡ CDN Performance Data (Cacheable Responses)"
-                description="Version-based URLs enable permanent CDN caching"
+                header="⚡ Data Dragon CDN Structure (Cacheable Responses)"
+                description="Real CDN URL structure showing how version-based URLs enable permanent caching"
                 emptyMessage="No CDN data available"
               />
             </Container>

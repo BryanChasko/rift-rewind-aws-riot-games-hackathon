@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Container, Alert, ColumnLayout, Box, Select, SpaceBetween } from '@cloudscape-design/components';
 import { RestConstraintBase } from '../shared/RestConstraintBase';
 import { DataTable, type TableColumn } from '../shared/DataTable';
@@ -13,6 +14,7 @@ export class LayeredSystem extends RestConstraintBase {
   private async fetchLayeredSystem() {
     await this.props.apiService.fetchLayeredSystem();
     this.props.stateManager.setDataMode(this.section, 'live');
+    this.forceUpdate();
   }
 
   renderContent(): React.JSX.Element {
@@ -136,7 +138,14 @@ export class LayeredSystem extends RestConstraintBase {
               className="rest-constraint-5"
             >
               <DataTable
-                items={[]} // Will be populated by parent with layer data
+                items={[
+                  { layer: 'CloudFront CDN', description: 'Global edge cache', purpose: 'Content delivery', latency: 5, visible: false },
+                  { layer: 'Application Load Balancer', description: 'Traffic distribution', purpose: 'Load balancing', latency: 2, visible: false },
+                  { layer: 'API Gateway', description: 'Request routing', purpose: 'API management', latency: 8, visible: false },
+                  { layer: 'Lambda Function', description: 'Serverless compute', purpose: 'Business logic', latency: 15, visible: false },
+                  { layer: 'RDS Database', description: 'Persistent storage', purpose: 'Data retrieval', latency: 12, visible: false },
+                  { layer: 'Response Aggregation', description: 'Data formatting', purpose: 'JSON response', latency: 3, visible: true }
+                ]}
                 columns={layerColumns}
                 header="🔍 Request Processing Layers (Layered System)"
                 description="Multiple infrastructure systems working behind one simple API call"

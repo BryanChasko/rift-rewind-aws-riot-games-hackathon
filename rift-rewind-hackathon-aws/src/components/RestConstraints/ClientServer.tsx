@@ -1,9 +1,18 @@
-
+import React from 'react';
 import { Container, Alert, ColumnLayout, Box, Select, SpaceBetween } from '@cloudscape-design/components';
 import { RestConstraintBase } from '../shared/RestConstraintBase';
 import { DataTable, type TableColumn } from '../shared/DataTable';
-
 import type { TournamentWinner } from '../../services/types';
+import { ALL_CHAMPIONS } from '../../data/champions';
+
+const RIOT_API_PROXY_URL = 'https://nojl2v2ozhs5epqg76smmtjmhu0htodl.lambda-url.us-east-2.on.aws/';
+
+interface ClientServerState {
+  selectedChampion: { label: string; value: string } | null;
+  selectionSource: 'table' | 'dropdown' | null;
+  summoners: TournamentWinner[];
+  error: string | null;
+}
 
 export class ClientServer extends RestConstraintBase {
   protected constraintNumber = 2;
@@ -11,14 +20,69 @@ export class ClientServer extends RestConstraintBase {
   protected description = "Explore separation of concerns between frontend and backend. Watch how UI and data storage evolve independently through stable contracts.";
   protected section = 'champions' as const;
 
+  state: ClientServerState = {
+    selectedChampion: null,
+    selectionSource: null,
+    summoners: [],
+    error: null
+  };
+
   private async fetchSummoners() {
-    await this.props.apiService.fetchSummoners(this.props.selectedYear.value);
-    this.props.stateManager.setDataMode(this.section, 'live');
+    try {
+      this.setState({ error: null });
+      const summoners = await this.getTopSummoners();
+      this.setState({ summoners });
+      await this.props.apiService.fetchSummoners(this.props.selectedYear.value);
+      this.props.stateManager.setDataMode(this.section, 'live');
+    } catch (error: any) {
+      console.error('Full error details:', error);
+      const isApiKeyError = error.message?.includes('API key');
+      this.setState({ 
+        error: isApiKeyError ? 'api-key' : 'network',
+        summoners: this.getDefaultSummoners()
+      });
+      // Re-throw to show detailed error in console
+      throw error;
+    }
+  }
+
+  private async getTopSummoners(): Promise<TournamentWinner[]> {
+    const response = await fetch(`${RIOT_API_PROXY_URL}?endpoint=challenger-league`);
+    
+    if (response.status === 403 || response.status === 401) {
+      throw new Error('API key expired or invalid');
+    }
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    const data = JSON.parse(result.body);
+    
+    if (data.data && Array.isArray(data.data)) {
+      return data.data.slice(0, 5).map((entry: any, index: number) => ({
+        player: entry.summonerName || `Player ${index + 1}`,
+        team: 'Challenger',
+        championPlayed: ['Azir', 'Aatrox', 'Jinx', 'Thresh', 'Graves'][index],
+        tournamentWins: entry.wins || 0,
+        tournamentLosses: entry.losses || 0,
+        winRate: entry.wins && entry.losses ? Math.round((entry.wins / (entry.wins + entry.losses)) * 100) : 0,
+        performanceScore: entry.leaguePoints ? Math.min(100, Math.round(entry.leaguePoints / 10)) : 0,
+        event: 'Challenger League'
+      }));
+    }
+    return [];
+  }
+
+  private getDefaultSummoners(): TournamentWinner[] {
+    return [
+      { player: 'Loading...', team: 'Challenger', championPlayed: 'Azir', tournamentWins: 0, tournamentLosses: 0, winRate: 0, performanceScore: 0, event: 'Demo Data' }
+    ];
   }
 
   renderContent(): React.JSX.Element {
     const dataMode = this.props.stateManager.getDataMode(this.section);
-    const winners = this.props.stateManager.getDataMode('contests') === 'live' || dataMode === 'live';
+    const winners = true; // Always show table like in original
 
     const summonerColumns: TableColumn<TournamentWinner>[] = [
       {
@@ -79,6 +143,24 @@ export class ClientServer extends RestConstraintBase {
           React Frontend ↔ AWS Lambda ↔ Riot API | Independent development, stable contracts
         </Alert>
         
+        {this.state.error === 'api-key' && (
+          <Alert type="error" header="🔑 API Key Issue Detected">
+            <Box variant="p">
+              The Riot Games API key needs to be updated. Please contact <a href="https://linkedin.com/in/bryanchasko" target="_blank" rel="noopener noreferrer">Bryan Chasko on LinkedIn</a> or check the <a href="https://github.com/BryanChasko/rift-rewind-aws-riot-games-hackathon" target="_blank" rel="noopener noreferrer">GitHub repository</a> for updates.
+            </Box>
+          </Alert>
+        )}
+        
+        {this.state.error === 'network' && (
+          <Alert type="warning" header="⚠️ API Communication Issue">
+            <Box variant="p">
+              The Lambda API is not responding as expected. This could be due to API key expiration, Lambda function issues, or Riot API rate limits. 
+              Check the browser console for detailed error information. 
+              <a href="https://github.com/BryanChasko/rift-rewind-aws-riot-games-hackathon" target="_blank" rel="noopener noreferrer">🔗 View GitHub repo</a> for troubleshooting or contact <a href="https://linkedin.com/in/bryanchasko" target="_blank" rel="noopener noreferrer">Bryan Chasko</a>.
+            </Box>
+          </Alert>
+        )}
+        
         {this.props.stateManager.getDataMode('contests') === 'live' && (
           <Alert type="success" header={`🔗 Data Context from Step 1: ${this.props.selectedYear.value} Tournament`}>
             <Box variant="p">
@@ -103,7 +185,11 @@ export class ClientServer extends RestConstraintBase {
                 <strong>Select Tournament Year:</strong><br/>
                 <Select
                   selectedOption={this.props.selectedYear}
-                  onChange={() => {}} // Handled by parent
+                  onChange={({ detail }) => {
+                    if (this.props.onYearChange) {
+                      this.props.onYearChange(detail.selectedOption as { label: string; value: string });
+                    }
+                  }}
                   options={[
                     { label: '2024', value: '2024' },
                     { label: '2023', value: '2023' },
@@ -122,7 +208,7 @@ export class ClientServer extends RestConstraintBase {
             
             {this.renderApiButton(
               () => this.fetchSummoners(),
-              'Fetch Championship Summoners',
+              'Fetch Top Summoners',
               'Live Summoner Data Loaded',
               false
             )}
@@ -141,21 +227,79 @@ export class ClientServer extends RestConstraintBase {
               header="🏆 Championship Summoners Response"
               className="rest-constraint-2"
             >
-              <DataTable
-                items={[]} // Will be populated by parent with actual data
-                columns={summonerColumns}
-                header="Worlds Greatest Winning Summoners"
-                description={`Worlds ${this.props.selectedYear.value} championship summoners and their signature champions. Select a row to view more about the champion as we explore stateless communication.`}
-                counter="(5)"
-                emptyMessage="Click 'Fetch Championship Summoners' to load data"
-              />
+              <SpaceBetween direction="vertical" size="m">
+                <DataTable
+                  items={this.state.summoners.length > 0 ? this.state.summoners : this.getDefaultSummoners()}
+                  columns={summonerColumns}
+                  header="Top Challenger Summoners"
+                  description={`Top Challenger summoners and their signature champions. Select a row to view more about the champion as we explore stateless communication.`}
+                  counter="(5)"
+                  emptyMessage="Click 'Fetch Top Summoners' to load data"
+                  selectionType="single"
+                  selectedItems={this.state.selectedChampion && this.state.selectionSource === 'table' ? 
+                    (this.state.summoners.length > 0 ? this.state.summoners : this.getDefaultSummoners()).filter(w => 
+                      w.championPlayed.toLowerCase() === this.state.selectedChampion!.value
+                    ) : []}
+                  onSelectionChange={(items) => {
+                    if (items.length > 0) {
+                      const selectedWinner = items[0] as TournamentWinner;
+                      const champion = { 
+                        label: selectedWinner.championPlayed, 
+                        value: selectedWinner.championPlayed.toLowerCase() 
+                      };
+                      this.setState({
+                        selectedChampion: champion,
+                        selectionSource: 'table'
+                      });
+                      // Propagate to parent
+                      if (this.props.onChampionChange) {
+                        this.props.onChampionChange(champion);
+                      }
+                    } else {
+                      this.setState({
+                        selectedChampion: null,
+                        selectionSource: null
+                      });
+                      // Propagate to parent
+                      if (this.props.onChampionChange) {
+                        this.props.onChampionChange(null);
+                      }
+                    }
+                  }}
+                  trackBy="championPlayed"
+                />
+                
+                <SpaceBetween direction="vertical" size="s">
+                  <Box variant="p">Or choose your favorite champion:</Box>
+                  <Select
+                    selectedOption={this.state.selectedChampion}
+                    onChange={({ detail }) => {
+                      const champion = detail.selectedOption as { label: string; value: string };
+                      this.setState({
+                        selectedChampion: champion,
+                        selectionSource: 'dropdown'
+                      });
+                      // Propagate to parent
+                      if (this.props.onChampionChange) {
+                        this.props.onChampionChange(champion);
+                      }
+                    }}
+                    options={ALL_CHAMPIONS.map(champion => ({
+                      label: champion,
+                      value: champion.toLowerCase()
+                    }))}
+                    placeholder="Type or select any champion..."
+                    filteringType="auto"
+                  />
+                </SpaceBetween>
+              </SpaceBetween>
             </Container>
             
             {this.renderNextStep(
               'stateless',
               'Stateless Communication',
-              this.props.selectedChampion ? 
-                `Ready to explore ${this.props.selectedChampion.label} mastery data with self-contained authentication?` :
+              this.state.selectedChampion ? 
+                `Ready to explore ${this.state.selectedChampion.label} mastery data with self-contained authentication?` :
                 'Select a champion above, then explore how each API request contains complete authentication context.'
             )}
           </>
