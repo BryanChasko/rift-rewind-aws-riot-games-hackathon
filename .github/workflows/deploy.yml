@@ -1,0 +1,98 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      cdk-changed: ${{ steps.changes.outputs.cdk }}
+      frontend-changed: ${{ steps.changes.outputs.frontend }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+    - uses: dorny/paths-filter@v2
+      id: changes
+      with:
+        filters: |
+          cdk:
+            - 'riot-api-cdk/**'
+          frontend:
+            - 'rift-rewind-hackathon-aws/**'
+
+  deploy-cdk:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.cdk-changed == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      lambda-url: ${{ steps.lambda-url.outputs.url }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-2
+    - name: Deploy CDK Infrastructure
+      run: |
+        cd riot-api-cdk
+        npm install
+        npx cdk deploy --require-approval never --outputs-file outputs.json
+    - name: Get Lambda URL from CDK outputs
+      id: lambda-url
+      run: |
+        LAMBDA_URL=$(cat riot-api-cdk/outputs.json | jq -r '.RiotApiCdkStack.LambdaFunctionUrl')
+        echo "url=$LAMBDA_URL" >> $GITHUB_OUTPUT
+
+  deploy-frontend:
+    needs: [detect-changes, deploy-cdk]
+    if: always() && (needs.detect-changes.outputs.frontend-changed == 'true' || needs.detect-changes.outputs.cdk-changed == 'true')
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-2
+    - name: Get Lambda URL
+      id: get-url
+      run: |
+        if [ "${{ needs.deploy-cdk.outputs.lambda-url }}" != "" ]; then
+          echo "url=${{ needs.deploy-cdk.outputs.lambda-url }}" >> $GITHUB_OUTPUT
+        else
+          # Get existing URL from CloudFormation if CDK didn't run
+          LAMBDA_URL=$(aws cloudformation describe-stacks --stack-name RiotApiCdkStack --query 'Stacks[0].Outputs[?OutputKey==`LambdaFunctionUrl`].OutputValue' --output text)
+          echo "url=$LAMBDA_URL" >> $GITHUB_OUTPUT
+        fi
+    - name: Build Frontend
+      run: |
+        cd rift-rewind-hackathon-aws
+        npm install
+        npm run build
+      env:
+        VITE_API_URL: ${{ steps.get-url.outputs.url }}
+    - name: Deploy to S3
+      run: |
+        cd rift-rewind-hackathon-aws
+        aws s3 sync dist/ s3://${{ secrets.S3_BUCKET }}/apitraining/ --delete
+        aws s3 cp dist/index.html s3://${{ secrets.S3_BUCKET }}/apitraining/index.html --cache-control "no-cache"
+    - name: Invalidate CloudFront
+      run: |
+        aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/apitraining/*"
