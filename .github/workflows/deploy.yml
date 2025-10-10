@@ -4,6 +4,17 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      deploy_infrastructure:
+        description: 'Deploy infrastructure (requires AWS credentials)'
+        required: false
+        default: 'false'
+        type: boolean
+      deploy_frontend:
+        description: 'Deploy frontend only'
+        required: false
+        default: 'true'
+        type: boolean
 
 jobs:
   security-check:
@@ -18,6 +29,7 @@ jobs:
   deploy-infrastructure:
     needs: security-check
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_infrastructure == 'true'
     steps:
     - uses: actions/checkout@v4
     
@@ -37,6 +49,8 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-2
+      continue-on-error: true
+      id: aws-config
     
     - name: Install CDK dependencies
       working-directory: riot-api-cdk
@@ -52,23 +66,27 @@ jobs:
     
     - name: Deploy CDK stack
       working-directory: riot-api-cdk
+      if: steps.aws-config.outcome == 'success'
       run: |
         npx cdk bootstrap --require-approval never
         npx cdk deploy --require-approval never
     
     - name: Get Lambda URL
       id: lambda-url
+      if: steps.aws-config.outcome == 'success'
       run: |
         URL=$(aws cloudformation describe-stacks --stack-name RiotApiCdkStack --query 'Stacks[0].Outputs[?OutputKey==`LambdaFunctionUrl`].OutputValue' --output text)
         echo "lambda-url=$URL" >> $GITHUB_OUTPUT
         echo "LAMBDA_URL=$URL" >> $GITHUB_ENV
+      continue-on-error: true
     
     outputs:
       lambda-url: ${{ steps.lambda-url.outputs.lambda-url }}
 
   deploy-frontend:
-    needs: deploy-infrastructure
+    needs: [security-check]
     runs-on: ubuntu-latest
+    if: always() && (needs.security-check.result == 'success')
     steps:
     - uses: actions/checkout@v4
     
@@ -85,6 +103,8 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
+      continue-on-error: true
+      id: aws-config
     
     - name: Install frontend dependencies
       working-directory: rift-rewind-hackathon-aws
@@ -93,15 +113,17 @@ jobs:
     - name: Build frontend
       working-directory: rift-rewind-hackathon-aws
       env:
-        VITE_API_URL: ${{ needs.deploy-infrastructure.outputs.lambda-url }}
+        VITE_API_URL: ${{ needs.deploy-infrastructure.outputs.lambda-url || '' }}
       run: yarn build
     
     - name: Deploy to S3
       working-directory: rift-rewind-hackathon-aws
+      if: steps.aws-config.outcome == 'success'
       run: |
         aws s3 sync dist/ s3://awsaerospace.org/learning/api/ --delete
         aws s3 sync dist/ s3://awsaerospace.org/apitraining/ --delete
     
     - name: Invalidate CloudFront
+      if: steps.aws-config.outcome == 'success'
       run: |
         aws cloudfront create-invalidation --distribution-id ECC3LP1BL2CZS --paths "/learning/api/*" "/apitraining/*"
