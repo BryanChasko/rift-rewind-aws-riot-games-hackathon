@@ -45,19 +45,32 @@ riot-api-cdk/lambda/riot-api-source/charset_normalizer/
 riot-api-cdk/lambda/riot-api-source/idna/
 riot-api-cdk/lambda/riot-api-source/requests/
 riot-api-cdk/lambda/riot-api-source/urllib3/
+riot-api-cdk/lambda/riot-api-source/aws_xray_sdk/
+riot-api-cdk/lambda/riot-api-source/botocore/
+riot-api-cdk/lambda/riot-api-source/jmespath/
+riot-api-cdk/lambda/riot-api-source/python_dateutil/
+riot-api-cdk/lambda/riot-api-source/dateutil/
+riot-api-cdk/lambda/riot-api-source/six.py
+riot-api-cdk/lambda/riot-api-source/wrapt/
 riot-api-cdk/lambda/riot-api-source/*-dist-info/
+riot-api-cdk/lambda/riot-api-source/*.dist-info/
 
 # Agentic workshop Python environment
 agentic-ai-workshop/.venv/
 agentic-ai-workshop/__pycache__/
 
 # Environment and secrets
-.env
-.env.local
-.env.production
-.env.development
+.env*
 *.pem
 *.key
+*.p12
+*.pfx
+*secret*
+*credential*
+config.json
+secrets.json
+.aws/credentials
+.aws/config
 
 # IDE and OS
 .DS_Store

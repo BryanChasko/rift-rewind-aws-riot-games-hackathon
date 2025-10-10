@@ -2,97 +2,107 @@ name: Deploy to AWS
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  detect-changes:
+  security-check:
     runs-on: ubuntu-latest
-    outputs:
-      cdk-changed: ${{ steps.changes.outputs.cdk }}
-      frontend-changed: ${{ steps.changes.outputs.frontend }}
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-depth: 2
-    - uses: dorny/paths-filter@v2
-      id: changes
-      with:
-        filters: |
-          cdk:
-            - 'riot-api-cdk/**'
-          frontend:
-            - 'rift-rewind-hackathon-aws/**'
+    - name: Security Scan
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  deploy-cdk:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.cdk-changed == 'true'
+  deploy-infrastructure:
+    needs: security-check
     runs-on: ubuntu-latest
-    outputs:
-      lambda-url: ${{ steps.lambda-url.outputs.url }}
     steps:
     - uses: actions/checkout@v4
+    
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
+        cache-dependency-path: riot-api-cdk/package-lock.json
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-2
-    - name: Deploy CDK Infrastructure
+    
+    - name: Install CDK dependencies
+      working-directory: riot-api-cdk
+      run: npm ci
+    
+    - name: Install Lambda dependencies
+      working-directory: riot-api-cdk/lambda/riot-api-source
       run: |
-        cd riot-api-cdk
-        npm install
-        npx cdk deploy --require-approval never --outputs-file outputs.json
-    - name: Get Lambda URL from CDK outputs
+        pip install aws-xray-sdk -t .
+        # Remove unnecessary files to reduce package size
+        find . -name "*.pyc" -delete
+        find . -name "__pycache__" -type d -exec rm -rf {} + || true
+    
+    - name: Deploy CDK stack
+      working-directory: riot-api-cdk
+      run: |
+        npx cdk bootstrap --require-approval never
+        npx cdk deploy --require-approval never
+    
+    - name: Get Lambda URL
       id: lambda-url
       run: |
-        LAMBDA_URL=$(cat riot-api-cdk/outputs.json | jq -r '.RiotApiCdkStack.LambdaFunctionUrl')
-        echo "url=$LAMBDA_URL" >> $GITHUB_OUTPUT
+        URL=$(aws cloudformation describe-stacks --stack-name RiotApiCdkStack --query 'Stacks[0].Outputs[?OutputKey==`LambdaFunctionUrl`].OutputValue' --output text)
+        echo "lambda-url=$URL" >> $GITHUB_OUTPUT
+    
+    outputs:
+      lambda-url: ${{ steps.lambda-url.outputs.lambda-url }}
 
   deploy-frontend:
-    needs: [detect-changes, deploy-cdk]
-    if: always() && (needs.detect-changes.outputs.frontend-changed == 'true' || needs.detect-changes.outputs.cdk-changed == 'true')
+    needs: deploy-infrastructure
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
+        cache: 'yarn'
+        cache-dependency-path: rift-rewind-hackathon-aws/yarn.lock
+    
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-2
-    - name: Get Lambda URL
-      id: get-url
-      run: |
-        if [ "${{ needs.deploy-cdk.outputs.lambda-url }}" != "" ]; then
-          echo "url=${{ needs.deploy-cdk.outputs.lambda-url }}" >> $GITHUB_OUTPUT
-        else
-          # Get existing URL from CloudFormation if CDK didn't run
-          LAMBDA_URL=$(aws cloudformation describe-stacks --stack-name RiotApiCdkStack --query 'Stacks[0].Outputs[?OutputKey==`LambdaFunctionUrl`].OutputValue' --output text)
-          echo "url=$LAMBDA_URL" >> $GITHUB_OUTPUT
-        fi
-    - name: Build Frontend
-      run: |
-        cd rift-rewind-hackathon-aws
-        npm install
-        npm run build
+        aws-region: us-east-1
+    
+    - name: Install frontend dependencies
+      working-directory: rift-rewind-hackathon-aws
+      run: yarn install --frozen-lockfile
+    
+    - name: Build frontend
+      working-directory: rift-rewind-hackathon-aws
       env:
-        VITE_API_URL: ${{ steps.get-url.outputs.url }}
+        VITE_API_URL: ${{ needs.deploy-infrastructure.outputs.lambda-url }}
+      run: yarn build
+    
     - name: Deploy to S3
+      working-directory: rift-rewind-hackathon-aws
       run: |
-        cd rift-rewind-hackathon-aws
-        aws s3 sync dist/ s3://${{ secrets.S3_BUCKET }}/apitraining/ --delete
-        aws s3 cp dist/index.html s3://${{ secrets.S3_BUCKET }}/apitraining/index.html --cache-control "no-cache"
+        aws s3 sync dist/ s3://awsaerospace.org/learning/api/ --delete
+        aws s3 sync dist/ s3://awsaerospace.org/apitraining/ --delete
+    
     - name: Invalidate CloudFront
       run: |
-        aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/apitraining/*"
+        aws cloudfront create-invalidation --distribution-id ECC3LP1BL2CZS --paths "/learning/api/*" "/apitraining/*"

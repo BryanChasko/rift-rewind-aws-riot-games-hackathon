@@ -1,0 +1,55 @@
+# GitLeaks configuration for Rift Rewind project
+title = "Rift Rewind Security Configuration"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "riot-api-key"
+description = "Riot Games API Key"
+regex = '''RGAPI-[a-zA-Z0-9_-]{42}'''
+keywords = ["RGAPI"]
+
+[[rules]]
+id = "aws-access-key"
+description = "AWS Access Key"
+regex = '''AKIA[0-9A-Z]{16}'''
+keywords = ["AKIA"]
+
+[[rules]]
+id = "aws-secret-key"
+description = "AWS Secret Key"
+regex = '''[A-Za-z0-9/+=]{40}'''
+keywords = ["aws_secret"]
+
+[[rules]]
+id = "lambda-url"
+description = "AWS Lambda Function URL"
+regex = '''https://[a-z0-9]+\.lambda-url\.[a-z0-9-]+\.on\.aws/'''
+keywords = ["lambda-url"]
+
+[allowlist]
+description = "Allowlist for false positives"
+paths = [
+  '''\.git/''',
+  '''node_modules/''',
+  '''\.yarn/''',
+  '''dist/''',
+  '''build/''',
+  '''cdk\.out/'''
+]
+
+files = [
+  '''\.gitignore$''',
+  '''\.gitleaks\.toml$''',
+  '''README\.md$''',
+  '''DEPLOYMENT_.*\.md$'''
+]
+
+regexes = [
+  '''PLACEHOLDER_KEY''',
+  '''YOUR_.*_HERE''',
+  '''example\.com''',
+  '''localhost''',
+  '''127\.0\.0\.1'''
+]
