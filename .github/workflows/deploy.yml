@@ -1,18 +1,29 @@
 name: Deploy to AWS
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'riot-api-cdk/**'
+      - 'rift-rewind-hackathon-aws/**'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
     inputs:
       deploy_infrastructure:
-        description: 'Deploy infrastructure (requires AWS credentials)'
+        description: 'Deploy infrastructure'
         required: false
-        default: 'false'
+        default: true
         type: boolean
       deploy_frontend:
-        description: 'Deploy frontend only'
+        description: 'Deploy frontend'
         required: false
-        default: 'true'
+        default: true
         type: boolean
+
+env:
+  AWS_REGION: us-east-2
+  CDK_DEFAULT_REGION: us-east-2
+  CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
 
 jobs:
   security-check:
@@ -27,7 +38,12 @@ jobs:
   deploy-infrastructure:
     needs: security-check
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_infrastructure == 'true'
+    if: |
+      (github.event_name == 'push' && contains(github.event.head_commit.modified, 'riot-api-cdk/')) ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_infrastructure == 'true')
+    permissions:
+      id-token: write
+      contents: read
     steps:
     - uses: actions/checkout@v4
     
@@ -44,39 +60,85 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        role-session-name: GitHubActions-CDK-Deploy
+        aws-region: ${{ env.AWS_REGION }}
+        # Fallback to access keys if OIDC not configured
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-2
       continue-on-error: true
       id: aws-config
     
+    - name: Validate AWS credentials
+      if: steps.aws-config.outcome == 'success'
+      run: |
+        echo "✅ AWS credentials configured successfully"
+        aws sts get-caller-identity
+      continue-on-error: false
+    
     - name: Install CDK dependencies
       working-directory: riot-api-cdk
-      run: npm ci
+      run: |
+        echo "📦 Installing CDK dependencies..."
+        npm ci
+        echo "✅ CDK dependencies installed"
+    
+    - name: Validate CDK app
+      working-directory: riot-api-cdk
+      run: |
+        echo "🔍 Validating CDK application..."
+        npx cdk synth --quiet
+        echo "✅ CDK application is valid"
     
     - name: Install Lambda dependencies
       working-directory: riot-api-cdk/lambda/riot-api-source
       run: |
-        pip install aws-xray-sdk -t .
-        # Remove unnecessary files to reduce package size
+        echo "🐍 Installing Lambda dependencies..."
+        pip install aws-xray-sdk -t . --quiet
         find . -name "*.pyc" -delete
         find . -name "__pycache__" -type d -exec rm -rf {} + || true
+        echo "✅ Lambda dependencies installed"
+    
+    - name: CDK Bootstrap
+      working-directory: riot-api-cdk
+      if: steps.aws-config.outcome == 'success'
+      run: |
+        echo "🚀 Bootstrapping CDK..."
+        npx cdk bootstrap --require-approval never
+        echo "✅ CDK bootstrap complete"
+      continue-on-error: false
     
     - name: Deploy CDK stack
       working-directory: riot-api-cdk
       if: steps.aws-config.outcome == 'success'
       run: |
-        npx cdk bootstrap --require-approval never
-        npx cdk deploy --require-approval never
+        echo "🏗️ Deploying CDK stack..."
+        npx cdk deploy --require-approval never --outputs-file outputs.json
+        echo "✅ CDK deployment complete"
+      continue-on-error: false
+    
+    - name: Validate Lambda deployment
+      if: steps.aws-config.outcome == 'success'
+      run: |
+        echo "🔍 Validating Lambda deployment..."
+        aws lambda get-function --function-name riot-api-function --query 'Configuration.State' --output text
+        echo "✅ Lambda function is active"
+      continue-on-error: false
     
     - name: Get Lambda URL
       id: lambda-url
       if: steps.aws-config.outcome == 'success'
       run: |
+        echo "🔗 Getting Lambda Function URL..."
         URL=$(aws cloudformation describe-stacks --stack-name RiotApiCdkStack --query 'Stacks[0].Outputs[?OutputKey==`LambdaFunctionUrl`].OutputValue' --output text)
+        if [ -z "$URL" ] || [ "$URL" = "None" ]; then
+          echo "❌ Failed to get Lambda URL"
+          exit 1
+        fi
         echo "lambda-url=$URL" >> $GITHUB_OUTPUT
         echo "LAMBDA_URL=$URL" >> $GITHUB_ENV
-      continue-on-error: true
+        echo "✅ Lambda URL: $URL"
+      continue-on-error: false
     
     outputs:
       lambda-url: ${{ steps.lambda-url.outputs.lambda-url }}
@@ -84,7 +146,14 @@ jobs:
   deploy-frontend:
     needs: [security-check]
     runs-on: ubuntu-latest
-    if: always() && (needs.security-check.result == 'success')
+    if: |
+      always() && (needs.security-check.result == 'success') && (
+        (github.event_name == 'push' && contains(github.event.head_commit.modified, 'rift-rewind-hackathon-aws/')) ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_frontend == 'true')
+      )
+    permissions:
+      id-token: write
+      contents: read
     steps:
     - uses: actions/checkout@v4
     
@@ -98,30 +167,112 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        role-session-name: GitHubActions-Frontend-Deploy
+        aws-region: us-east-1
+        # Fallback to access keys if OIDC not configured
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
       continue-on-error: true
       id: aws-config
     
+    - name: Validate AWS credentials
+      if: steps.aws-config.outcome == 'success'
+      run: |
+        echo "✅ AWS credentials configured successfully"
+        aws sts get-caller-identity
+      continue-on-error: false
+    
     - name: Install frontend dependencies
       working-directory: rift-rewind-hackathon-aws
-      run: yarn install --frozen-lockfile
+      run: |
+        echo "📦 Installing frontend dependencies..."
+        yarn install
+        echo "✅ Frontend dependencies installed"
+    
+    - name: Validate environment
+      working-directory: rift-rewind-hackathon-aws
+      run: |
+        echo "🔍 Validating build environment..."
+        echo "Node version: $(node --version)"
+        echo "Yarn version: $(yarn --version)"
+        echo "API URL: ${{ needs.deploy-infrastructure.outputs.lambda-url || 'Not provided' }}"
+        if [ -f "package.json" ]; then
+          echo "✅ package.json found"
+        else
+          echo "❌ package.json not found"
+          exit 1
+        fi
     
     - name: Build frontend
       working-directory: rift-rewind-hackathon-aws
       env:
         VITE_API_URL: ${{ needs.deploy-infrastructure.outputs.lambda-url || '' }}
-      run: yarn build
+      run: |
+        echo "🏗️ Building frontend application..."
+        yarn build
+        echo "✅ Frontend build complete"
+      continue-on-error: false
+    
+    - name: Validate build output
+      working-directory: rift-rewind-hackathon-aws
+      run: |
+        echo "🔍 Validating build output..."
+        if [ -d "dist" ]; then
+          echo "✅ dist directory exists"
+          echo "Build size: $(du -sh dist | cut -f1)"
+          echo "Files: $(find dist -type f | wc -l)"
+        else
+          echo "❌ dist directory not found"
+          exit 1
+        fi
+        if [ -f "dist/index.html" ]; then
+          echo "✅ index.html found"
+        else
+          echo "❌ index.html not found"
+          exit 1
+        fi
+    
+    - name: Validate S3 bucket access
+      if: steps.aws-config.outcome == 'success'
+      run: |
+        echo "🔍 Validating S3 bucket access..."
+        aws s3 ls s3://awsaerospace.org/learning/api/ --recursive | head -5 || echo "Bucket is empty or inaccessible"
+        echo "✅ S3 bucket access validated"
     
     - name: Deploy to S3
       working-directory: rift-rewind-hackathon-aws
       if: steps.aws-config.outcome == 'success'
       run: |
-        aws s3 sync dist/ s3://awsaerospace.org/learning/api/ --delete
-        aws s3 sync dist/ s3://awsaerospace.org/apitraining/ --delete
+        echo "🚀 Deploying to S3..."
+        echo "Syncing to learning/api path..."
+        aws s3 sync dist/ s3://awsaerospace.org/learning/api/ --delete --exact-timestamps
+        echo "Syncing to apitraining path..."
+        aws s3 sync dist/ s3://awsaerospace.org/apitraining/ --delete --exact-timestamps
+        echo "✅ S3 deployment complete"
+      continue-on-error: false
+    
+    - name: Validate S3 deployment
+      if: steps.aws-config.outcome == 'success'
+      run: |
+        echo "🔍 Validating S3 deployment..."
+        if aws s3 ls s3://awsaerospace.org/learning/api/index.html; then
+          echo "✅ index.html deployed to learning/api"
+        else
+          echo "❌ index.html not found in learning/api"
+          exit 1
+        fi
+        if aws s3 ls s3://awsaerospace.org/apitraining/index.html; then
+          echo "✅ index.html deployed to apitraining"
+        else
+          echo "❌ index.html not found in apitraining"
+          exit 1
+        fi
     
     - name: Invalidate CloudFront
       if: steps.aws-config.outcome == 'success'
       run: |
-        aws cloudfront create-invalidation --distribution-id ECC3LP1BL2CZS --paths "/learning/api/*" "/apitraining/*"
+        echo "🔄 Invalidating CloudFront cache..."
+        INVALIDATION_ID=$(aws cloudfront create-invalidation --distribution-id ECC3LP1BL2CZS --paths "/learning/api/*" "/apitraining/*" --query 'Invalidation.Id' --output text)
+        echo "✅ CloudFront invalidation created: $INVALIDATION_ID"
+      continue-on-error: false
