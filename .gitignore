@@ -17,7 +17,8 @@ riot-api-cdk/test/*.d.ts
 # Node.js dependencies
 node_modules/
 */node_modules/
-package-lock.json
+# Allow CDK package-lock.json
+!riot-api-cdk/package-lock.json
 
 # Python virtual environments
 .venv/
