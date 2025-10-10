@@ -52,5 +52,8 @@ regexes = [
   '''example\.com''',
   '''localhost''',
   '''127\.0\.0\.1''',
-  '''https://nojl2v2ozhs5epqg76smmtjmhu0htodl\.lambda-url\.us-east-2\.on\.aws/'''
+  '''https://nojl2v2ozhs5epqg76smmtjmhu0htodl\.lambda-url\.us-east-2\.on\.aws/''',
+  '''6938fd4d98bab03faadb97b34396831e3780aea1''',
+  '''echo.*======''',
+  '''--thumbprint-list.*6938fd4d98bab03faadb97b34396831e3780aea1'''
 ]
