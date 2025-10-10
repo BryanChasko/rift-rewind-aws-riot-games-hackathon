@@ -1,5 +1,6 @@
 import React from 'react';
-import { Container, Header, Box, SpaceBetween, ColumnLayout, Button, Select } from '@cloudscape-design/components';
+import { Container, Header, Box, SpaceBetween, ColumnLayout, Button, Grid } from '@cloudscape-design/components';
+import { CodeView } from '@cloudscape-design/code-view';
 
 interface RestOverviewProps {
   onNavigate: (page: string) => void;
@@ -10,118 +11,148 @@ const RestOverview: React.FC<RestOverviewProps> = ({ onNavigate }) => {
     <Container header={<Header variant="h2">🌐 REST Constraints Overview</Header>} variant="default">
       <SpaceBetween direction="vertical" size="m">
         <Box variant="p">
-          <strong>REST</strong> (REpresentational State Transfer) and <strong>API</strong> (Application Programming Interface - a way for programs to talk to each other) work together. The Riot Games API showcases all 6 REST constraints:
+          <strong>API</strong> (Application Programming Interface): Rules for programs to exchange data. <strong>REST</strong> (REpresentational State Transfer): 6 specific rules for designing APIs with standard web requests. Learn using League of Legends data - including details of the 160+ game characters known as Champions and our gamers known as Summoners.
         </Box>
         
-        <ColumnLayout columns={3} variant="text-grid">
-          <Container variant="stacked">
-            <Header variant="h3">1️⃣ Uniform Interface</Header>
-            <SpaceBetween direction="vertical" size="xs">
-              <Box variant="p"><strong>One pattern for all data types.</strong> Consistent HTTP methods and JSON structure across all endpoints.</Box>
-              <Box variant="small">• Resource identification via URIs<br/>• Standard HTTP GET/POST methods<br/>• Uniform JSON response format<br/>• Self-descriptive messages</Box>
-              <Box variant="small" color="text-body-secondary">Riot Example: <code>/lol/tournament/v5/tournaments</code></Box>
-              <Button variant="primary" onClick={() => onNavigate('uniform-interface')}>
-                🎯 Try Tournament API Demo
-              </Button>
-            </SpaceBetween>
-          </Container>
-          <Container variant="stacked">
-            <Header variant="h3">2️⃣ Client-Server</Header>
-            <SpaceBetween direction="vertical" size="xs">
-              <Box variant="p"><strong>Frontend and backend develop separately.</strong> UI and data storage evolve independently through stable contracts.</Box>
-              <Box variant="small">• Separation of concerns<br/>• Independent evolution<br/>• Portable user interfaces<br/>• Scalable server architecture</Box>
-              <Box variant="small" color="text-body-secondary">React ↔ AWS Lambda ↔ Riot API</Box>
-              <Button variant="primary" onClick={() => onNavigate('client-server')}>
-                🏗️ See Architecture in Action
-              </Button>
-            </SpaceBetween>
-          </Container>
-          <Container variant="stacked">
-            <Header variant="h3">3️⃣ Stateless</Header>
-            <SpaceBetween direction="vertical" size="xs">
-              <Box variant="p"><strong>Self-contained requests.</strong> Every call includes complete authentication and context.</Box>
-              <Box variant="small">• No session memory<br/>• Complete request context<br/>• Independent API calls<br/>• Scalable server design</Box>
-              <Box variant="small" color="text-body-secondary">X-Riot-Token header required every time</Box>
-              <Button variant="primary" onClick={() => onNavigate('stateless')}>
-                🔑 Test Authentication Flow
-              </Button>
-            </SpaceBetween>
-          </Container>
-          <Container variant="stacked">
-            <Header variant="h3">4️⃣ Cacheable</Header>
-            <SpaceBetween direction="vertical" size="xs">
-              <Box variant="p"><strong>Version-based performance.</strong> Immutable URLs enable permanent caching for speed.</Box>
-              <Box variant="small">• Cache-Control headers<br/>• Versioned resource URLs<br/>• CDN optimization<br/>• Performance improvement</Box>
-              <Box variant="small" color="text-body-secondary">Data Dragon: <code>/cdn/15.20.1/</code></Box>
-              <Button variant="primary" onClick={() => onNavigate('cacheable')}>
-                🌍 Experience CDN Speed
-              </Button>
-            </SpaceBetween>
-          </Container>
-          <Container variant="stacked">
-            <Header variant="h3">5️⃣ Layered System</Header>
-            <SpaceBetween direction="vertical" size="xs">
-              <Box variant="p"><strong>Hidden complexity.</strong> Multiple infrastructure layers behind simple API calls.</Box>
-              <Box variant="small">• Hierarchical architecture<br/>• Component behavior constraints<br/>• Layer visibility limits<br/>• Independent layer evolution</Box>
-              <Box variant="small" color="text-body-secondary">CDN → Load Balancer → Auth → Game DB</Box>
-              <Button variant="primary" onClick={() => onNavigate('layered-system')}>
-                🔍 Explore Hidden Layers
-              </Button>
-            </SpaceBetween>
-          </Container>
-          <Container variant="stacked">
-            <Header variant="h3">6️⃣ Code on Demand</Header>
-            <SpaceBetween direction="vertical" size="xs">
-              <Box variant="p"><strong>Runtime adaptation.</strong> Server sends instructions along with data for dynamic UI behavior.</Box>
-              <Box variant="small">• Optional constraint<br/>• Client functionality extension<br/>• Dynamic code delivery<br/>• Simplified client architecture</Box>
-              <Box variant="small" color="text-body-secondary">API metadata → UI component configuration</Box>
-              <Button variant="primary" onClick={() => onNavigate('code-on-demand')}>
-                ⚡ Watch Dynamic Loading
-              </Button>
-            </SpaceBetween>
-          </Container>
-        </ColumnLayout>
+        <div style={{ minWidth: '370px' }}>
+          <Grid gridDefinition={[{ colspan: { default: 12, s: 6, m: 4 } }, { colspan: { default: 12, s: 6, m: 4 } }, { colspan: { default: 12, s: 6, m: 4 } }, { colspan: { default: 12, s: 6, m: 4 } }, { colspan: { default: 12, s: 6, m: 4 } }, { colspan: { default: 12, s: 6, m: 4 } }]}>
+            <div style={{ minWidth: '330px' }}>
+              <Container variant="stacked">
+                <Header variant="h3">1️⃣ Uniform Interface</Header>
+                <SpaceBetween direction="vertical" size="xs">
+                  <Box variant="p"><strong>Same pattern for all data requests.</strong> Player info, match history, champion details use identical request methods.</Box>
+                  <Box variant="small">• <strong>Endpoints</strong>: Unique web addresses per data type<br/>• <strong>HTTP GET</strong>: Standard "retrieve data" command<br/>• <strong>JSON</strong>: Text format for returned data<br/>• <strong>Status codes</strong>: Numbers indicating success/failure</Box>
+                  <Box variant="small" color="text-body-secondary">Example:</Box>
+                  <CodeView content={`// Same GET pattern for different data types
+GET /summoner/by-name/Faker        (player info)
+GET /match/by-player/{id}          (match history) 
+GET /champions/config              (character list)
+
+// All return data in JSON format: {"data": [...]}`} lineNumbers={false} />
+                  <Button variant="primary" onClick={() => onNavigate('uniform-interface')}>
+                    🎯 Try Challenges API
+                  </Button>
+                </SpaceBetween>
+              </Container>
+            </div>
+            <div style={{ minWidth: '330px' }}>
+              <Container variant="stacked">
+                <Header variant="h3">2️⃣ Client-Server</Header>
+                <SpaceBetween direction="vertical" size="xs">
+                  <Box variant="p"><strong>Two separate systems working together.</strong> Chrome requests data from Riot Games API independently.</Box>
+                  <Box variant="small">• <strong>Client</strong>: Chrome, Safari, mobile apps requesting data<br/>• <strong>Server</strong>: Riot Games API storing game data<br/>• <strong>Independent</strong>: Each updates separately<br/>• <strong>Contract</strong>: Agreed communication format</Box>
+                  <Box variant="small" color="text-body-secondary">Example:</Box>
+                  <CodeView content={`// Chrome sends request
+fetch('https://api.riotgames.com/summoner/by-name/Faker')
+
+// Riot Games API responds with player data
+// Chrome and Riot API update independently
+// Request format stays consistent`} lineNumbers={false} />
+                  <Button variant="primary" onClick={() => onNavigate('client-server')}>
+                    🏗️ See Architecture in Action
+                  </Button>
+                </SpaceBetween>
+              </Container>
+            </div>
+            <div style={{ minWidth: '330px' }}>
+              <Container variant="stacked">
+                <Header variant="h3">3️⃣ Stateless</Header>
+                <SpaceBetween direction="vertical" size="xs">
+                  <Box variant="p"><strong>Each request stands alone.</strong> Riot Games API doesn't remember previous requests, every call includes complete information.</Box>
+                  <Box variant="small">• <strong>No memory</strong>: Riot API forgets each request after responding<br/>• <strong>API Key</strong>: Unique identifier proving authorization<br/>• <strong>Headers</strong>: Metadata fields containing API key<br/>• <strong>Self-contained</strong>: Each request has everything needed</Box>
+                  <Box variant="small" color="text-body-secondary">Example:</Box>
+                  <CodeView content={`// Every request must include API key
+fetch('/summoner/by-name/Faker', {
+  headers: {
+    'X-Riot-Token': 'RGAPI-abc123def456'
+  }
+});
+
+// Riot API processes request with no memory of previous ones`} lineNumbers={false} />
+                  <Button variant="primary" onClick={() => onNavigate('stateless')}>
+                    🔑 Test Authentication Flow
+                  </Button>
+                </SpaceBetween>
+              </Container>
+            </div>
+            <div style={{ minWidth: '330px' }}>
+              <Container variant="stacked">
+                <Header variant="h3">4️⃣ Cacheable</Header>
+                <SpaceBetween direction="vertical" size="xs">
+                  <Box variant="p"><strong>Save data locally for faster loading.</strong> Game data never changes, applications store copies instead of repeated requests.</Box>
+                  <Box variant="small">• <strong>Caching</strong>: Storing local data copy<br/>• <strong>Versioned URLs</strong>: Web addresses including version numbers<br/>• <strong>Cache-Control</strong>: Riot instructions for data retention<br/>• <strong>CDN</strong>: Global network storing copies</Box>
+                  <Box variant="small" color="text-body-secondary">Example:</Box>
+                  <CodeView content={`// Version numbers in URLs mean data never changes
+/cdn/13.24.1/champion-list.json    (game version 13.24.1)
+/cdn/13.24.1/champion-ahri.png     (character image)
+
+// Applications can save this data permanently
+// Cache-Control: max-age=31536000 (1 year)`} lineNumbers={false} />
+                  <Button variant="primary" onClick={() => onNavigate('cacheable')}>
+                    🌍 Experience CDN Speed
+                  </Button>
+                </SpaceBetween>
+              </Container>
+            </div>
+            <div style={{ minWidth: '330px' }}>
+              <Container variant="stacked">
+                <Header variant="h3">5️⃣ Layered System</Header>
+                <SpaceBetween direction="vertical" size="xs">
+                  <Box variant="p"><strong>Complex systems hidden behind simple requests.</strong> Simple API calls pass through multiple invisible computer systems.</Box>
+                  <Box variant="small">• <strong>API Gateway</strong>: Entry point routing requests<br/>• <strong>Load Balancer</strong>: Distributes traffic across Riot computers<br/>• <strong>Rate Limiting</strong>: Controls requests per minute<br/>• <strong>Microservices</strong>: Small programs handling specific tasks</Box>
+                  <Box variant="small" color="text-body-secondary">Example:</Box>
+                  <CodeView content={`// Chrome makes one simple request
+fetch('/summoner/by-name/Faker')
+
+// Hidden Riot infrastructure processes request:
+// 1. API Gateway (routes request)
+// 2. Rate Limiter (checks request limits) 
+// 3. Load Balancer (picks available computer)
+// 4. Database (retrieves player data)`} lineNumbers={false} />
+                  <Button variant="primary" onClick={() => onNavigate('layered-system')}>
+                    🔍 Explore Hidden Layers
+                  </Button>
+                </SpaceBetween>
+              </Container>
+            </div>
+            <div style={{ minWidth: '330px' }}>
+              <Container variant="stacked">
+                <Header variant="h3">6️⃣ Code on Demand</Header>
+                <SpaceBetween direction="vertical" size="xs">
+                  <Box variant="p"><strong>Optional: Send programs to run.</strong> Instead of data only, websites can send small programs adding new browser features.</Box>
+                  <Box variant="small">• <strong>Optional</strong>: Not required for REST APIs<br/>• <strong>Executable code</strong>: Programs running in browser<br/>• <strong>JavaScript</strong>: Programming language for web browsers<br/>• <strong>Dynamic</strong>: New functionality delivered when needed</Box>
+                  <Box variant="small" color="text-body-secondary">Example:</Box>
+                  <CodeView content={`// Website sends program file to Chrome
+<script src="/player-stats-widget.js"></script>
+
+// Program knows how to get and display player data
+fetch('/summoner/by-name/Faker')
+  .then(data => displayPlayerStats(data));`} lineNumbers={false} />
+                  <Button variant="primary" onClick={() => onNavigate('code-on-demand')}>
+                    ⚡ Watch Dynamic Loading
+                  </Button>
+                </SpaceBetween>
+              </Container>
+            </div>
+          </Grid>
+        </div>
         
         <Container variant="stacked">
           <Header variant="h3">Technical Resources</Header>
           <SpaceBetween direction="vertical" size="s">
             <Button variant="normal" onClick={() => onNavigate('cheat-sheet')} fullWidth>
-              📋 API Cheat Sheet
-              <Box variant="small" display="block" color="text-body-secondary">Quick start guide</Box>
+              📋 LoL API Endpoints & Code Examples
             </Button>
             <Button variant="normal" onClick={() => onNavigate('how-it-works')} fullWidth>
-              ⚙️ How This Works
-              <Box variant="small" display="block" color="text-body-secondary">Technical deep dive</Box>
+              ⚙️ AWS Architecture & Implementation
             </Button>
             <Button variant="normal" onClick={() => onNavigate('resources')} fullWidth>
-              🔗 Project Resources
-              <Box variant="small" display="block" color="text-body-secondary">GitHub & docs</Box>
+              🔗 GitHub Repository & Documentation
             </Button>
           </SpaceBetween>
         </Container>
         
-        <Container variant="stacked">
-          <Header 
-            variant="h3"
-            description="Select a year to pull League of Legends tournaments from that year and view the uniform interface constraint in action"
-          >
-            Championship Year
-          </Header>
-          <Select
-            selectedOption={{ label: '2024', value: '2024' }}
-            onChange={({ detail }) => {
-              const year = detail.selectedOption.value;
-              onNavigate(`uniform-interface?year=${year}`);
-            }}
-            options={[
-              { label: '2024', value: '2024' },
-              { label: '2023', value: '2023' },
-              { label: '2022', value: '2022' },
-              { label: '2021', value: '2021' }
-            ]}
-            placeholder="Select championship year"
-          />
-        </Container>
+
       </SpaceBetween>
     </Container>
   );

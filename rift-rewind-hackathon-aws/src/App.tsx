@@ -5,6 +5,7 @@ import Navigation from './components/navigation';
 import Breadcrumbs from './components/breadcrumbs';
 import Shell from './layouts/shell';
 import RiftRewindDashboardModular from './RiftRewindDashboardModular';
+import { ErrorBoundary } from './ErrorBoundary';
 
 function App() {
   useEffect(() => {
@@ -28,27 +29,29 @@ function App() {
   }, []);
 
   return (
-    <Shell
-      breadcrumbs={
-        <Breadcrumbs 
-          active={{ text: 'API Training', href: '/learning/api/' }} 
-        />
-      }
-      navigation={
-        <Navigation 
-          onFollow={(event) => {
-            if (event.detail.href.startsWith('#')) {
-              const page = event.detail.href.substring(1);
-              window.dispatchEvent(new CustomEvent('navigate', { detail: page }));
-            }
-          }}
-        />
-      }
-    >
-      <ContentLayout>
-        <RiftRewindDashboardModular />
-      </ContentLayout>
-    </Shell>
+    <ErrorBoundary>
+      <Shell
+        breadcrumbs={
+          <Breadcrumbs 
+            active={{ text: 'API Training', href: '/learning/api/' }} 
+          />
+        }
+        navigation={
+          <Navigation 
+            onFollow={(event) => {
+              if (event.detail.href.startsWith('#')) {
+                const page = event.detail.href.substring(1);
+                window.dispatchEvent(new CustomEvent('navigate', { detail: page }));
+              }
+            }}
+          />
+        }
+      >
+        <ContentLayout>
+          <RiftRewindDashboardModular />
+        </ContentLayout>
+      </Shell>
+    </ErrorBoundary>
   );
 }
 

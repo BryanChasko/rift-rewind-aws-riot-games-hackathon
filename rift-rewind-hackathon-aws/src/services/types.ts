@@ -3,6 +3,11 @@ export interface Contest {
   name: string;
   status: string;
   winner: string;
+  points: number;
+  participants: number;
+  difficulty: string;
+  category: string;
+  year: string;
 }
 
 export interface TournamentWinner {

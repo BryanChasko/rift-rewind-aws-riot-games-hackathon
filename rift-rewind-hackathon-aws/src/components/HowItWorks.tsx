@@ -26,9 +26,9 @@ const HowItWorks: React.FC<HowItWorksProps> = () => {
       
       <Container>
         <SpaceBetween direction="vertical" size="l">
-          <Alert type="success" header="🎯 Real-World Architecture">
+          <Alert type="info" header="🏗️ Serverless Architecture">
             <Box variant="p">
-              This isn't just a demo - it's a production application running on AWS, processing real Riot Games data, and serving thousands of visitors.
+              AWS Lambda functions process Riot Games API requests with encrypted key storage, X-Ray tracing, and cost-effective pay-per-request billing.
             </Box>
           </Alert>
           
@@ -39,16 +39,16 @@ const HowItWorks: React.FC<HowItWorksProps> = () => {
                 <Header variant="h3">📊 Data Sources</Header>
                 <SpaceBetween direction="vertical" size="xs">
                   <Box variant="p">
-                    <strong>✅ From Riot API:</strong><br/>
-                    • Champion names & lore titles<br/>
-                    • Attack damage, health, speed stats<br/>
-                    • Official game balance data
+                    <strong>✅ Live Riot Data:</strong><br/>
+                    • Challenger League rankings<br/>
+                    • Challenge leaderboards<br/>
+                    • Champion mastery points
                   </Box>
                   <Box variant="p">
-                    <strong>🛠️ Our Processing:</strong><br/>
-                    • Tier rankings (S/A-Tier algorithm)<br/>
-                    • Display scaling (÷10, ÷100, ÷20)<br/>
-                    • Performance calculations
+                    <strong>🛠️ AWS Processing:</strong><br/>
+                    • Lambda transforms API responses<br/>
+                    • SSM stores encrypted API keys<br/>
+                    • CloudWatch logs all requests
                   </Box>
                 </SpaceBetween>
               </Container>
@@ -70,19 +70,19 @@ const HowItWorks: React.FC<HowItWorksProps> = () => {
               </Container>
               
               <Container variant="stacked">
-                <Header variant="h3">🎯 Champion Data Mapping</Header>
+                <Header variant="h3">🔒 Security & Secrets</Header>
                 <SpaceBetween direction="vertical" size="xs">
                   <Box variant="p">
-                    <strong>⚔️ Attack Power</strong><br/>
-                    <code>stats.attackdamage ÷ 10</code>
+                    <strong>🔑 API Key Storage</strong><br/>
+                    AWS SSM Parameter Store (encrypted)
                   </Box>
                   <Box variant="p">
-                    <strong>🛡️ Defense Rating</strong><br/>
-                    <code>stats.hp ÷ 100</code>
+                    <strong>🛡️ IAM Permissions</strong><br/>
+                    Least privilege access control
                   </Box>
                   <Box variant="p">
-                    <strong>💨 Speed Rating</strong><br/>
-                    <code>stats.movespeed ÷ 20</code>
+                    <strong>📊 Monitoring</strong><br/>
+                    X-Ray tracing + CloudWatch logs
                   </Box>
                 </SpaceBetween>
               </Container>
@@ -100,11 +100,11 @@ const HowItWorks: React.FC<HowItWorksProps> = () => {
                 • Educational transparency about costs
               </Box>
               <Box variant="p">
-                <strong>📊 Real Numbers:</strong><br/>
-                • ~$0.0001 per API request<br/>
-                • S3 hosting: ~$1/month<br/>
-                • Lambda: Pay only when used<br/>
-                • Total monthly cost: Under $5
+                <strong>📊 AWS Costs:</strong><br/>
+                • Lambda: $0.0000002 per request<br/>
+                • S3 hosting: $0.50/month<br/>
+                • CloudFront CDN: $0.10/GB<br/>
+                • SSM Parameter Store: No charge
               </Box>
             </ColumnLayout>
           </Container>
@@ -129,9 +129,9 @@ const HowItWorks: React.FC<HowItWorksProps> = () => {
 6. 📊 React App → Receives response, updates UI tables
 7. ✅ You → See live League of Legends data in under 2 seconds!
 
-// Example Champion Processing:
-// Raw Riot Data: { "attackdamage": 640, "hp": 5800, "movespeed": 340 }
-// Our Display: { "attack": 64, "defense": 58, "speed": 17 }
+// Example Challenge Processing:
+// Raw Riot Data: { "challengeId": 101000, "percentile": 99.5, "level": "CHALLENGER" }
+// Our Display: { "name": "Aram Legend", "participants": 15000, "winner": "T1 Faker" }
 
 // Authentication Summary:
 // ✅ Data Dragon CDN: No authentication needed

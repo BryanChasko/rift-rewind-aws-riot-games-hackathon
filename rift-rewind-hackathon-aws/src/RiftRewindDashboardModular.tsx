@@ -138,7 +138,7 @@ const RiftRewindDashboardModular: React.FC = () => {
           >
             <Grid gridDefinition={[{ colspan: { default: 12, xs: 12 } }]}>
               <div className="responsive-text">
-                Cloudscape Design System → AWS Lambda → Riot Data Dragon API | Demonstrating REST principles with real League of Legends champion data
+                Web interface with Cloudscape buttons/tables built with Vite and hosted on S3 → Amazon Lambda cloud functions running Python code on Amazon Web Services → Multiple Riot APIs including Challenges, Summoner, Champion Expertise, and Data Dragon content delivery network | Interactive REST constraint examples - design rules demonstrated with real League of Legends data
               </div>
             </Grid>
           </Alert>

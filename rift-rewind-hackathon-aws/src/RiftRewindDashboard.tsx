@@ -25,6 +25,9 @@ interface Contest {
   name: string;
   status: string;
   winner: string;
+  description?: string;
+  participants?: number;
+  challenge_id?: number;
 }
 
 const RiftRewindDashboard: React.FC = () => {
@@ -34,7 +37,7 @@ const RiftRewindDashboard: React.FC = () => {
   const [activeDemo, setActiveDemo] = useState<'contests' | 'champions' | 'champion-details' | 'data-dragon' | 'challenger' | 'dynamic' | null>(null);
   const [selectedYear, setSelectedYear] = useState({ label: '2024', value: '2024' });
   const [lastUpdated, setLastUpdated] = useState<Record<string, Date>>({});
-  const [dataMode, setDataMode] = useState<Record<string, 'demo' | 'live'>>({ contests: 'demo', champions: 'demo', 'champion-details': 'demo', 'data-dragon': 'demo', challenger: 'demo', dynamic: 'demo' });
+  const [dataMode, setDataMode] = useState<Record<string, 'demo' | 'live'>>({});
   const [selectedChampion, setSelectedChampion] = useState<{ label: string; value: string } | null>(null);
   const [selectionSource, setSelectionSource] = useState<'table' | 'dropdown' | null>(null);
 
@@ -44,12 +47,7 @@ const RiftRewindDashboard: React.FC = () => {
       const [pageName, yearParam] = page.split('?year=');
       setCurrentPage(pageName);
       setSelectedYear({ label: yearParam, value: yearParam });
-      // Auto-trigger API call for uniform interface
-      if (pageName === 'uniform-interface') {
-        setTimeout(() => {
-          fetchContests(yearParam);
-        }, 500);
-      }
+      // Note: No auto-trigger for uniform interface - user must click button
     } else {
       setCurrentPage(page);
     }
@@ -118,7 +116,7 @@ const RiftRewindDashboard: React.FC = () => {
             </Box>
             <Box variant="p">
               <strong>🌐 Full Endpoint URL:</strong><br/>
-              <code>https://americas.api.riotgames.com/lol/tournament/v5/tournaments?year={selectedYear.value}</code><br/>
+              <code>https://na1.api.riotgames.com/lol/challenges/v1/challenges/config?year={selectedYear.value}</code><br/>
               <strong>📡 HTTP Method:</strong> GET<br/>
               <strong>🔑 Auth:</strong> X-Riot-Token header required
             </Box>
@@ -127,7 +125,7 @@ const RiftRewindDashboard: React.FC = () => {
           <SpaceBetween direction="horizontal" size="s">
             <Button 
               onClick={() => {
-                fetchContests();
+                fetchContests(selectedYear.value);
                 setTimeout(() => {
                   const element = document.querySelector('[data-testid="contests-response"]');
                   if (element) {
@@ -141,14 +139,6 @@ const RiftRewindDashboard: React.FC = () => {
             >
               {dataMode.contests === 'live' ? '✅ Live Data Loaded - See Below!' : '🚀 Send GET Request'}
             </Button>
-            {dataMode.contests === 'live' && (
-              <Button 
-                onClick={() => resetToDemo('contests')}
-                variant="normal"
-              >
-                🔄 Reset to Sample Data
-              </Button>
-            )}
           </SpaceBetween>
           
           {lastUpdated.contests && (
@@ -159,7 +149,7 @@ const RiftRewindDashboard: React.FC = () => {
         </SpaceBetween>
       </Container>
       
-      {activeDemo === 'contests' && contests.length > 0 && (
+      {contests.length > 0 && (
         <>
           <Alert 
             type="success" 
@@ -180,15 +170,50 @@ const RiftRewindDashboard: React.FC = () => {
           >
             <Table
               columnDefinitions={[
-                {id: 'name', header: 'Tournament', cell: (item: Contest) => item.name},
-                {id: 'status', header: 'Status', cell: (item: Contest) => item.status},
-                {id: 'winner', header: 'Winner', cell: (item: Contest) => item.winner}
+                {
+                  id: 'name', 
+                  header: 'Challenge Contest', 
+                  cell: (item: Contest) => (
+                    <SpaceBetween direction="vertical" size="xs">
+                      <Box variant="strong">{item.name}</Box>
+                      <Box variant="small" color="text-body-secondary">
+                        {item.description || 'Elite competitive challenge'}
+                      </Box>
+                    </SpaceBetween>
+                  )
+                },
+                {
+                  id: 'status', 
+                  header: 'Status', 
+                  cell: (item: Contest) => (
+                    <Box variant="strong" color={item.status === 'live' ? 'text-status-success' : 'text-status-info'}>
+                      {item.status}
+                    </Box>
+                  )
+                },
+                {
+                  id: 'winner', 
+                  header: 'Current Leader', 
+                  cell: (item: Contest) => (
+                    <SpaceBetween direction="vertical" size="xs">
+                      <Box variant="strong">{item.winner}</Box>
+                      {item.participants && item.participants > 0 && (
+                        <Box variant="small" color="text-body-secondary">
+                          {item.participants} top players
+                        </Box>
+                      )}
+                    </SpaceBetween>
+                  )
+                }
               ]}
               items={contests}
               empty="No contests available"
               header={
-                <Header description="Uniform JSON representation with consistent structure">
-                  🏆 Tournament Data (Uniform Interface Applied)
+                <Header 
+                  description={`Live data from Riot Games Challenges API for ${selectedYear.value}. Shows ${contests.length} competitive challenges with current leaders and point values. Demonstrates uniform HTTP methods (GET), consistent JSON structure, and real API integration.`}
+                  counter={contests.length > 0 ? `(${contests.length})` : undefined}
+                >
+                  🏆 Challenge Contest Data (Uniform Interface Applied)
                 </Header>
               }
             />
@@ -1217,10 +1242,7 @@ const RiftRewindDashboard: React.FC = () => {
       setLastUpdated(prev => ({ ...prev, contests: new Date() }));
     } catch (error) {
       console.error('Failed to fetch contests:', error);
-      setContests([
-        {id: 'worlds2024', name: 'Worlds Championship 2024', status: 'completed', winner: 'T1'},
-        {id: 'msi2024', name: 'Mid-Season Invitational 2024', status: 'completed', winner: 'Gen.G'}
-      ]);
+      setContests([]);
       setDataMode(prev => ({ ...prev, contests: 'demo' }));
     } finally {
       setLoading(false);
@@ -1311,11 +1333,8 @@ const RiftRewindDashboard: React.FC = () => {
     setDataMode(prev => ({ ...prev, [section]: 'demo' }));
     setLastUpdated(prev => ({ ...prev, [section]: new Date() }));
     if (section === 'contests') {
-      setContests([
-        {id: 'worlds2024', name: 'Worlds Championship 2024', status: 'completed', winner: 'T1'},
-        {id: 'msi2024', name: 'Mid-Season Invitational 2024', status: 'completed', winner: 'Gen.G'}
-      ]);
-      setActiveDemo('contests');
+      setContests([]);
+      setActiveDemo(null);
     }
   };
 
@@ -1383,7 +1402,7 @@ const RiftRewindDashboard: React.FC = () => {
       {currentPage === 'overview' && (
         <Header
           variant="h1"
-          description="League of Legends is a multiplayer online battle arena (MOBA) game where two teams of 5 players compete. Each player controls a unique champion - a character with distinct abilities, strengths, and weaknesses. There are 160+ champions, each with their own lore, abilities, and gameplay role. This application demonstrates REST (REpresentational State Transfer) and API (Application Programming Interface) fundamentals using real Riot Games data."
+          description="League of Legends is a multiplayer online battle arena (MOBA) game where two teams of 5 players compete. Each player controls a unique champion - a character with distinct abilities, strengths, and weaknesses. There are 160+ champions, each with their own lore, abilities, and gameplay role. This site demonstrates REST and API fundamentals using real Riot Games data."
         >
           Rift Rewind: REST API fundamentals with Riot Games Developer Portal
         </Header>
@@ -1394,7 +1413,7 @@ const RiftRewindDashboard: React.FC = () => {
           statusIconAriaLabel="Info"
           header="🚀 Live REST API Integration"
         >
-          Cloudscape Design System → AWS Lambda → Riot Data Dragon API | Demonstrating REST principles with real League of Legends champion data
+          Web interface with Cloudscape buttons/tables built with Vite and hosted on S3 → Amazon Lambda cloud functions running Python code on Amazon Web Services → Multiple Riot APIs including Challenges, Summoner, Champion Expertise, and Data Dragon content delivery network | Interactive REST constraint examples - design rules demonstrated with real League of Legends data
         </Alert>
       )}
       
