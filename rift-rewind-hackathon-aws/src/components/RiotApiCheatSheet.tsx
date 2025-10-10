@@ -138,6 +138,13 @@ const RiotApiCheatSheet: React.FC<RiotApiCheatSheetProps> = () => {
                   <Box variant="strong">Authentication</Box>
                   <CodeView content="headers: {\n  'X-Riot-Token': 'RGAPI-your-key-here'\n}" />
                   
+                  <Box variant="strong">AWS SSM Parameter Store</Box>
+                  <CodeView content={`aws ssm put-parameter \\
+  --name "/rift-rewind/riot-api-key" \\
+  --value "RGAPI-your-key" \\
+  --type "SecureString"`} />
+                  <Box variant="small">Encrypted storage prevents API key exposure in code</Box>
+                  
                   <Box variant="strong">Key Rotation</Box>
                   <Box variant="small">Development keys expire every 24 hours</Box>
                 </SpaceBetween>

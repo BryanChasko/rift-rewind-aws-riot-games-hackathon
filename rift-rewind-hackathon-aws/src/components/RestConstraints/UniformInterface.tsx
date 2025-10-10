@@ -129,6 +129,7 @@ export class UniformInterface extends RestConstraintBase {
                 <Box><StatusIndicator type="success">GET</StatusIndicator></Box>
                 <Box variant="strong">🔑 Auth Header:</Box>
                 <CodeView content="X-Riot-Token: RGAPI-your-key-here" />
+                <Box variant="small" color="text-body-secondary">🔒 Stored securely in AWS SSM Parameter Store</Box>
               </SpaceBetween>
             </ColumnLayout>
             
