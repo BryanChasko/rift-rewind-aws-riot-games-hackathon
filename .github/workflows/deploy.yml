@@ -80,7 +80,7 @@ jobs:
       working-directory: riot-api-cdk
       run: |
         echo "📦 Installing CDK dependencies..."
-        npm ci
+        npm install
         echo "✅ CDK dependencies installed"
     
     - name: Validate CDK app
