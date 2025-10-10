@@ -7,8 +7,6 @@ import HowItWorks from './components/HowItWorks';
 import ProjectResources from './components/ProjectResources';
 import { ALL_CHAMPIONS } from './champions';
 
-
-
 interface TournamentWinner {
   player: string;
   team: string;
@@ -36,7 +34,7 @@ const RiftRewindDashboard: React.FC = () => {
   const [activeDemo, setActiveDemo] = useState<'contests' | 'champions' | 'champion-details' | 'data-dragon' | 'challenger' | 'dynamic' | null>(null);
   const [selectedYear, setSelectedYear] = useState({ label: '2024', value: '2024' });
   const [lastUpdated, setLastUpdated] = useState<Record<string, Date>>({});
-  const [dataMode, setDataMode] = useState<Record<string, 'demo' | 'live'>>({ contests: 'demo', champions: 'demo', 'champion-details': 'demo', 'data-dragon': 'demo', challenger: 'demo', dynamic: 'demo' });
+  const [, setDataMode] = useState<Record<string, 'demo' | 'live'>>({ contests: 'demo', champions: 'demo', 'champion-details': 'demo', 'data-dragon': 'demo', challenger: 'demo', dynamic: 'demo' });
   const [selectedChampion, setSelectedChampion] = useState<{ label: string; value: string } | null>(null);
   const [selectionSource, setSelectionSource] = useState<'table' | 'dropdown' | null>(null);
 
@@ -344,7 +342,7 @@ const RiftRewindDashboard: React.FC = () => {
                     'cell': (item: TournamentWinner) => (
                       <SpaceBetween direction="vertical" size="xs">
                         <Box variant="strong">{item.championPlayed}</Box>
-                        <Box variant="small" color="text-body-secondary">Character played</Box>
+                        <Box variant="small">Character played</Box>
                       </SpaceBetween>
                     )
                   },
@@ -579,7 +577,7 @@ const RiftRewindDashboard: React.FC = () => {
                   'cell': (item: TournamentWinner) => (
                     <Box>
                       <Box variant="strong">{item.championPlayed}</Box>
-                      <Box variant="small" color="text-body-secondary">Mastery data</Box>
+                      <Box variant="small">Mastery data</Box>
                     </Box>
                   )
                 },
@@ -764,7 +762,7 @@ const RiftRewindDashboard: React.FC = () => {
                       />
                       <SpaceBetween direction="vertical" size="xs">
                         <Box variant="strong">{item.championPlayed} Portrait</Box>
-                        <Box variant="small" color="text-body-secondary">PNG image asset</Box>
+                        <Box variant="small">PNG image asset</Box>
                       </SpaceBetween>
                     </SpaceBetween>
                   )
@@ -784,7 +782,7 @@ const RiftRewindDashboard: React.FC = () => {
                   'cell': () => (
                     <SpaceBetween direction="vertical" size="xs">
                       <Box variant="strong" color="text-status-success">HIT</Box>
-                      <Box variant="small" color="text-body-secondary">Served from CDN</Box>
+                      <Box variant="small">Served from CDN</Box>
                     </SpaceBetween>
                   )
                 },
