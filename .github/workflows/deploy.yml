@@ -42,7 +42,6 @@ jobs:
     needs: security-check
     runs-on: ubuntu-latest
     if: |
-      (github.event_name == 'push' && (contains(join(github.event.head_commit.added, ' '), 'riot-api-cdk/') || contains(join(github.event.head_commit.modified, ' '), 'riot-api-cdk/'))) ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_infrastructure == 'true')
     permissions:
       id-token: write
@@ -179,10 +178,7 @@ jobs:
     needs: [security-check]
     runs-on: ubuntu-latest
     if: |
-      always() && (needs.security-check.result == 'success') && (
-        (github.event_name == 'push' && (contains(join(github.event.head_commit.added, ' '), 'rift-rewind-hackathon-aws/') || contains(join(github.event.head_commit.modified, ' '), 'rift-rewind-hackathon-aws/'))) ||
-        (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_frontend == 'true')
-      )
+      always() && (needs.security-check.result == 'success')
     permissions:
       id-token: write
       contents: read
