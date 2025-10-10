@@ -5,7 +5,7 @@ import { DataTable, type TableColumn } from '../shared/DataTable';
 import type { TournamentWinner } from '../../services/types';
 import { ALL_CHAMPIONS } from '../../data/champions';
 
-const RIOT_API_PROXY_URL = 'https://nojl2v2ozhs5epqg76smmtjmhu0htodl.lambda-url.us-east-2.on.aws/';
+const RIOT_API_PROXY_URL = import.meta.env.VITE_API_URL || '';
 
 interface StatelessState {
   championData: any;

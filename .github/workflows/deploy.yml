@@ -63,6 +63,7 @@ jobs:
       run: |
         URL=$(aws cloudformation describe-stacks --stack-name RiotApiCdkStack --query 'Stacks[0].Outputs[?OutputKey==`LambdaFunctionUrl`].OutputValue' --output text)
         echo "lambda-url=$URL" >> $GITHUB_OUTPUT
+        echo "LAMBDA_URL=$URL" >> $GITHUB_ENV
     
     outputs:
       lambda-url: ${{ steps.lambda-url.outputs.lambda-url }}

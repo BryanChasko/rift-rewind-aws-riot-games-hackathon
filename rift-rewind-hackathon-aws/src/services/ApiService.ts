@@ -1,7 +1,7 @@
 import type { Contest, TournamentWinner, MasteryData, LayerData, ConfigData } from './types';
 
 export class ApiService {
-  private baseUrl = import.meta.env.VITE_API_URL || 'https://nojl2v2ozhs5epqg76smmtjmhu0htodl.lambda-url.us-east-2.on.aws/';
+  private baseUrl = import.meta.env.VITE_API_URL || '';
   
   constructor() {
     // Production: URL injected by GitHub Actions from CDK outputs

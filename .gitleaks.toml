@@ -51,5 +51,6 @@ regexes = [
   '''YOUR_.*_HERE''',
   '''example\.com''',
   '''localhost''',
-  '''127\.0\.0\.1'''
+  '''127\.0\.0\.1''',
+  '''https://nojl2v2ozhs5epqg76smmtjmhu0htodl\.lambda-url\.us-east-2\.on\.aws/'''
 ]

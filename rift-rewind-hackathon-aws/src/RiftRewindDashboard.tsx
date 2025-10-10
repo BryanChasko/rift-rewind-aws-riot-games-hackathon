@@ -20,7 +20,7 @@ interface TournamentWinner {
   event: string;
 }
 
-const RIOT_API_PROXY_URL = 'https://nojl2v2ozhs5epqg76smmtjmhu0htodl.lambda-url.us-east-2.on.aws/';
+const RIOT_API_PROXY_URL = import.meta.env.VITE_API_URL || '';
 
 interface Contest {
   id: string;

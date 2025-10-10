@@ -60,7 +60,11 @@ agentic-ai-workshop/.venv/
 agentic-ai-workshop/__pycache__/
 
 # Environment and secrets
-.env*
+.env
+.env.local
+.env.production
+.env.development
+!.env.example
 *.pem
 *.key
 *.p12
