@@ -75,7 +75,9 @@ def handle_contests_endpoint(api_attempts: List[Dict[str, Any]], headers: Dict[s
             
             if leaderboard_data and isinstance(leaderboard_data, list) and len(leaderboard_data) > 0:
                 top_player = leaderboard_data[0]
-                winner = f'#{top_player.get("position", 1)} Player ({top_player.get("value", 0):,.0f} points)'
+                # Get actual summoner name if available, otherwise use position
+                summoner_name = top_player.get('summonerName', f'Player #{top_player.get("position", 1)}')
+                winner = f'{summoner_name} ({top_player.get("value", 0):,.0f} points)'
                 top_score = int(top_player.get("value", 0))
                 participant_count = len(leaderboard_data) * 1000  # Estimate total participants
             

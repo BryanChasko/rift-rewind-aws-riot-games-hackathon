@@ -75,9 +75,13 @@ export class UniformInterface extends RestConstraintBase {
     if (this.state.contests.length > 0) {
       const topContest = this.state.contests[0];
       const winner = topContest.winner || 'Unknown Player';
-      // Extract player name from format like "#1 Player (15,847 points)"
-      const match = winner.match(/#(\d+)\s+Player/);
-      return match ? `Rank ${match[1]} Champion` : winner;
+      // Extract player name from format like "PlayerName (15,847 points)" or "Player #1 (points)"
+      const nameMatch = winner.match(/^([^(]+)\s*\(/);
+      if (nameMatch) {
+        const playerName = nameMatch[1].trim();
+        return playerName.startsWith('Player #') ? `${playerName} Champion` : `${playerName}`;
+      }
+      return winner;
     }
     return 'Challenge Winner';
   }
