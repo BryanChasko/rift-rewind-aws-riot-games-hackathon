@@ -92,7 +92,7 @@ def handle_players_endpoint(api_attempts: List[Dict[str, Any]], headers: Dict[st
     challenger_data, status_code, error_details = make_request(challenger_url, headers)
     
     if challenger_data and 'entries' in challenger_data:
-        top_players = challenger_data['entries'][:5]
+        top_players = challenger_data['entries'][:15]  # Limit to top 15 to be discrete with API requests
         players_data = [{
             'summonerId': player.get('summonerId', 'unknown'),
             'summonerName': player.get('summonerName', 'Unknown'),
@@ -205,6 +205,48 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Prepare headers for Riot API authentication
         headers = {RIOT_API_HEADER: api_key}
         
+        # Validate API key first with a lightweight endpoint
+        with xray_recorder.capture('validate_api_key'):
+            validation_url = "https://na1.api.riotgames.com/lol/status/v4/platform-data"
+            validation_data, status_code, error_details = make_request(validation_url, headers)
+            
+            if status_code == 401:
+                api_attempts.append({
+                    'endpoint': 'API Key Validation',
+                    'status': 'Failed',
+                    'method': 'GET',
+                    'url': validation_url,
+                    'auth': 'X-Riot-Token required',
+                    'result': f'Invalid API key: {error_details}',
+                    'status_code': status_code,
+                    'data_count': 0
+                })
+                raise Exception(f'API key validation failed: {error_details}')
+            elif status_code != 200:
+                api_attempts.append({
+                    'endpoint': 'API Key Validation',
+                    'status': 'Failed',
+                    'method': 'GET',
+                    'url': validation_url,
+                    'auth': 'X-Riot-Token required',
+                    'result': f'API validation error: {error_details}',
+                    'status_code': status_code,
+                    'data_count': 0
+                })
+                raise Exception(f'API validation failed: {error_details}')
+            else:
+                api_attempts.append({
+                    'endpoint': 'API Key Validation',
+                    'status': 'Success',
+                    'method': 'GET',
+                    'url': validation_url,
+                    'auth': 'X-Riot-Token required',
+                    'result': 'API key is valid',
+                    'status_code': status_code,
+                    'data_count': 0
+                })
+                xray_recorder.put_annotation('api_key_valid', True)
+        
         @xray_recorder.capture('make_request')
         def make_request(url: str, headers: Optional[Dict[str, str]] = None) -> tuple[Optional[Dict[str, Any]], int, str]:
             """
@@ -232,13 +274,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return None, 0, f'Unexpected error: {str(e)}'
         
         # Initialize tracking structures for educational transparency
-        # These provide detailed information about API calls for learning purposes
         api_attempts: List[Dict[str, Any]] = []
-        live_data: List[Dict[str, Any]] = []
-        
-        # Remove dummy data - focus on real API calls only
-        
-        # Remove non-essential API calls - focus on challenger league only
         
         # Handle different endpoint types for uniform interface demonstration
         if endpoint_type == 'contests':
