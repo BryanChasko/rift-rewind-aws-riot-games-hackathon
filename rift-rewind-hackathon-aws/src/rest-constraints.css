@@ -163,6 +163,16 @@
   animation: fadeInUp 0.5s ease-out;
 }
 
+/* Table Selection Styling */
+.rest-constraint-2 [data-testid="summoners-response"] tr[aria-selected="true"] {
+  background-color: rgba(209, 50, 18, 0.1) !important;
+  border-left: 3px solid #d13212 !important;
+}
+
+.rest-constraint-2 [data-testid="summoners-response"] tr[aria-selected="true"]:hover {
+  background-color: rgba(209, 50, 18, 0.15) !important;
+}
+
 /* GitHub Link Styling */
 .github-link {
   transition: all 0.3s ease;

@@ -83,23 +83,9 @@ const RestOverview: React.FC<RestOverviewProps> = ({ onNavigate }) => {
         </ColumnLayout>
         
         <Container variant="stacked">
-          <Header variant="h3">🏊 Dive Deep</Header>
-          <ColumnLayout columns={4} variant="text-grid">
-            <SpaceBetween direction="vertical" size="xs">
-              <Box variant="p"><strong>Championship Year:</strong></Box>
-              <Select
-                selectedOption={{ label: '2024', value: '2024' }}
-                onChange={({ detail }) => onNavigate(`uniform-interface?year=${detail.selectedOption.value}`)}
-                options={[
-                  { label: '2024 - T1 Victory', value: '2024' },
-                  { label: '2023 - T1 Victory', value: '2023' },
-                  { label: '2022 - DRX Victory', value: '2022' },
-                  { label: '2021 - EDG Victory', value: '2021' }
-                ]}
-                placeholder="Select championship year"
-              />
-            </SpaceBetween>
-            <Button variant="primary" onClick={() => onNavigate('cheat-sheet')} fullWidth>
+          <Header variant="h3">Technical Resources</Header>
+          <SpaceBetween direction="vertical" size="s">
+            <Button variant="normal" onClick={() => onNavigate('cheat-sheet')} fullWidth>
               📋 API Cheat Sheet
               <Box variant="small" display="block" color="text-body-secondary">Quick start guide</Box>
             </Button>
@@ -111,7 +97,30 @@ const RestOverview: React.FC<RestOverviewProps> = ({ onNavigate }) => {
               🔗 Project Resources
               <Box variant="small" display="block" color="text-body-secondary">GitHub & docs</Box>
             </Button>
-          </ColumnLayout>
+          </SpaceBetween>
+        </Container>
+        
+        <Container variant="stacked">
+          <Header 
+            variant="h3"
+            description="Select a year to pull League of Legends tournaments from that year and view the uniform interface constraint in action"
+          >
+            Championship Year
+          </Header>
+          <Select
+            selectedOption={{ label: '2024', value: '2024' }}
+            onChange={({ detail }) => {
+              const year = detail.selectedOption.value;
+              onNavigate(`uniform-interface?year=${year}`);
+            }}
+            options={[
+              { label: '2024', value: '2024' },
+              { label: '2023', value: '2023' },
+              { label: '2022', value: '2022' },
+              { label: '2021', value: '2021' }
+            ]}
+            placeholder="Select championship year"
+          />
         </Container>
       </SpaceBetween>
     </Container>

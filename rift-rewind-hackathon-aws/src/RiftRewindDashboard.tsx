@@ -5,20 +5,9 @@ import RestOverview from './components/RestOverview';
 import RiotApiCheatSheet from './components/RiotApiCheatSheet';
 import HowItWorks from './components/HowItWorks';
 import ProjectResources from './components/ProjectResources';
+import { ALL_CHAMPIONS } from './champions';
 
-interface MatchSummary {
-  matchId: string;
-  kills: number;
-  deaths: number;
-  assists: number;
-  win: boolean;
-  champion: string;
-  wins?: number;
-  losses?: number;
-  total_games?: number;
-  win_rate?: number;
-  event?: string;
-}
+
 
 interface TournamentWinner {
   player: string;
@@ -42,19 +31,30 @@ interface Contest {
 
 const RiftRewindDashboard: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<string>('overview');
-  const [matches, setMatches] = useState<MatchSummary[]>([]);
   const [loading, setLoading] = useState(false);
-
   const [contests, setContests] = useState<Contest[]>([]);
   const [activeDemo, setActiveDemo] = useState<'contests' | 'champions' | 'champion-details' | 'data-dragon' | 'challenger' | 'dynamic' | null>(null);
   const [selectedYear, setSelectedYear] = useState({ label: '2024', value: '2024' });
   const [lastUpdated, setLastUpdated] = useState<Record<string, Date>>({});
   const [dataMode, setDataMode] = useState<Record<string, 'demo' | 'live'>>({ contests: 'demo', champions: 'demo', 'champion-details': 'demo', 'data-dragon': 'demo', challenger: 'demo', dynamic: 'demo' });
-  const [championsList, setChampionsList] = useState<string[]>([]);
   const [selectedChampion, setSelectedChampion] = useState<{ label: string; value: string } | null>(null);
+  const [selectionSource, setSelectionSource] = useState<'table' | 'dropdown' | null>(null);
 
   const handleNavigation = (page: string) => {
-    setCurrentPage(page);
+    // Check if page contains year parameter
+    if (page.includes('?year=')) {
+      const [pageName, yearParam] = page.split('?year=');
+      setCurrentPage(pageName);
+      setSelectedYear({ label: yearParam, value: yearParam });
+      // Auto-trigger API call for uniform interface
+      if (pageName === 'uniform-interface') {
+        setTimeout(() => {
+          fetchContests(yearParam);
+        }, 500);
+      }
+    } else {
+      setCurrentPage(page);
+    }
   };
 
   useEffect(() => {
@@ -173,9 +173,9 @@ const RiftRewindDashboard: React.FC = () => {
           >
             <Table
               columnDefinitions={[
-                {'id': 'name', header: 'Tournament', cell: (item: Contest) => item.name},
-                {'id': 'status', header: 'Status', cell: (item: Contest) => item.status},
-                {'id': 'winner', header: 'Winner', cell: (item: Contest) => item.winner}
+                {id: 'name', header: 'Tournament', cell: (item: Contest) => item.name},
+                {id: 'status', header: 'Status', cell: (item: Contest) => item.status},
+                {id: 'winner', header: 'Winner', cell: (item: Contest) => item.winner}
               ]}
               items={contests}
               empty="No contests available"
@@ -234,106 +234,230 @@ const RiftRewindDashboard: React.FC = () => {
         </Alert>
       )}
       
-      <Container header={<Header variant="h3">Summoner Signature Champions</Header>}>
+      <Container 
+        header={<Header variant="h3">Summoner Signature Champions</Header>}
+        className="rest-constraint-2"
+      >
         <SpaceBetween direction="vertical" size="s">
           <Alert type="info" header="🎮 Separation of Concerns in Action">
             <Box variant="p">
               <strong>Independent development:</strong> Our React UI can be redesigned, our Lambda function can be rewritten, and Riot can upgrade their servers - as long as the API contracts stay consistent, nothing breaks.
             </Box>
           </Alert>
-          <Box variant="p">Tournament-winning summoners with their champion performance metrics for {selectedYear.value}</Box>
           
-          <Table
-            columnDefinitions={[
-              {
-                'id': 'player',
-                'header': 'Summoner',
-                'cell': (item: TournamentWinner) => (
-                  <Box>
-                    <Box variant="strong">{item.player}</Box>
-                    <Box variant="small">{item.team}</Box>
-                  </Box>
-                )
-              },
-              {
-                'id': 'champion',
-                'header': 'Signature Champion',
-                'cell': (item: TournamentWinner) => (
-                  <Box>
-                    <Box variant="strong">{item.championPlayed}</Box>
-                    <Box variant="small" color="text-body-secondary">Character played</Box>
-                  </Box>
-                )
-              },
-              {
-                'id': 'tournamentRecord',
-                'header': 'Tournament Record',
-                'cell': (item: TournamentWinner) => (
-                  <Box>
-                    <Box variant="strong" color={item.winRate >= 85 ? "text-status-success" : "text-status-info"}>
-                      {item.winRate}%
-                    </Box>
-                    <Box variant="small" color="text-body-secondary">{item.tournamentWins}W - {item.tournamentLosses}L</Box>
-                  </Box>
-                )
-              },
-              {
-                'id': 'performance',
-                'header': 'Performance Score',
-                'cell': (item: TournamentWinner) => (
-                  <Box variant="strong" color={item.performanceScore >= 95 ? "text-status-success" : item.performanceScore >= 90 ? "text-status-warning" : "text-status-info"}>
-                    {item.performanceScore}/100
-                  </Box>
-                )
-              },
-              {
-                'id': 'achievement',
-                'header': 'Achievement',
-                'cell': (item: TournamentWinner) => (
-                  <Box>
-                    🏆 <Box variant="strong" display="inline">{item.event}</Box>
-                  </Box>
-                )
-              }
-            ]}
-            items={getTournamentWinners(selectedYear.value)}
-            loading={loading}
-            header={
-              <Header
-                counter="(5)"
-                description={`Worlds ${selectedYear.value} championship summoners and their signature champions`}
+          <ColumnLayout columns={2} variant="text-grid">
+            <Box variant="p">
+              <strong>Select Tournament Year:</strong><br/>
+              <Select
+                selectedOption={selectedYear}
+                onChange={({ detail }) => setSelectedYear(detail.selectedOption as { label: string; value: string })}
+                options={[
+                  { label: '2024', value: '2024' },
+                  { label: '2023', value: '2023' },
+                  { label: '2022', value: '2022' },
+                  { label: '2021', value: '2021' }
+                ]}
+              />
+            </Box>
+            <Box variant="p">
+              <strong>🌐 Full Endpoint URL:</strong><br/>
+              <code>https://americas.api.riotgames.com/lol/tournament/v5/summoners?year={selectedYear.value}</code><br/>
+              <strong>📡 HTTP Method:</strong> GET<br/>
+              <strong>🔑 Auth:</strong> X-Riot-Token header required
+            </Box>
+          </ColumnLayout>
+          
+          <SpaceBetween direction="horizontal" size="s">
+            <Button 
+              onClick={() => {
+                fetchSummoners();
+                setTimeout(() => {
+                  const element = document.querySelector('[data-testid="summoners-response"]');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }, 1500);
+              }} 
+              loading={loading && activeDemo === 'champions'}
+              variant="primary"
+              className="button-color-2"
+            >
+              {dataMode.champions === 'live' ? '✅ Live Summoner Data Loaded' : '🚀 Fetch Championship Summoners'}
+            </Button>
+            {dataMode.champions === 'live' && (
+              <Button 
+                onClick={() => resetToDemo('champions')}
+                variant="normal"
               >
-                Worlds Greatest Winning Summoners
-              </Header>
-            }
-            empty={
-              <Box textAlign="center">
-                <Box variant="strong" textAlign="center">
-                  No tournament data available
-                </Box>
-                <Box variant="p" padding={{ bottom: 's' }}>
-                  Select a year to view championship data
-                </Box>
-              </Box>
-            }
-          />
+                🔄 Reset to Sample Data
+              </Button>
+            )}
+          </SpaceBetween>
+          
+          {lastUpdated.champions && (
+            <Box variant="small" color="text-body-secondary">
+              🕰️ Last updated: {lastUpdated.champions.toLocaleTimeString()} | 🔑 Using: Bryan's Private API Key
+            </Box>
+          )}
         </SpaceBetween>
       </Container>
       
-      <Container variant="stacked">
-        <Header variant="h3">🚀 Next Step: Stateless Communication</Header>
-        <SpaceBetween direction="vertical" size="s">
-          <Box variant="p">
-            Ready to explore how each API request contains complete authentication context?
-          </Box>
-          <Button 
-            variant="primary" 
-            onClick={() => handleNavigation('stateless')}
+      {(activeDemo === 'champions' || dataMode.champions === 'live' || dataMode.contests === 'live') && (
+        <>
+          {(activeDemo === 'champions' || dataMode.champions === 'live') && (
+            <Alert 
+              type="success" 
+              header="🎉 Client-Server Separation! Frontend and backend evolved independently."
+              dismissible
+            />
+          )}
+          <Container 
+            data-testid="summoners-response"
+            header={
+              <Header 
+                variant="h3" 
+                description="✅ Client-Server Architecture - Independent development layers"
+              >
+                🏆 Championship Summoners Response
+              </Header>
+            }
+            className="rest-constraint-2"
           >
-            ➡️ Continue to Stateless Demo
-          </Button>
-        </SpaceBetween>
-      </Container>
+            <SpaceBetween direction="vertical" size="m">
+              <Table
+                columnDefinitions={[
+                  {
+                    id: 'player',
+                    header: 'Summoner',
+                    'cell': (item: TournamentWinner) => (
+                      <SpaceBetween direction="vertical" size="xs">
+                        <Box variant="strong">{item.player}</Box>
+                        <Box variant="small">{item.team}</Box>
+                      </SpaceBetween>
+                    )
+                  },
+                  {
+                    id: 'champion',
+                    header: 'Signature Champion',
+                    'cell': (item: TournamentWinner) => (
+                      <SpaceBetween direction="vertical" size="xs">
+                        <Box variant="strong">{item.championPlayed}</Box>
+                        <Box variant="small" color="text-body-secondary">Character played</Box>
+                      </SpaceBetween>
+                    )
+                  },
+                  {
+                    id: 'tournamentRecord',
+                    header: 'Tournament Record',
+                    'cell': (item: TournamentWinner) => (
+                      <SpaceBetween direction="vertical" size="xs">
+                        <Box variant="strong" color={item.winRate >= 85 ? "text-status-success" : "text-status-info"}>
+                          {item.winRate}%
+                        </Box>
+                        <Box variant="small" color="text-body-secondary">{item.tournamentWins}W - {item.tournamentLosses}L</Box>
+                      </SpaceBetween>
+                    )
+                  },
+                  {
+                    id: 'performance',
+                    header: 'Performance Score',
+                    'cell': (item: TournamentWinner) => (
+                      <Box variant="strong" color={item.performanceScore >= 95 ? "text-status-success" : item.performanceScore >= 90 ? "text-status-warning" : "text-status-info"}>
+                        {item.performanceScore}/100
+                      </Box>
+                    )
+                  },
+                  {
+                    id: 'achievement',
+                    header: 'Achievement',
+                    'cell': (item: TournamentWinner) => (
+                      <Box>
+                        🏆 <Box variant="strong" display="inline">{item.event}</Box>
+                      </Box>
+                    )
+                  }
+                ]}
+                items={getTournamentWinners(selectedYear.value)}
+                loading={loading && activeDemo === 'champions'}
+                selectionType="single"
+                selectedItems={selectedChampion && selectionSource === 'table' ? getTournamentWinners(selectedYear.value).filter(w => 
+                  w.championPlayed.toLowerCase() === selectedChampion.value
+                ) : []}
+                onSelectionChange={({ detail }) => {
+                  if (detail.selectedItems.length > 0) {
+                    const selectedWinner = detail.selectedItems[0] as TournamentWinner;
+                    setSelectedChampion({ 
+                      label: selectedWinner.championPlayed, 
+                      value: selectedWinner.championPlayed.toLowerCase() 
+                    });
+                    setSelectionSource('table');
+                  } else {
+                    setSelectedChampion(null);
+                    setSelectionSource(null);
+                  }
+                }}
+                trackBy="championPlayed"
+                header={
+                  <Header
+                    counter="(5)"
+                    description={`Worlds ${selectedYear.value} championship summoners and their signature champions. Select a row to view more about the champion as we explore stateless communication.`}
+                  >
+                    Worlds Greatest Winning Summoners
+                  </Header>
+                }
+                empty={
+                  <Box textAlign="center">
+                    <Box variant="strong" textAlign="center">
+                      No tournament data available
+                    </Box>
+                    <Box variant="p" padding={{ bottom: 's' }}>
+                      Click "Fetch Championship Summoners" to load data
+                    </Box>
+                  </Box>
+                }
+              />
+              
+              <SpaceBetween direction="vertical" size="s">
+                <Box variant="p">Or choose your favorite champion:</Box>
+                <Select
+                  selectedOption={selectionSource === 'dropdown' ? selectedChampion : null}
+                  onChange={({ detail }) => {
+                    setSelectedChampion(detail.selectedOption as { label: string; value: string });
+                    setSelectionSource('dropdown');
+                  }}
+                  options={ALL_CHAMPIONS.map(champion => ({
+                    label: champion,
+                    value: champion.toLowerCase()
+                  }))}
+                  placeholder="Type or select any champion..."
+                  filteringType="auto"
+                />
+              </SpaceBetween>
+            </SpaceBetween>
+          </Container>
+          
+
+          
+          <Container variant="stacked">
+            <Header variant="h3">🚀 Next Step: Stateless Communication</Header>
+            <SpaceBetween direction="vertical" size="s">
+              <Box variant="p">
+                {selectedChampion ? 
+                  `Ready to explore ${selectedChampion.label} mastery data with self-contained authentication?` :
+                  'Select a champion above, then explore how each API request contains complete authentication context.'
+                }
+              </Box>
+              <Button 
+                variant="primary" 
+                onClick={() => handleNavigation('stateless')}
+                disabled={!selectedChampion}
+              >
+                ➡️ Continue to Stateless Constraint
+              </Button>
+            </SpaceBetween>
+          </Container>
+        </>
+      )}
     </SpaceBetween>
   );
 
@@ -455,8 +579,8 @@ const RiftRewindDashboard: React.FC = () => {
             <Table
               columnDefinitions={[
                 {
-                  'id': 'champion',
-                  'header': 'Champion',
+                  id: 'champion',
+                  header: 'Champion',
                   'cell': (item: TournamentWinner) => (
                     <Box>
                       <Box variant="strong">{item.championPlayed}</Box>
@@ -465,8 +589,8 @@ const RiftRewindDashboard: React.FC = () => {
                   )
                 },
                 {
-                  'id': 'masteryLevel',
-                  'header': 'Mastery Level',
+                  id: 'masteryLevel',
+                  header: 'Mastery Level',
                   'cell': (item: TournamentWinner) => (
                     <Box variant="strong" color="text-status-success">
                       Level {Math.min(7, Math.floor(item.performanceScore / 15))}
@@ -474,8 +598,8 @@ const RiftRewindDashboard: React.FC = () => {
                   )
                 },
                 {
-                  'id': 'masteryPoints',
-                  'header': 'Mastery Points',
+                  id: 'masteryPoints',
+                  header: 'Mastery Points',
                   'cell': (item: TournamentWinner) => (
                     <Box variant="strong">
                       {(item.performanceScore * 1000).toLocaleString()}
@@ -483,8 +607,8 @@ const RiftRewindDashboard: React.FC = () => {
                   )
                 },
                 {
-                  'id': 'lastPlayed',
-                  'header': 'Last Played',
+                  id: 'lastPlayed',
+                  header: 'Last Played',
                   'cell': () => (
                     <Box variant="small" color="text-body-secondary">
                       {new Date().toLocaleDateString()}
@@ -641,8 +765,8 @@ const RiftRewindDashboard: React.FC = () => {
             <Table
               columnDefinitions={[
                 {
-                  'id': 'asset',
-                  'header': 'Champion Asset',
+                  id: 'asset',
+                  header: 'Champion Asset',
                   'cell': (item: TournamentWinner) => (
                     <SpaceBetween direction="vertical" size="xs">
                       <img 
@@ -658,8 +782,8 @@ const RiftRewindDashboard: React.FC = () => {
                   )
                 },
                 {
-                  'id': 'version',
-                  'header': 'Version',
+                  id: 'version',
+                  header: 'Version',
                   'cell': () => (
                     <Box variant="strong" color="text-status-success">
                       14.23.1
@@ -667,8 +791,8 @@ const RiftRewindDashboard: React.FC = () => {
                   )
                 },
                 {
-                  'id': 'cacheStatus',
-                  'header': 'Cache Status',
+                  id: 'cacheStatus',
+                  header: 'Cache Status',
                   'cell': () => (
                     <SpaceBetween direction="vertical" size="xs">
                       <Box variant="strong" color="text-status-success">HIT</Box>
@@ -677,8 +801,8 @@ const RiftRewindDashboard: React.FC = () => {
                   )
                 },
                 {
-                  'id': 'responseTime',
-                  'header': 'Response Time',
+                  id: 'responseTime',
+                  header: 'Response Time',
                   'cell': () => (
                     <Box variant="strong" color="text-status-success">
                       {Math.floor(Math.random() * 50 + 10)}ms
@@ -686,8 +810,8 @@ const RiftRewindDashboard: React.FC = () => {
                   )
                 },
                 {
-                  'id': 'cacheExpiry',
-                  'header': 'Cache Expiry',
+                  id: 'cacheExpiry',
+                  header: 'Cache Expiry',
                   'cell': () => (
                     <Box variant="strong" color="text-status-info">
                       Never (immutable)
@@ -845,8 +969,8 @@ const RiftRewindDashboard: React.FC = () => {
             <Table
               columnDefinitions={[
                 {
-                  'id': 'layer',
-                  'header': 'Infrastructure Layer',
+                  id: 'layer',
+                  header: 'Infrastructure Layer',
                   'cell': (item: any) => (
                     <SpaceBetween direction="vertical" size="xs">
                       <Box variant="strong">{item.layer}</Box>
@@ -855,8 +979,8 @@ const RiftRewindDashboard: React.FC = () => {
                   )
                 },
                 {
-                  'id': 'purpose',
-                  'header': 'Purpose',
+                  id: 'purpose',
+                  header: 'Purpose',
                   'cell': (item: any) => (
                     <Box variant="strong">
                       {item.purpose}
@@ -864,8 +988,8 @@ const RiftRewindDashboard: React.FC = () => {
                   )
                 },
                 {
-                  'id': 'latency',
-                  'header': 'Processing Time',
+                  id: 'latency',
+                  header: 'Processing Time',
                   'cell': (item: any) => (
                     <Box variant="strong" color="text-status-success">
                       {item.latency}ms
@@ -873,8 +997,8 @@ const RiftRewindDashboard: React.FC = () => {
                   )
                 },
                 {
-                  'id': 'visibility',
-                  'header': 'Client Visibility',
+                  id: 'visibility',
+                  header: 'Client Visibility',
                   'cell': (item: any) => (
                     <Box variant="strong" color={item.visible ? "text-status-warning" : "text-status-info"}>
                       {item.visible ? 'Visible' : 'Hidden'}
@@ -1036,8 +1160,8 @@ const RiftRewindDashboard: React.FC = () => {
             <Table
               columnDefinitions={[
                 {
-                  'id': 'config',
-                  'header': 'UI Configuration',
+                  id: 'config',
+                  header: 'UI Configuration',
                   'cell': (item: any) => (
                     <SpaceBetween direction="vertical" size="xs">
                       <Box variant="strong">{item.config}</Box>
@@ -1046,8 +1170,8 @@ const RiftRewindDashboard: React.FC = () => {
                   )
                 },
                 {
-                  'id': 'serverInstruction',
-                  'header': 'Server Instruction',
+                  id: 'serverInstruction',
+                  header: 'Server Instruction',
                   'cell': (item: any) => (
                     <Box variant="strong">
                       {item.instruction}
@@ -1055,8 +1179,8 @@ const RiftRewindDashboard: React.FC = () => {
                   )
                 },
                 {
-                  'id': 'clientBehavior',
-                  'header': 'Client Behavior',
+                  id: 'clientBehavior',
+                  header: 'Client Behavior',
                   'cell': (item: any) => (
                     <Box variant="strong" color="text-status-success">
                       {item.behavior}
@@ -1064,8 +1188,8 @@ const RiftRewindDashboard: React.FC = () => {
                   )
                 },
                 {
-                  'id': 'adaptation',
-                  'header': 'Runtime Adaptation',
+                  id: 'adaptation',
+                  header: 'Runtime Adaptation',
                   'cell': (item: any) => (
                     <Box variant="strong" color={item.adapted ? "text-status-success" : "text-status-info"}>
                       {item.adapted ? 'Adapted' : 'Static'}
@@ -1122,8 +1246,8 @@ const RiftRewindDashboard: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch contests:', error);
       setContests([
-        {'id': 'worlds2024', 'name': 'Worlds Championship 2024', 'status': 'completed', 'winner': 'T1'},
-        {'id': 'msi2024', 'name': 'Mid-Season Invitational 2024', 'status': 'completed', 'winner': 'Gen.G'}
+        {id: 'worlds2024', name: 'Worlds Championship 2024', status: 'completed', winner: 'T1'},
+        {id: 'msi2024', name: 'Mid-Season Invitational 2024', status: 'completed', winner: 'Gen.G'}
       ]);
       setDataMode(prev => ({ ...prev, contests: 'demo' }));
     } finally {
@@ -1131,20 +1255,16 @@ const RiftRewindDashboard: React.FC = () => {
     }
   };
 
-  const fetchChampions = async () => {
+  const fetchSummoners = async () => {
     setLoading(true);
     setActiveDemo('champions');
     try {
-      await fetch(`${RIOT_API_PROXY_URL}?endpoint=champions`);
+      await fetch(`${RIOT_API_PROXY_URL}?endpoint=summoners&year=${selectedYear.value}`);
       
-      // Extract champion names for dropdown
-      const champions = getTournamentWinners(selectedYear.value).map(winner => winner.championPlayed);
-      setChampionsList(champions);
-
       setDataMode(prev => ({ ...prev, champions: 'live' }));
       setLastUpdated(prev => ({ ...prev, champions: new Date() }));
     } catch (error) {
-      console.error('Failed to fetch champions:', error);
+      console.error('Failed to fetch summoners:', error);
       setDataMode(prev => ({ ...prev, champions: 'demo' }));
     } finally {
       setLoading(false);
@@ -1215,34 +1335,17 @@ const RiftRewindDashboard: React.FC = () => {
     }
   };
 
-
-
   const resetToDemo = (section: string) => {
     setDataMode(prev => ({ ...prev, [section]: 'demo' }));
     setLastUpdated(prev => ({ ...prev, [section]: new Date() }));
     if (section === 'contests') {
       setContests([
-        {'id': 'worlds2024', 'name': 'Worlds Championship 2024', 'status': 'completed', 'winner': 'T1'},
-        {'id': 'msi2024', 'name': 'Mid-Season Invitational 2024', 'status': 'completed', 'winner': 'Gen.G'}
+        {id: 'worlds2024', name: 'Worlds Championship 2024', status: 'completed', winner: 'T1'},
+        {id: 'msi2024', name: 'Mid-Season Invitational 2024', status: 'completed', winner: 'Gen.G'}
       ]);
       setActiveDemo('contests');
     }
   };
-
-  const loadDummyData = () => {
-    const mockMatches: MatchSummary[] = [
-      { matchId: 'The Emperor of Shurima', kills: 17, deaths: 1, assists: 14, win: true, champion: 'Azir' },
-      { matchId: 'The Darkin Blade', kills: 18, deaths: 0, assists: 15, win: true, champion: 'Aatrox' },
-      { matchId: 'The Loose Cannon', kills: 17, deaths: 1, assists: 14, win: true, champion: 'Jinx' },
-      { matchId: 'The Chain Warden', kills: 17, deaths: 1, assists: 14, win: true, champion: 'Thresh' },
-      { matchId: 'The Outlaw', kills: 16, deaths: 1, assists: 13, win: true, champion: 'Graves' }
-    ];
-    setMatches(mockMatches);
-  };
-
-  useEffect(() => {
-    loadDummyData();
-  }, []);
 
   const getTournamentWinners = (year: string): TournamentWinner[] => {
     const winnersData: Record<string, TournamentWinner[]> = {
