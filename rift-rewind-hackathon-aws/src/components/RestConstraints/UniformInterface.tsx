@@ -96,10 +96,10 @@ export class UniformInterface extends RestConstraintBase {
     try {
       const contestColumns: TableColumn<Contest>[] = [
         { id: 'name', header: 'Challenge Contest', cell: (item) => item.name },
-        { id: 'difficulty', header: 'Difficulty', cell: (item) => item.difficulty },
-        { id: 'participants', header: 'Participants', cell: (item) => item.participants?.toLocaleString() || 'N/A' },
-        { id: 'points', header: 'Top Score', cell: (item) => item.points?.toLocaleString() || 'N/A' },
-        { id: 'category', header: 'Category', cell: (item) => item.category },
+        { id: 'winner', header: 'Current Leader', cell: (item) => item.winner || 'TBD' },
+        { id: 'difficulty', header: 'Difficulty', cell: (item) => item.difficulty || 'Expert' },
+        { id: 'participants', header: 'Leaderboard Size', cell: (item) => item.participants?.toLocaleString() || '0' },
+        { id: 'category', header: 'Category', cell: (item) => item.category || 'Challenge' },
         { id: 'status', header: 'Status', cell: (item) => item.status }
       ];
 
@@ -208,9 +208,9 @@ export class UniformInterface extends RestConstraintBase {
                 emptyMessage="No contests available"
                 selectionType="single"
                 selectedItems={this.state.selectedContest ? [this.state.selectedContest] : []}
-                onSelectionChange={(event: any) => {
+                onSelectionChange={(selectedItems: Contest[]) => {
                   this.setState({ 
-                    selectedContest: event.detail.selectedItems.length > 0 ? event.detail.selectedItems[0] as Contest : null 
+                    selectedContest: selectedItems.length > 0 ? selectedItems[0] : null 
                   });
                 }}
                 trackBy="id"
