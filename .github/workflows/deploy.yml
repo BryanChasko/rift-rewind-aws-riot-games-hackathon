@@ -50,7 +50,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
     
     - name: Setup Python
       uses: actions/setup-python@v4
@@ -80,7 +80,7 @@ jobs:
       working-directory: riot-api-cdk
       run: |
         echo "📦 Installing CDK dependencies..."
-        npm ci
+        npm install
         echo "✅ CDK dependencies installed"
     
     - name: Validate CDK app
@@ -160,7 +160,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'yarn'
         cache-dependency-path: rift-rewind-hackathon-aws/yarn.lock
     
