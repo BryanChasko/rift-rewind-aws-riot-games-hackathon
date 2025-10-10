@@ -205,12 +205,12 @@ export class ClientServer extends RestConstraintBase {
           147: 'Seraphine', 875: 'Sett', 35: 'Shaco', 98: 'Shen', 102: 'Shyvana',
           27: 'Singed', 14: 'Sion', 15: 'Sivir', 72: 'Skarner', 37: 'Sona',
           16: 'Soraka', 50: 'Swain', 517: 'Sylas', 134: 'Syndra', 223: 'Tahm Kench',
-          163: 'Taliyah', 91: 'Talon', 44: 'Taric', 17: 'Teemo', 412: 'Thresh',
+          163: 'Taliyah', 44: 'Taric', 17: 'Teemo', 412: 'Thresh',
           18: 'Tristana', 48: 'Trundle', 23: 'Tryndamere', 4: 'Twisted Fate',
           29: 'Twitch', 77: 'Udyr', 6: 'Urgot', 110: 'Varus', 67: 'Vayne',
           45: 'Veigar', 161: 'Vel\'Koz', 254: 'Vi', 112: 'Viktor', 8: 'Vladimir',
           106: 'Volibear', 19: 'Warwick', 498: 'Xayah', 101: 'Xerath', 5: 'Xin Zhao',
-          83: 'Yorick', 350: 'Yuumi', 154: 'Zac', 238: 'Zed', 115: 'Ziggs',
+          83: 'Yorick', 350: 'Yuumi', 154: 'Zac', 115: 'Ziggs',
           26: 'Zilean', 142: 'Zoe', 143: 'Zyra'
         };
         return championMap[championId] || `Champion ${championId}`;
@@ -337,7 +337,6 @@ export class ClientServer extends RestConstraintBase {
   }
 
   renderContent(): React.JSX.Element {
-    const dataMode = this.props.stateManager.getDataMode(this.section);
     const winners = this.state.summoners.length > 0 && this.state.summoners[0].player !== 'Loading...';
 
     const summonerColumns: TableColumn<TournamentWinner>[] = [
@@ -415,7 +414,7 @@ export class ClientServer extends RestConstraintBase {
               </Box>
               
               {this.state.xrayTraceId && (
-                <Box variant="p" padding={{vertical: 's', horizontal: 'm'}} style={{backgroundColor: '#fff2cc', borderRadius: '8px'}}>
+                <Box variant="p" padding={{vertical: 's', horizontal: 'm'}}>
                   <strong>🔍 Request Journey:</strong><br/>
                   <div style={{fontFamily: 'monospace', fontSize: '12px', marginTop: '8px'}}>
                     ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐<br/>

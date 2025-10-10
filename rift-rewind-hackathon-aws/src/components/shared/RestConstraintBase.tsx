@@ -4,7 +4,7 @@ import { ApiService } from '../../services/ApiService';
 import { StateManager } from '../../services/StateManager';
 import type { ConstraintSection } from '../../services/types';
 import { focusElement, announceToScreenReader } from '../../utils/accessibility';
-import { useResponsive } from '../../utils/responsive';
+// import { useResponsive } from '../../utils/responsive';
 
 export interface RestConstraintBaseProps {
   apiService: ApiService;
@@ -31,7 +31,6 @@ export abstract class RestConstraintBase extends React.Component<RestConstraintB
       <Header
         variant="h1"
         description={this.description}
-        headingIdentifier={`constraint-${this.constraintNumber}`}
         info={<span className="sr-only">REST constraint {this.constraintNumber} of 6</span>}
       >
         {this.constraintNumber}️⃣ {this.title}

@@ -2,10 +2,10 @@ import React from 'react';
 import { Container, Alert, ColumnLayout, Box, SpaceBetween, Select } from '@cloudscape-design/components';
 import { RestConstraintBase } from '../shared/RestConstraintBase';
 import { DataTable, type TableColumn } from '../shared/DataTable';
-import type { TournamentWinner } from '../../services/types';
+
 import { ALL_CHAMPIONS } from '../../data/champions';
 
-const RIOT_API_PROXY_URL = import.meta.env.VITE_API_URL || '';
+
 
 interface StatelessState {
   championData: any;
@@ -31,31 +31,7 @@ export class Stateless extends RestConstraintBase {
     }
   }
 
-  private async getHighRankedPlayers(): Promise<any[]> {
-    try {
-      // Use Challenger league data as proxy for high-level players
-      const response = await fetch(`${RIOT_API_PROXY_URL}?endpoint=challenger-league`);
-      const data = await response.json();
-      
-      if (data.entries) {
-        return data.entries.slice(0, 5).map((entry: any, index: number) => ({
-          player: entry.summonerName,
-          team: 'Challenger',
-          championPlayed: ['Azir', 'Aatrox', 'Jinx', 'Thresh', 'Graves'][index],
-          leaguePoints: entry.leaguePoints,
-          wins: entry.wins,
-          losses: entry.losses,
-          winRate: Math.round((entry.wins / (entry.wins + entry.losses)) * 100),
-          rank: index + 1,
-          event: 'Challenger League'
-        }));
-      }
-      return [];
-    } catch (error) {
-      console.error('Failed to fetch challenger data:', error);
-      return [];
-    }
-  }
+
 
   private async getChampionData(championName: string) {
     try {

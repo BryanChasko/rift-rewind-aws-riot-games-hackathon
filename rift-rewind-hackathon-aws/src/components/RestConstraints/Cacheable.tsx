@@ -27,22 +27,7 @@ export class Cacheable extends RestConstraintBase {
     }
   }
 
-  private generateETag(championName: string): string {
-    // Generate consistent hash based on champion name
-    let hash = 0;
-    for (let i = 0; i < championName.length; i++) {
-      const char = championName.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    return Math.abs(hash).toString(16).substring(0, 7);
-  }
 
-  private getDataCenter(championName: string): string {
-    const centers = ['Virginia', 'Oregon', 'Ireland', 'Singapore', 'Tokyo'];
-    const index = championName.length % centers.length;
-    return centers[index];
-  }
 
   renderContent(): React.JSX.Element {
     const dataMode = this.props.stateManager.getDataMode(this.section);
@@ -70,13 +55,13 @@ export class Cacheable extends RestConstraintBase {
         header: 'CDN URL Structure',
         cell: (item) => (
           <SpaceBetween direction="vertical" size="xs">
-            <Box variant="small" variant="code">
+            <Box variant="code">
               ddragon.leagueoflegends.com
             </Box>
-            <Box variant="small" variant="code">
+            <Box variant="code">
               /cdn/14.23.1/img/champion/
             </Box>
-            <Box variant="small" variant="code">
+            <Box variant="code">
               {item.championPlayed}.png
             </Box>
           </SpaceBetween>

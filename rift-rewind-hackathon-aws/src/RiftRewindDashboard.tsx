@@ -34,7 +34,7 @@ const RiftRewindDashboard: React.FC = () => {
   const [activeDemo, setActiveDemo] = useState<'contests' | 'champions' | 'champion-details' | 'data-dragon' | 'challenger' | 'dynamic' | null>(null);
   const [selectedYear, setSelectedYear] = useState({ label: '2024', value: '2024' });
   const [lastUpdated, setLastUpdated] = useState<Record<string, Date>>({});
-  const [, setDataMode] = useState<Record<string, 'demo' | 'live'>>({ contests: 'demo', champions: 'demo', 'champion-details': 'demo', 'data-dragon': 'demo', challenger: 'demo', dynamic: 'demo' });
+  const [dataMode, setDataMode] = useState<Record<string, 'demo' | 'live'>>({ contests: 'demo', champions: 'demo', 'champion-details': 'demo', 'data-dragon': 'demo', challenger: 'demo', dynamic: 'demo' });
   const [selectedChampion, setSelectedChampion] = useState<{ label: string; value: string } | null>(null);
   const [selectionSource, setSelectionSource] = useState<'table' | 'dropdown' | null>(null);
 

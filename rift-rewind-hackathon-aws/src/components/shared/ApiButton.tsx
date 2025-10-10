@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, SpaceBetween, Box, Grid } from '@cloudscape-design/components';
 import type { DataMode } from '../../services/types';
 import { announceToScreenReader } from '../../utils/accessibility';
-import { useResponsive } from '../../utils/responsive';
+
 
 interface ApiButtonProps {
   onFetch: () => Promise<void>;
@@ -27,7 +27,7 @@ export const ApiButton: React.FC<ApiButtonProps> = ({
   className,
   lastUpdated
 }) => {
-  const { isMobile } = useResponsive();
+
   
   const handleFetch = async () => {
     announceToScreenReader('Loading data, please wait', 'polite');
