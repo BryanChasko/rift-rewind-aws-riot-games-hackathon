@@ -128,30 +128,48 @@ jobs:
       if: steps.aws-config.outcome == 'success'
       run: |
         echo "🔍 Validating Lambda deployment..."
-        FUNCTION_NAME=$(aws lambda list-functions --query 'Functions[?contains(FunctionName, `RiotApiCdkStack-RiotApiFunction`)].FunctionName' --output text)
-        if [ -n "$FUNCTION_NAME" ]; then
-          echo "✅ Found Lambda function: $FUNCTION_NAME"
-          STATE=$(aws lambda get-function --function-name "$FUNCTION_NAME" --query 'Configuration.State' --output text)
-          echo "✅ Lambda function state: $STATE"
+        MAIN_FUNCTION=$(aws lambda list-functions --query 'Functions[?contains(FunctionName, `RiotApiFunction`)].FunctionName' --output text)
+        SUMMONER_FUNCTION=$(aws lambda list-functions --query 'Functions[?contains(FunctionName, `SummonerLookup`)].FunctionName' --output text)
+        
+        if [ -n "$MAIN_FUNCTION" ]; then
+          echo "✅ Found main Lambda function: $MAIN_FUNCTION"
         else
-          echo "❌ Lambda function not found"
+          echo "❌ Main Lambda function not found"
+          exit 1
+        fi
+        
+        if [ -n "$SUMMONER_FUNCTION" ]; then
+          echo "✅ Found summoner lookup Lambda function: $SUMMONER_FUNCTION"
+        else
+          echo "❌ Summoner lookup Lambda function not found"
           exit 1
         fi
       continue-on-error: false
     
-    - name: Get Lambda URL
+    - name: Get Lambda URLs
       id: lambda-url
       if: steps.aws-config.outcome == 'success'
       run: |
-        echo "🔗 Getting Lambda Function URL..."
-        URL=$(aws cloudformation describe-stacks --stack-name RiotApiCdkStack --query 'Stacks[0].Outputs[?OutputKey==`LambdaFunctionUrl`].OutputValue' --output text)
-        if [ -z "$URL" ] || [ "$URL" = "None" ]; then
-          echo "❌ Failed to get Lambda URL"
+        echo "🔗 Getting Lambda Function URLs..."
+        MAIN_URL=$(aws cloudformation describe-stacks --stack-name RiotApiCdkStack --query 'Stacks[0].Outputs[?OutputKey==`LambdaFunctionUrl`].OutputValue' --output text)
+        SUMMONER_URL=$(aws cloudformation describe-stacks --stack-name RiotApiCdkStack --query 'Stacks[0].Outputs[?OutputKey==`SummonerLookupUrl`].OutputValue' --output text)
+        
+        if [ -z "$MAIN_URL" ] || [ "$MAIN_URL" = "None" ]; then
+          echo "❌ Failed to get main Lambda URL"
           exit 1
         fi
-        echo "lambda-url=$URL" >> $GITHUB_OUTPUT
-        echo "LAMBDA_URL=$URL" >> $GITHUB_ENV
-        echo "✅ Lambda URL: $URL"
+        
+        if [ -z "$SUMMONER_URL" ] || [ "$SUMMONER_URL" = "None" ]; then
+          echo "❌ Failed to get summoner lookup URL"
+          exit 1
+        fi
+        
+        echo "lambda-url=$MAIN_URL" >> $GITHUB_OUTPUT
+        echo "summoner-url=$SUMMONER_URL" >> $GITHUB_OUTPUT
+        echo "LAMBDA_URL=$MAIN_URL" >> $GITHUB_ENV
+        echo "SUMMONER_URL=$SUMMONER_URL" >> $GITHUB_ENV
+        echo "✅ Main Lambda URL: $MAIN_URL"
+        echo "✅ Summoner Lookup URL: $SUMMONER_URL"
       continue-on-error: false
     
     outputs:

@@ -274,6 +274,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return handle_contests_endpoint(api_attempts, year)
         elif endpoint_type in ['players', 'challenger-league']:
             return handle_players_endpoint(api_attempts, headers, make_request)
+        elif endpoint_type == 'summoner-lookup':
+            return handle_summoner_lookup(event, api_attempts, headers, make_request)
         else:
             # Default endpoint - no dummy data, just return empty with API attempts
             trace_id = xray_recorder.get_trace_entity().trace_id if xray_recorder.get_trace_entity() else 'unknown'
