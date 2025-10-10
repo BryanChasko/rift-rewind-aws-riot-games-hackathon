@@ -64,7 +64,7 @@ fetch('https://api.riotgames.com/summoner/by-name/Faker')
                   <CodeView content={`// Every request must include API key
 fetch('/summoner/by-name/Faker', {
   headers: {
-    'X-Riot-Token': 'RGAPI-abc123def456'
+    'X-Riot-Token': 'RGAPI-your-key-here'
   }
 });
 
