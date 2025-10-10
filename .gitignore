@@ -61,17 +61,24 @@ agentic-ai-workshop/__pycache__/
 
 # IDE and OS
 .DS_Store
-.vscode/
 .idea/
 *.swp
 *.swo
 *~
+
+# Keep .vscode settings for team consistency
+# .vscode/
+
+# ESLint and Prettier cache
+.eslintcache
+.prettier-cache
 
 # Logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
 # Runtime data
 pids

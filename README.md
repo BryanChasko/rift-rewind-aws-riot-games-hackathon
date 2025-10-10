@@ -36,9 +36,20 @@
 rift-rewind-aws-riot-games-hackathon/
 ├── rift-rewind-hackathon-aws/          # Frontend React Application
 │   ├── src/
-│   │   ├── RiftRewindDashboard.tsx     # Main dashboard with cost-effective demo mode
-│   │   ├── App.tsx                     # Cloudscape application shell
+│   │   ├── components/                 # Modular React Components
+│   │   │   ├── RestOverview.tsx        # REST constraints overview page
+│   │   │   ├── RiotApiCheatSheet.tsx   # API quick start guide
+│   │   │   ├── HowItWorks.tsx          # Technical implementation details
+│   │   │   └── ProjectResources.tsx    # GitHub links and documentation
+│   │   ├── RiftRewindDashboard.tsx     # Main dashboard with 6 REST constraints
+│   │   ├── App.tsx                     # Cloudscape application shell with navigation
+│   │   ├── rest-constraints.css        # Custom styling for REST demos
 │   │   └── main.tsx                    # Application entry point
+│   ├── .vscode/                        # VS Code configuration
+│   │   ├── extensions.json             # Recommended extensions
+│   │   └── settings.json               # Auto-formatting settings
+│   ├── .eslintrc.json                  # ESLint configuration
+│   ├── .prettierrc                     # Prettier formatting rules
 │   ├── dist/                           # Built assets for S3 deployment
 │   ├── package.json                    # Frontend dependencies
 │   └── vite.config.ts                  # Vite build configuration
@@ -58,12 +69,20 @@ rift-rewind-aws-riot-games-hackathon/
 ### 🔧 Key Files Explained
 
 #### Frontend (`rift-rewind-hackathon-aws/`)
-- **`RiftRewindDashboard.tsx`**: Main React component featuring:
+- **`RiftRewindDashboard.tsx`**: Main React component with complete REST constraints implementation:
+  - All 6 REST architectural constraints with interactive demos
+  - Seamless data flow between constraint demonstrations
   - Cost-effective demo mode by default
   - User-initiated API calls with explicit buttons
   - Comprehensive error handling and fallback strategies
   - Educational API transparency with detailed status alerts
-  - Cloudscape Design System components with proper styling
+
+- **`components/RestOverview.tsx`**: Landing page with REST constraints overview and navigation
+- **`components/RiotApiCheatSheet.tsx`**: Quick start guide for Riot Games API integration
+- **`components/HowItWorks.tsx`**: Technical deep dive into architecture and implementation
+- **`components/ProjectResources.tsx`**: GitHub repositories and documentation links
+- **`App.tsx`**: Cloudscape application shell with side navigation and event-driven routing
+- **`rest-constraints.css`**: Custom styling for REST constraint demonstrations
 
 #### Backend (`riot-api-cdk/lambda/riot-api-source/`)
 - **`lambda_function.py`**: Production-ready Lambda function with:
@@ -231,10 +250,12 @@ aws s3 sync dist/ s3://your-bucket-name/path/ --profile your-aws-profile
 - **RESTful Architecture** - Proper HTTP methods and status codes
 
 ### Development Tools
-- **ESLint + Prettier** - Code quality and formatting
+- **ESLint + Prettier** - Code quality and formatting with auto-fix
+- **VS Code Configuration** - Recommended extensions and settings for React/TypeScript
 - **Git** - Version control with conventional commits
-- **VS Code** - Recommended IDE with extensions
 - **AWS Toolkit** - Local development and debugging
+- **Type Checking** - Comprehensive TypeScript validation
+- **Auto-formatting** - On-save formatting and import organization
 
 ### Performance Optimizations
 - **Code Splitting** - Lazy loading for optimal bundle sizes
@@ -261,11 +282,17 @@ aws s3 sync dist/ s3://your-bucket-name/path/ --profile your-aws-profile
 - **AWS Security Standards** - IAM roles with least privilege access
 
 ### 📊 Educational Value
-- **REST API Transparency** - Detailed tracking of all API attempts with status codes
-- **6 REST Constraints Demo** - Live examples of uniform interface, stateless, cacheable, etc.
-- **API Endpoint Education** - Shows which Riot APIs work with basic vs production keys
+- **Complete REST Architecture** - Interactive demonstrations of all 6 REST constraints:
+  1. **Uniform Interface** - Consistent HTTP methods and JSON structure
+  2. **Client-Server** - Architectural separation with tournament data
+  3. **Stateless** - Self-contained authentication with champion mastery
+  4. **Cacheable** - CDN performance with Data Dragon assets
+  5. **Layered System** - Hidden infrastructure complexity
+  6. **Code on Demand** - Server-driven UI configuration
+- **API Transparency** - Detailed tracking of all API attempts with status codes
+- **Seamless Data Flow** - Each constraint demo builds upon previous demonstrations
+- **Visual Learning** - Champion portraits, performance metrics, and interactive tables
 - **Error Handling Patterns** - Demonstrates proper fallback and retry strategies
-- **Champions API Request Details** - Enhanced Worlds Champions section with detailed API request status showing expected vs actual results, authentication requirements, and response formats
 
 ### 🛠️ Technical Excellence
 - **Modern React Stack** - React 18 + Vite 5 + TypeScript for optimal performance
@@ -277,13 +304,21 @@ aws s3 sync dist/ s3://your-bucket-name/path/ --profile your-aws-profile
 ## 🎓 Educational Outcomes
 
 ### REST API Fundamentals
-This project demonstrates all 6 REST architectural constraints:
-1. **Uniform Interface** - Consistent HTTP methods and JSON responses
-2. **Client-Server** - Clear separation between frontend and backend
-3. **Stateless** - Each API call contains all necessary information
-4. **Cacheable** - CloudFront CDN and browser caching strategies
-5. **Layered System** - CDN → S3 → Lambda → Riot APIs
-6. **Code on Demand** - Dynamic JavaScript loading
+This project provides interactive demonstrations of all 6 REST architectural constraints:
+
+1. **Uniform Interface** - Tournament API with consistent HTTP methods and JSON structure
+2. **Client-Server** - Championship summoner data showing architectural separation
+3. **Stateless** - Champion mastery endpoint with self-contained authentication
+4. **Cacheable** - Data Dragon CDN with version-based permanent caching
+5. **Layered System** - Infrastructure layer tracing (CDN → Load Balancer → Lambda → DB)
+6. **Code on Demand** - Dynamic UI configuration based on server metadata
+
+Each constraint includes:
+- Interactive demos with real Riot Games data
+- Educational explanations of core concepts
+- Visual examples with champion portraits and performance metrics
+- Seamless data flow between demonstrations
+- Cost-effective user-initiated API calls
 
 ### AWS Serverless Patterns
 - **Cost Optimization** - User-initiated Lambda calls vs always-on servers

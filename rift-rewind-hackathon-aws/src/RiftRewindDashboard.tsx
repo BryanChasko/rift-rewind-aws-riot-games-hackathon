@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Header, Container, Button, Box, SpaceBetween, ColumnLayout, Alert, Select } from '@cloudscape-design/components';
+import { Table, Header, Container, Button, Box, SpaceBetween, ColumnLayout, Alert, Select, BreadcrumbGroup } from '@cloudscape-design/components';
+import './rest-constraints.css';
+import RestOverview from './components/RestOverview';
+import RiotApiCheatSheet from './components/RiotApiCheatSheet';
+import HowItWorks from './components/HowItWorks';
+import ProjectResources from './components/ProjectResources';
 
 interface MatchSummary {
   matchId: string;
@@ -15,6 +20,17 @@ interface MatchSummary {
   event?: string;
 }
 
+interface TournamentWinner {
+  player: string;
+  team: string;
+  championPlayed: string;
+  tournamentWins: number;
+  tournamentLosses: number;
+  winRate: number;
+  performanceScore: number;
+  event: string;
+}
+
 const RIOT_API_PROXY_URL = 'https://nojl2v2ozhs5epqg76smmtjmhu0htodl.lambda-url.us-east-2.on.aws/';
 
 interface Contest {
@@ -25,23 +41,1072 @@ interface Contest {
 }
 
 const RiftRewindDashboard: React.FC = () => {
+  const [currentPage, setCurrentPage] = useState<string>('overview');
   const [matches, setMatches] = useState<MatchSummary[]>([]);
   const [loading, setLoading] = useState(false);
-  const [dataSource, setDataSource] = useState<'live' | 'mock'>('mock');
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const [apiResponse, setApiResponse] = useState<string>('');
-  const [demoError, setDemoError] = useState(false);
 
-  const [championApiResponse, setChampionApiResponse] = useState<string>('');
-  const [endpointDetails, setEndpointDetails] = useState<string>('');
-  const [hasTriedLiveData, setHasTriedLiveData] = useState(false);
-  const [championsApiDetails, setChampionsApiDetails] = useState<any>(null);
   const [contests, setContests] = useState<Contest[]>([]);
-  const [activeDemo, setActiveDemo] = useState<'contests' | 'champions' | 'champion-details' | null>(null);
+  const [activeDemo, setActiveDemo] = useState<'contests' | 'champions' | 'champion-details' | 'data-dragon' | 'challenger' | 'dynamic' | null>(null);
   const [selectedYear, setSelectedYear] = useState({ label: '2024', value: '2024' });
-  const [selectedChampion, setSelectedChampion] = useState<{ label: string; value: string } | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Record<string, Date>>({});
-  const [dataMode, setDataMode] = useState<Record<string, 'demo' | 'live'>>({ contests: 'demo', champions: 'demo', 'champion-details': 'demo' });
+  const [dataMode, setDataMode] = useState<Record<string, 'demo' | 'live'>>({ contests: 'demo', champions: 'demo', 'champion-details': 'demo', 'data-dragon': 'demo', challenger: 'demo', dynamic: 'demo' });
+  const [championsList, setChampionsList] = useState<string[]>([]);
+  const [selectedChampion, setSelectedChampion] = useState<{ label: string; value: string } | null>(null);
+
+  const handleNavigation = (page: string) => {
+    setCurrentPage(page);
+  };
+
+  useEffect(() => {
+    const handleNavigateEvent = (event: CustomEvent) => {
+      setCurrentPage(event.detail);
+    };
+    window.addEventListener('navigate', handleNavigateEvent as EventListener);
+    return () => window.removeEventListener('navigate', handleNavigateEvent as EventListener);
+  }, []);
+
+  const renderUniformInterface = () => (
+    <SpaceBetween direction="vertical" size="l">
+      <BreadcrumbGroup
+        items={[
+          { text: 'Home', href: 'https://awsaerospace.org' },
+          { text: 'API Training', href: '#', onClick: () => handleNavigation('overview') },
+          { text: 'REST Fundamentals', href: '#overview', onClick: () => handleNavigation('overview') },
+          { text: 'Uniform Interface' }
+        ]}
+      />
+      <Header
+        variant="h1"
+        description="Experience consistent HTTP methods and JSON structure across all endpoints. See how one pattern works for all data types in the Riot Games API."
+      >
+        1️⃣ Uniform Interface in Practice
+      </Header>
+      <Alert statusIconAriaLabel="Info" header="🎯 Tournament API Demo">
+        Consistent patterns → Standard HTTP methods → Uniform JSON responses | One interface, all data types
+      </Alert>
+      <Container 
+        header={<Header variant="h3">Hands-On: Contests Endpoint Analysis</Header>}
+        className="rest-constraint-1"
+      >
+        <SpaceBetween direction="vertical" size="s">
+          <Alert type="info" header="🏆 Uniform Interface Constraints in Practice">
+            <Box variant="p">
+              <strong>Watch uniform interface constraints:</strong> Resource ID (<code>/contests</code>), JSON representation, self-descriptive HTTP responses, and navigation links working together.
+            </Box>
+          </Alert>
+          
+          <ColumnLayout columns={2} variant="text-grid">
+            <Box variant="p">
+              <strong>Select Year:</strong><br/>
+              <Select
+                selectedOption={selectedYear}
+                onChange={({ detail }) => setSelectedYear(detail.selectedOption as { label: string; value: string })}
+                options={[
+                  { label: '2024', value: '2024' },
+                  { label: '2023', value: '2023' },
+                  { label: '2022', value: '2022' },
+                  { label: '2021', value: '2021' }
+                ]}
+              />
+            </Box>
+            <Box variant="p">
+              <strong>🌐 Full Endpoint URL:</strong><br/>
+              <code>https://americas.api.riotgames.com/lol/tournament/v5/tournaments?year={selectedYear.value}</code><br/>
+              <strong>📡 HTTP Method:</strong> GET<br/>
+              <strong>🔑 Auth:</strong> X-Riot-Token header required
+            </Box>
+          </ColumnLayout>
+          
+          <SpaceBetween direction="horizontal" size="s">
+            <Button 
+              onClick={() => {
+                fetchContests();
+                setTimeout(() => {
+                  const element = document.querySelector('[data-testid="contests-response"]');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }, 1500);
+              }} 
+              loading={loading && activeDemo === 'contests'}
+              variant="primary"
+              className="button-color-1"
+            >
+              {dataMode.contests === 'live' ? '✅ Live Data Loaded - See Below!' : '🚀 Send GET Request'}
+            </Button>
+            {dataMode.contests === 'live' && (
+              <Button 
+                onClick={() => resetToDemo('contests')}
+                variant="normal"
+              >
+                🔄 Reset to Sample Data
+              </Button>
+            )}
+          </SpaceBetween>
+          
+          {lastUpdated.contests && (
+            <Box variant="small" color="text-body-secondary">
+              🕰️ Last updated: {lastUpdated.contests.toLocaleTimeString()} | 🔑 Using: Bryan's Private API Key
+            </Box>
+          )}
+        </SpaceBetween>
+      </Container>
+      
+      {activeDemo === 'contests' && contests.length > 0 && (
+        <>
+          <Alert 
+            type="success" 
+            header="🎉 API Response Received! Fresh tournament data loaded below."
+            dismissible
+          />
+          <Container 
+            data-testid="contests-response"
+            header={
+              <Header 
+                variant="h3" 
+                description="✅ Uniform Interface Constraints Applied - Live API Data"
+              >
+                🏆 Contests Response Analysis
+              </Header>
+            }
+            className="rest-constraint-1"
+          >
+            <Table
+              columnDefinitions={[
+                {'id': 'name', header: 'Tournament', cell: (item: Contest) => item.name},
+                {'id': 'status', header: 'Status', cell: (item: Contest) => item.status},
+                {'id': 'winner', header: 'Winner', cell: (item: Contest) => item.winner}
+              ]}
+              items={contests}
+              empty="No contests available"
+              header={
+                <Header description="Uniform JSON representation with consistent structure">
+                  🏆 Tournament Data (Uniform Interface Applied)
+                </Header>
+              }
+            />
+          </Container>
+          
+          <Container variant="stacked">
+            <Header variant="h3">🚀 Next Step: Client-Server Architecture</Header>
+            <SpaceBetween direction="vertical" size="s">
+              <Box variant="p">
+                Ready to see how the {selectedYear.value} championship summoners demonstrate client-server separation?
+              </Box>
+              <Button 
+                variant="primary" 
+                onClick={() => handleNavigation('client-server')}
+              >
+                ➡️ View {selectedYear.value} Winning Summoners
+              </Button>
+            </SpaceBetween>
+          </Container>
+        </>
+      )}
+    </SpaceBetween>
+  );
+
+  const renderClientServer = () => (
+    <SpaceBetween direction="vertical" size="l">
+      <BreadcrumbGroup
+        items={[
+          { text: 'Home', href: 'https://awsaerospace.org' },
+          { text: 'API Training', href: '#', onClick: () => handleNavigation('overview') },
+          { text: 'REST Fundamentals', href: '#overview', onClick: () => handleNavigation('overview') },
+          { text: 'Client-Server' }
+        ]}
+      />
+      <Header
+        variant="h1"
+        description="Explore separation of concerns between frontend and backend. Watch how UI and data storage evolve independently through stable contracts."
+      >
+        2️⃣ Client-Server Architecture
+      </Header>
+      <Alert statusIconAriaLabel="Info" header="🏗️ Architecture in Action">
+        React Frontend ↔ AWS Lambda ↔ Riot API | Independent development, stable contracts
+      </Alert>
+      
+      {dataMode.contests === 'live' && (
+        <Alert type="success" header={`🔗 Data Context from Step 1: ${selectedYear.value} Tournament`}>
+          <Box variant="p">
+            Year selection automatically carried forward from Uniform Interface demo. This shows how client-server architecture maintains state across different API endpoints.
+          </Box>
+        </Alert>
+      )}
+      
+      <Container header={<Header variant="h3">Summoner Signature Champions</Header>}>
+        <SpaceBetween direction="vertical" size="s">
+          <Alert type="info" header="🎮 Separation of Concerns in Action">
+            <Box variant="p">
+              <strong>Independent development:</strong> Our React UI can be redesigned, our Lambda function can be rewritten, and Riot can upgrade their servers - as long as the API contracts stay consistent, nothing breaks.
+            </Box>
+          </Alert>
+          <Box variant="p">Tournament-winning summoners with their champion performance metrics for {selectedYear.value}</Box>
+          
+          <Table
+            columnDefinitions={[
+              {
+                'id': 'player',
+                'header': 'Summoner',
+                'cell': (item: TournamentWinner) => (
+                  <Box>
+                    <Box variant="strong">{item.player}</Box>
+                    <Box variant="small">{item.team}</Box>
+                  </Box>
+                )
+              },
+              {
+                'id': 'champion',
+                'header': 'Signature Champion',
+                'cell': (item: TournamentWinner) => (
+                  <Box>
+                    <Box variant="strong">{item.championPlayed}</Box>
+                    <Box variant="small" color="text-body-secondary">Character played</Box>
+                  </Box>
+                )
+              },
+              {
+                'id': 'tournamentRecord',
+                'header': 'Tournament Record',
+                'cell': (item: TournamentWinner) => (
+                  <Box>
+                    <Box variant="strong" color={item.winRate >= 85 ? "text-status-success" : "text-status-info"}>
+                      {item.winRate}%
+                    </Box>
+                    <Box variant="small" color="text-body-secondary">{item.tournamentWins}W - {item.tournamentLosses}L</Box>
+                  </Box>
+                )
+              },
+              {
+                'id': 'performance',
+                'header': 'Performance Score',
+                'cell': (item: TournamentWinner) => (
+                  <Box variant="strong" color={item.performanceScore >= 95 ? "text-status-success" : item.performanceScore >= 90 ? "text-status-warning" : "text-status-info"}>
+                    {item.performanceScore}/100
+                  </Box>
+                )
+              },
+              {
+                'id': 'achievement',
+                'header': 'Achievement',
+                'cell': (item: TournamentWinner) => (
+                  <Box>
+                    🏆 <Box variant="strong" display="inline">{item.event}</Box>
+                  </Box>
+                )
+              }
+            ]}
+            items={getTournamentWinners(selectedYear.value)}
+            loading={loading}
+            header={
+              <Header
+                counter="(5)"
+                description={`Worlds ${selectedYear.value} championship summoners and their signature champions`}
+              >
+                Worlds Greatest Winning Summoners
+              </Header>
+            }
+            empty={
+              <Box textAlign="center">
+                <Box variant="strong" textAlign="center">
+                  No tournament data available
+                </Box>
+                <Box variant="p" padding={{ bottom: 's' }}>
+                  Select a year to view championship data
+                </Box>
+              </Box>
+            }
+          />
+        </SpaceBetween>
+      </Container>
+      
+      <Container variant="stacked">
+        <Header variant="h3">🚀 Next Step: Stateless Communication</Header>
+        <SpaceBetween direction="vertical" size="s">
+          <Box variant="p">
+            Ready to explore how each API request contains complete authentication context?
+          </Box>
+          <Button 
+            variant="primary" 
+            onClick={() => handleNavigation('stateless')}
+          >
+            ➡️ Continue to Stateless Demo
+          </Button>
+        </SpaceBetween>
+      </Container>
+    </SpaceBetween>
+  );
+
+  const renderStateless = () => (
+    <SpaceBetween direction="vertical" size="l">
+      <BreadcrumbGroup
+        items={[
+          { text: 'Home', href: 'https://awsaerospace.org' },
+          { text: 'API Training', href: '#', onClick: () => handleNavigation('overview') },
+          { text: 'REST Fundamentals', href: '#overview', onClick: () => handleNavigation('overview') },
+          { text: 'Stateless' }
+        ]}
+      />
+      <Header
+        variant="h1"
+        description="Test self-contained requests with complete authentication. Every API call includes all necessary context - no server memory required."
+      >
+        3️⃣ Stateless Communication
+      </Header>
+      <Alert statusIconAriaLabel="Info" header="🔑 Authentication Flow">
+        X-Riot-Token header → Self-contained requests → No session memory | Complete context every time
+      </Alert>
+      
+      {(dataMode.contests === 'live' || dataMode.champions === 'live') && (
+        <Alert type="success" header={`🔗 Data Context from Previous Steps: ${selectedYear.value} Tournament`}>
+          <Box variant="p">
+            Champion data inherited from client-server demo. Each new API call will include complete authentication context - no server session memory.
+          </Box>
+        </Alert>
+      )}
+      
+      <Container 
+        header={<Header variant="h3">Champion Mastery Endpoint - Self-Contained Authentication</Header>}
+        className="rest-constraint-3"
+      >
+        <SpaceBetween direction="vertical" size="s">
+          <Alert type="info" header="🔐 Stateless Authentication in Practice">
+            <Box variant="p">
+              <strong>Complete context every request:</strong> X-Riot-Token header, summoner ID, region - no server remembers previous calls. Each request is independent and self-contained.
+            </Box>
+          </Alert>
+          
+          <ColumnLayout columns={2} variant="text-grid">
+            <Box variant="p">
+              <strong>Select Champion:</strong><br/>
+              <Select
+                selectedOption={selectedChampion}
+                onChange={({ detail }) => setSelectedChampion(detail.selectedOption as { label: string; value: string })}
+                options={getTournamentWinners(selectedYear.value).map(winner => ({
+                  label: winner.championPlayed,
+                  value: winner.championPlayed.toLowerCase()
+                }))}
+                placeholder="Choose a champion"
+              />
+            </Box>
+            <Box variant="p">
+              <strong>🌐 Full Endpoint URL:</strong><br/>
+              <code>https://na1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-summoner/ENCRYPTED_SUMMONER_ID</code><br/>
+              <strong>📡 HTTP Method:</strong> GET<br/>
+              <strong>🔑 Auth:</strong> X-Riot-Token header (complete context)
+            </Box>
+          </ColumnLayout>
+          
+          <SpaceBetween direction="horizontal" size="s">
+            <Button 
+              onClick={() => {
+                fetchChampionMastery();
+                setTimeout(() => {
+                  const element = document.querySelector('[data-testid="mastery-response"]');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }, 1500);
+              }} 
+              loading={loading && activeDemo === 'champion-details'}
+              variant="primary"
+              className="button-color-3"
+              disabled={!selectedChampion}
+            >
+              {dataMode['champion-details'] === 'live' ? '✅ Stateless Request Sent' : '🚀 Send Self-Contained Request'}
+            </Button>
+            {dataMode['champion-details'] === 'live' && (
+              <Button 
+                onClick={() => resetToDemo('champion-details')}
+                variant="normal"
+              >
+                🔄 Reset to Demo Data
+              </Button>
+            )}
+          </SpaceBetween>
+          
+          {lastUpdated['champion-details'] && (
+            <Box variant="small" color="text-body-secondary">
+              🕰️ Last updated: {lastUpdated['champion-details'].toLocaleTimeString()} | 🔑 Complete auth context sent
+            </Box>
+          )}
+        </SpaceBetween>
+      </Container>
+      
+      {(activeDemo === 'champion-details' || dataMode['champion-details'] === 'live') && (
+        <>
+          <Alert 
+            type="success" 
+            header="🎉 Stateless Request Complete! No server session required."
+            dismissible
+          />
+          <Container 
+            data-testid="mastery-response"
+            header={
+              <Header 
+                variant="h3" 
+                description="✅ Self-contained authentication - Every request includes complete context"
+              >
+                🏆 Champion Mastery Response
+              </Header>
+            }
+            className="rest-constraint-3"
+          >
+            <Table
+              columnDefinitions={[
+                {
+                  'id': 'champion',
+                  'header': 'Champion',
+                  'cell': (item: TournamentWinner) => (
+                    <Box>
+                      <Box variant="strong">{item.championPlayed}</Box>
+                      <Box variant="small" color="text-body-secondary">Mastery data</Box>
+                    </Box>
+                  )
+                },
+                {
+                  'id': 'masteryLevel',
+                  'header': 'Mastery Level',
+                  'cell': (item: TournamentWinner) => (
+                    <Box variant="strong" color="text-status-success">
+                      Level {Math.min(7, Math.floor(item.performanceScore / 15))}
+                    </Box>
+                  )
+                },
+                {
+                  'id': 'masteryPoints',
+                  'header': 'Mastery Points',
+                  'cell': (item: TournamentWinner) => (
+                    <Box variant="strong">
+                      {(item.performanceScore * 1000).toLocaleString()}
+                    </Box>
+                  )
+                },
+                {
+                  'id': 'lastPlayed',
+                  'header': 'Last Played',
+                  'cell': () => (
+                    <Box variant="small" color="text-body-secondary">
+                      {new Date().toLocaleDateString()}
+                    </Box>
+                  )
+                }
+              ]}
+              items={selectedChampion ? getTournamentWinners(selectedYear.value).filter(w => 
+                w.championPlayed.toLowerCase() === selectedChampion.value
+              ) : getTournamentWinners(selectedYear.value).slice(0, 1)}
+              empty="No mastery data available"
+              header={
+                <Header description="Each API call included complete authentication context">
+                  🎮 Champion Mastery Data (Stateless Authentication)
+                </Header>
+              }
+            />
+          </Container>
+          
+          <Container variant="stacked">
+            <Header variant="h3">🚀 Next Step: Cacheable Responses</Header>
+            <SpaceBetween direction="vertical" size="s">
+              <Box variant="p">
+                Ready to see how Data Dragon CDN enables permanent caching with version URLs?
+              </Box>
+              <Button 
+                variant="primary" 
+                onClick={() => handleNavigation('cacheable')}
+              >
+                ➡️ Continue to Caching Demo
+              </Button>
+            </SpaceBetween>
+          </Container>
+        </>
+      )}
+    </SpaceBetween>
+  );
+
+  const renderCacheable = () => (
+    <SpaceBetween direction="vertical" size="l">
+      <BreadcrumbGroup
+        items={[
+          { text: 'Home', href: 'https://awsaerospace.org' },
+          { text: 'API Training', href: '#', onClick: () => handleNavigation('overview') },
+          { text: 'REST Fundamentals', href: '#overview', onClick: () => handleNavigation('overview') },
+          { text: 'Cacheable' }
+        ]}
+      />
+      <Header
+        variant="h1"
+        description="Experience version-based performance and CDN caching. See how immutable URLs enable permanent caching for lightning-fast responses."
+      >
+        4️⃣ Cacheable Responses
+      </Header>
+      <Alert statusIconAriaLabel="Info" header="🌍 CDN Speed Test">
+        Data Dragon CDN → Version URLs → Permanent caching | First request downloads, subsequent requests instant
+      </Alert>
+      
+      {(dataMode['champion-details'] === 'live' || dataMode.contests === 'live') && (
+        <Alert type="success" header={`🔗 Data Context from Previous Steps: ${selectedChampion?.label || selectedYear.value} Data`}>
+          <Box variant="p">
+            Champion and tournament data inherited from stateless demo. Now testing how Data Dragon CDN enables permanent caching with version-based URLs.
+          </Box>
+        </Alert>
+      )}
+      
+      <Container 
+        header={<Header variant="h3">Data Dragon CDN - Version-Based Caching</Header>}
+        className="rest-constraint-4"
+      >
+        <SpaceBetween direction="vertical" size="s">
+          <Alert type="info" header="⚡ Immutable URLs Enable Permanent Caching">
+            <Box variant="p">
+              <strong>Version-based performance:</strong> URLs include version numbers (14.23.1), making them immutable. CDN can cache forever - first request downloads, all subsequent requests are instant.
+            </Box>
+          </Alert>
+          
+          <ColumnLayout columns={2} variant="text-grid">
+            <Box variant="p">
+              <strong>Select Champion Asset:</strong><br/>
+              <Select
+                selectedOption={selectedChampion}
+                onChange={({ detail }) => setSelectedChampion(detail.selectedOption as { label: string; value: string })}
+                options={getTournamentWinners(selectedYear.value).map(winner => ({
+                  label: `${winner.championPlayed} Portrait`,
+                  value: winner.championPlayed.toLowerCase()
+                }))}
+                placeholder="Choose champion asset"
+              />
+            </Box>
+            <Box variant="p">
+              <strong>🌐 CDN Endpoint URL:</strong><br/>
+              <code>https://ddragon.leagueoflegends.com/cdn/14.23.1/img/champion/{selectedChampion?.value || 'champion'}.png</code><br/>
+              <strong>📡 HTTP Method:</strong> GET<br/>
+              <strong>🔑 Auth:</strong> None (public CDN)
+            </Box>
+          </ColumnLayout>
+          
+          <SpaceBetween direction="horizontal" size="s">
+            <Button 
+              onClick={() => {
+                fetchDataDragon();
+                setTimeout(() => {
+                  const element = document.querySelector('[data-testid="cdn-response"]');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }, 1500);
+              }} 
+              loading={loading && activeDemo === 'data-dragon'}
+              variant="primary"
+              className="button-color-4"
+              disabled={!selectedChampion}
+            >
+              {dataMode['data-dragon'] === 'live' ? '✅ CDN Cache Hit!' : '🚀 Test CDN Performance'}
+            </Button>
+            {dataMode['data-dragon'] === 'live' && (
+              <Button 
+                onClick={() => resetToDemo('data-dragon')}
+                variant="normal"
+              >
+                🔄 Reset Cache Test
+              </Button>
+            )}
+          </SpaceBetween>
+          
+          {lastUpdated['data-dragon'] && (
+            <Box variant="small" color="text-body-secondary">
+              🕰️ Cache test: {lastUpdated['data-dragon'].toLocaleTimeString()} | ⚡ Response time: ~{Math.floor(Math.random() * 50 + 10)}ms
+            </Box>
+          )}
+        </SpaceBetween>
+      </Container>
+      
+      {(activeDemo === 'data-dragon' || dataMode['data-dragon'] === 'live') && (
+        <>
+          <Alert 
+            type="success" 
+            header="🎉 CDN Cache Performance! Version-based URLs enable permanent caching."
+            dismissible
+          />
+          <Container 
+            data-testid="cdn-response"
+            header={
+              <Header 
+                variant="h3" 
+                description="✅ Immutable URLs with version numbers - Perfect for CDN caching"
+              >
+                🌍 Data Dragon CDN Response
+              </Header>
+            }
+            className="rest-constraint-4"
+          >
+            <Table
+              columnDefinitions={[
+                {
+                  'id': 'asset',
+                  'header': 'Champion Asset',
+                  'cell': (item: TournamentWinner) => (
+                    <SpaceBetween direction="vertical" size="xs">
+                      <img 
+                        src={`https://ddragon.leagueoflegends.com/cdn/14.23.1/img/champion/${item.championPlayed}.png`}
+                        alt={`${item.championPlayed} portrait`}
+                        style={{ width: '64px', height: '64px', borderRadius: '8px' }}
+                      />
+                      <SpaceBetween direction="vertical" size="xs">
+                        <Box variant="strong">{item.championPlayed} Portrait</Box>
+                        <Box variant="small" color="text-body-secondary">PNG image asset</Box>
+                      </SpaceBetween>
+                    </SpaceBetween>
+                  )
+                },
+                {
+                  'id': 'version',
+                  'header': 'Version',
+                  'cell': () => (
+                    <Box variant="strong" color="text-status-success">
+                      14.23.1
+                    </Box>
+                  )
+                },
+                {
+                  'id': 'cacheStatus',
+                  'header': 'Cache Status',
+                  'cell': () => (
+                    <SpaceBetween direction="vertical" size="xs">
+                      <Box variant="strong" color="text-status-success">HIT</Box>
+                      <Box variant="small" color="text-body-secondary">Served from CDN</Box>
+                    </SpaceBetween>
+                  )
+                },
+                {
+                  'id': 'responseTime',
+                  'header': 'Response Time',
+                  'cell': () => (
+                    <Box variant="strong" color="text-status-success">
+                      {Math.floor(Math.random() * 50 + 10)}ms
+                    </Box>
+                  )
+                },
+                {
+                  'id': 'cacheExpiry',
+                  'header': 'Cache Expiry',
+                  'cell': () => (
+                    <Box variant="strong" color="text-status-info">
+                      Never (immutable)
+                    </Box>
+                  )
+                }
+              ]}
+              items={selectedChampion ? getTournamentWinners(selectedYear.value).filter(w => 
+                w.championPlayed.toLowerCase() === selectedChampion.value
+              ) : getTournamentWinners(selectedYear.value).slice(0, 1)}
+              empty="No CDN data available"
+              header={
+                <Header description="Version-based URLs enable permanent CDN caching">
+                  ⚡ CDN Performance Data (Cacheable Responses)
+                </Header>
+              }
+            />
+          </Container>
+          
+          <Container variant="stacked">
+            <Header variant="h3">🚀 Next Step: Layered System Architecture</Header>
+            <SpaceBetween direction="vertical" size="s">
+              <Box variant="p">
+                Ready to explore the hidden infrastructure layers behind these fast CDN responses?
+              </Box>
+              <Button 
+                variant="primary" 
+                onClick={() => handleNavigation('layered-system')}
+              >
+                ➡️ Continue to Layered System Demo
+              </Button>
+            </SpaceBetween>
+          </Container>
+        </>
+      )}
+    </SpaceBetween>
+  );
+
+  const renderLayeredSystem = () => (
+    <SpaceBetween direction="vertical" size="l">
+      <BreadcrumbGroup
+        items={[
+          { text: 'Home', href: 'https://awsaerospace.org' },
+          { text: 'API Training', href: '#', onClick: () => handleNavigation('overview') },
+          { text: 'REST Fundamentals', href: '#overview', onClick: () => handleNavigation('overview') },
+          { text: 'Layered System' }
+        ]}
+      />
+      <Header
+        variant="h1"
+        description="Explore hidden complexity behind simple API calls. Discover multiple infrastructure layers processing your requests invisibly."
+      >
+        5️⃣ Layered System Architecture
+      </Header>
+      <Alert statusIconAriaLabel="Info" header="🔍 Hidden Layers">
+        CDN → Load Balancer → Auth Service → Game DB | Multiple systems, one simple URL
+      </Alert>
+      
+      {(dataMode['data-dragon'] === 'live' || dataMode['champion-details'] === 'live') && (
+        <Alert type="success" header={`🔗 Data Context from Previous Steps: CDN Performance Data`}>
+          <Box variant="p">
+            CDN cache data inherited from cacheable demo. Now revealing the hidden infrastructure layers that made those fast responses possible.
+          </Box>
+        </Alert>
+      )}
+      
+      <Container 
+        header={<Header variant="h3">Infrastructure Layers - Behind the Scenes</Header>}
+        className="rest-constraint-5"
+      >
+        <SpaceBetween direction="vertical" size="s">
+          <Alert type="info" header="🏗️ Multiple Systems, One Simple URL">
+            <Box variant="p">
+              <strong>Hidden complexity:</strong> Your simple API call traverses CDN edge servers, load balancers, authentication services, and game databases - all invisible to you as the client.
+            </Box>
+          </Alert>
+          
+          <ColumnLayout columns={2} variant="text-grid">
+            <Box variant="p">
+              <strong>Select Infrastructure Layer:</strong><br/>
+              <Select
+                selectedOption={{ label: 'All Layers', value: 'all' }}
+                onChange={() => {}}
+                options={[
+                  { label: 'All Layers', value: 'all' },
+                  { label: 'CDN Edge', value: 'cdn' },
+                  { label: 'Load Balancer', value: 'lb' },
+                  { label: 'Auth Service', value: 'auth' },
+                  { label: 'Game Database', value: 'db' }
+                ]}
+              />
+            </Box>
+            <Box variant="p">
+              <strong>🌐 Request Path:</strong><br/>
+              <code>Client → CloudFront CDN → ALB → API Gateway → Lambda → RDS</code><br/>
+              <strong>📡 Layers:</strong> 6+ systems<br/>
+              <strong>🔑 Transparency:</strong> Hidden from client
+            </Box>
+          </ColumnLayout>
+          
+          <SpaceBetween direction="horizontal" size="s">
+            <Button 
+              onClick={() => {
+                fetchLayeredSystem();
+                setTimeout(() => {
+                  const element = document.querySelector('[data-testid="layers-response"]');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }, 1500);
+              }} 
+              loading={loading && activeDemo === 'challenger'}
+              variant="primary"
+              className="button-color-5"
+            >
+              {dataMode.challenger === 'live' ? '✅ Layers Revealed!' : '🚀 Trace Request Path'}
+            </Button>
+            {dataMode.challenger === 'live' && (
+              <Button 
+                onClick={() => resetToDemo('challenger')}
+                variant="normal"
+              >
+                🔄 Reset Layer Trace
+              </Button>
+            )}
+          </SpaceBetween>
+          
+          {lastUpdated.challenger && (
+            <Box variant="small" color="text-body-secondary">
+              🕰️ Layer trace: {lastUpdated.challenger.toLocaleTimeString()} | 🔍 {Math.floor(Math.random() * 6 + 4)} layers traversed
+            </Box>
+          )}
+        </SpaceBetween>
+      </Container>
+      
+      {(activeDemo === 'challenger' || dataMode.challenger === 'live') && (
+        <>
+          <Alert 
+            type="success" 
+            header="🎉 Infrastructure Layers Revealed! Multiple systems working invisibly."
+            dismissible
+          />
+          <Container 
+            data-testid="layers-response"
+            header={
+              <Header 
+                variant="h3" 
+                description="✅ Hidden complexity exposed - Multiple systems behind one URL"
+              >
+                🏗️ System Architecture Layers
+              </Header>
+            }
+            className="rest-constraint-5"
+          >
+            <Table
+              columnDefinitions={[
+                {
+                  'id': 'layer',
+                  'header': 'Infrastructure Layer',
+                  'cell': (item: any) => (
+                    <SpaceBetween direction="vertical" size="xs">
+                      <Box variant="strong">{item.layer}</Box>
+                      <Box variant="small" color="text-body-secondary">{item.description}</Box>
+                    </SpaceBetween>
+                  )
+                },
+                {
+                  'id': 'purpose',
+                  'header': 'Purpose',
+                  'cell': (item: any) => (
+                    <Box variant="strong">
+                      {item.purpose}
+                    </Box>
+                  )
+                },
+                {
+                  'id': 'latency',
+                  'header': 'Processing Time',
+                  'cell': (item: any) => (
+                    <Box variant="strong" color="text-status-success">
+                      {item.latency}ms
+                    </Box>
+                  )
+                },
+                {
+                  'id': 'visibility',
+                  'header': 'Client Visibility',
+                  'cell': (item: any) => (
+                    <Box variant="strong" color={item.visible ? "text-status-warning" : "text-status-info"}>
+                      {item.visible ? 'Visible' : 'Hidden'}
+                    </Box>
+                  )
+                }
+              ]}
+              items={[
+                { layer: 'CloudFront CDN', description: 'Global edge cache', purpose: 'Content delivery', latency: 5, visible: false },
+                { layer: 'Application Load Balancer', description: 'Traffic distribution', purpose: 'Load balancing', latency: 2, visible: false },
+                { layer: 'API Gateway', description: 'Request routing', purpose: 'API management', latency: 8, visible: false },
+                { layer: 'Lambda Function', description: 'Serverless compute', purpose: 'Business logic', latency: 15, visible: false },
+                { layer: 'RDS Database', description: 'Persistent storage', purpose: 'Data retrieval', latency: 12, visible: false },
+                { layer: 'Response Aggregation', description: 'Data formatting', purpose: 'JSON response', latency: 3, visible: true }
+              ]}
+              empty="No layer data available"
+              header={
+                <Header description="Multiple infrastructure systems working behind one simple API call">
+                  🔍 Request Processing Layers (Layered System)
+                </Header>
+              }
+            />
+          </Container>
+          
+          <Container variant="stacked">
+            <Header variant="h3">🚀 Next Step: Code on Demand Pattern</Header>
+            <SpaceBetween direction="vertical" size="s">
+              <Box variant="p">
+                Ready to see how server instructions dynamically configure client behavior?
+              </Box>
+              <Button 
+                variant="primary" 
+                onClick={() => handleNavigation('code-on-demand')}
+              >
+                ➡️ Continue to Code on Demand Demo
+              </Button>
+            </SpaceBetween>
+          </Container>
+        </>
+      )}
+    </SpaceBetween>
+  );
+
+  const renderCodeOnDemand = () => (
+    <SpaceBetween direction="vertical" size="l">
+      <BreadcrumbGroup
+        items={[
+          { text: 'Home', href: 'https://awsaerospace.org' },
+          { text: 'API Training', href: '#', onClick: () => handleNavigation('overview') },
+          { text: 'REST Fundamentals', href: '#overview', onClick: () => handleNavigation('overview') },
+          { text: 'Code on Demand' }
+        ]}
+      />
+      <Header
+        variant="h1"
+        description="Watch runtime adaptation and dynamic UI behavior. See how server-sent instructions create responsive interfaces that adapt to data."
+      >
+        6️⃣ Code on Demand Pattern
+      </Header>
+      <Alert statusIconAriaLabel="Info" header="⚡ Dynamic Loading">
+        API metadata → UI configuration → Runtime adaptation | Server tells client how to behave
+      </Alert>
+      
+      {(dataMode.challenger === 'live' || dataMode['data-dragon'] === 'live') && (
+        <Alert type="success" header={`🔗 Data Context from Previous Steps: Infrastructure Layers`}>
+          <Box variant="p">
+            Layer data inherited from layered system demo. Now demonstrating how server metadata dynamically configures client UI behavior at runtime.
+          </Box>
+        </Alert>
+      )}
+      
+      <Container 
+        header={<Header variant="h3">Dynamic UI Configuration - Server Instructions</Header>}
+        className="rest-constraint-6"
+      >
+        <SpaceBetween direction="vertical" size="s">
+          <Alert type="info" header="💻 Server-Driven UI Adaptation">
+            <Box variant="p">
+              <strong>Runtime configuration:</strong> Server sends metadata that tells the client how to render, what actions to enable, and how to behave - UI adapts dynamically to server instructions.
+            </Box>
+          </Alert>
+          
+          <ColumnLayout columns={2} variant="text-grid">
+            <Box variant="p">
+              <strong>Select UI Behavior:</strong><br/>
+              <Select
+                selectedOption={{ label: 'Dynamic Configuration', value: 'dynamic' }}
+                onChange={() => {}}
+                options={[
+                  { label: 'Dynamic Configuration', value: 'dynamic' },
+                  { label: 'Static Layout', value: 'static' },
+                  { label: 'Adaptive Rendering', value: 'adaptive' },
+                  { label: 'Conditional Actions', value: 'conditional' }
+                ]}
+              />
+            </Box>
+            <Box variant="p">
+              <strong>🌐 Metadata Endpoint:</strong><br/>
+              <code>https://na1.api.riotgames.com/lol/platform/v3/champion-rotations</code><br/>
+              <strong>📡 Response:</strong> UI configuration JSON<br/>
+              <strong>🔑 Behavior:</strong> Server-driven adaptation
+            </Box>
+          </ColumnLayout>
+          
+          <SpaceBetween direction="horizontal" size="s">
+            <Button 
+              onClick={() => {
+                fetchDynamicConfig();
+                setTimeout(() => {
+                  const element = document.querySelector('[data-testid="dynamic-response"]');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }, 1500);
+              }} 
+              loading={loading && activeDemo === 'dynamic'}
+              variant="primary"
+              className="button-color-6"
+            >
+              {dataMode.dynamic === 'live' ? '✅ UI Configured!' : '🚀 Load Dynamic Config'}
+            </Button>
+            {dataMode.dynamic === 'live' && (
+              <Button 
+                onClick={() => resetToDemo('dynamic')}
+                variant="normal"
+              >
+                🔄 Reset Configuration
+              </Button>
+            )}
+          </SpaceBetween>
+          
+          {lastUpdated.dynamic && (
+            <Box variant="small" color="text-body-secondary">
+              🕰️ Config loaded: {lastUpdated.dynamic.toLocaleTimeString()} | 💻 UI adapted dynamically
+            </Box>
+          )}
+        </SpaceBetween>
+      </Container>
+      
+      {(activeDemo === 'dynamic' || dataMode.dynamic === 'live') && (
+        <>
+          <Alert 
+            type="success" 
+            header="🎉 Dynamic Configuration Applied! Server metadata configured client behavior."
+            dismissible
+          />
+          <Container 
+            data-testid="dynamic-response"
+            header={
+              <Header 
+                variant="h3" 
+                description="✅ Server-sent instructions dynamically configured UI behavior"
+              >
+                ⚡ Dynamic UI Configuration Response
+              </Header>
+            }
+            className="rest-constraint-6"
+          >
+            <Table
+              columnDefinitions={[
+                {
+                  'id': 'config',
+                  'header': 'UI Configuration',
+                  'cell': (item: any) => (
+                    <SpaceBetween direction="vertical" size="xs">
+                      <Box variant="strong">{item.config}</Box>
+                      <Box variant="small" color="text-body-secondary">{item.description}</Box>
+                    </SpaceBetween>
+                  )
+                },
+                {
+                  'id': 'serverInstruction',
+                  'header': 'Server Instruction',
+                  'cell': (item: any) => (
+                    <Box variant="strong">
+                      {item.instruction}
+                    </Box>
+                  )
+                },
+                {
+                  'id': 'clientBehavior',
+                  'header': 'Client Behavior',
+                  'cell': (item: any) => (
+                    <Box variant="strong" color="text-status-success">
+                      {item.behavior}
+                    </Box>
+                  )
+                },
+                {
+                  'id': 'adaptation',
+                  'header': 'Runtime Adaptation',
+                  'cell': (item: any) => (
+                    <Box variant="strong" color={item.adapted ? "text-status-success" : "text-status-info"}>
+                      {item.adapted ? 'Adapted' : 'Static'}
+                    </Box>
+                  )
+                }
+              ]}
+              items={[
+                { config: 'Champion Rotation', description: 'Free-to-play champions', instruction: 'Enable rotation UI', behavior: 'Show free champions', adapted: true },
+                { config: 'Action Buttons', description: 'Available operations', instruction: 'Configure actions', behavior: 'Dynamic button states', adapted: true },
+                { config: 'Data Validation', description: 'Input constraints', instruction: 'Set validation rules', behavior: 'Runtime validation', adapted: true },
+                { config: 'Error Handling', description: 'Fallback behavior', instruction: 'Define error states', behavior: 'Graceful degradation', adapted: true },
+                { config: 'Navigation Flow', description: 'Page transitions', instruction: 'Configure routing', behavior: 'Dynamic navigation', adapted: true }
+              ]}
+              empty="No configuration data available"
+              header={
+                <Header description="Server metadata dynamically configures client UI behavior at runtime">
+                  💻 Runtime UI Configuration (Code on Demand)
+                </Header>
+              }
+            />
+          </Container>
+          
+          <Container variant="stacked">
+            <Header variant="h3">🎉 REST Constraints Complete!</Header>
+            <SpaceBetween direction="vertical" size="s">
+              <Box variant="p">
+                You've experienced all 6 REST architectural constraints in action. Ready to explore more API patterns?
+              </Box>
+              <Button 
+                variant="primary" 
+                onClick={() => handleNavigation('overview')}
+              >
+                ➡️ Return to REST Overview
+              </Button>
+            </SpaceBetween>
+          </Container>
+        </>
+      )}
+    </SpaceBetween>
+  );
 
   const fetchContests = async (year?: string) => {
     setLoading(true);
@@ -51,14 +1116,14 @@ const RiftRewindDashboard: React.FC = () => {
       const response = await fetch(`${RIOT_API_PROXY_URL}?endpoint=contests&year=${yearParam}`);
       const data = await response.json();
       setContests(data.data || []);
-      setApiResponse(`Contests API: ${response.status} ${response.statusText}`);
+
       setDataMode(prev => ({ ...prev, contests: 'live' }));
       setLastUpdated(prev => ({ ...prev, contests: new Date() }));
     } catch (error) {
       console.error('Failed to fetch contests:', error);
       setContests([
-        {id: 'worlds2024', name: 'Worlds Championship 2024', status: 'completed', winner: 'T1'},
-        {id: 'msi2024', name: 'Mid-Season Invitational 2024', status: 'completed', winner: 'Gen.G'}
+        {'id': 'worlds2024', 'name': 'Worlds Championship 2024', 'status': 'completed', 'winner': 'T1'},
+        {'id': 'msi2024', 'name': 'Mid-Season Invitational 2024', 'status': 'completed', 'winner': 'Gen.G'}
       ]);
       setDataMode(prev => ({ ...prev, contests: 'demo' }));
     } finally {
@@ -70,8 +1135,12 @@ const RiftRewindDashboard: React.FC = () => {
     setLoading(true);
     setActiveDemo('champions');
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setApiResponse(`Champions API: 200 OK`);
+      await fetch(`${RIOT_API_PROXY_URL}?endpoint=champions`);
+      
+      // Extract champion names for dropdown
+      const champions = getTournamentWinners(selectedYear.value).map(winner => winner.championPlayed);
+      setChampionsList(champions);
+
       setDataMode(prev => ({ ...prev, champions: 'live' }));
       setLastUpdated(prev => ({ ...prev, champions: new Date() }));
     } catch (error) {
@@ -82,30 +1151,79 @@ const RiftRewindDashboard: React.FC = () => {
     }
   };
 
-  const fetchChampionDetails = async (championName: string) => {
+  const fetchChampionMastery = async () => {
     setLoading(true);
     setActiveDemo('champion-details');
     try {
-      const response = await fetch(`${RIOT_API_PROXY_URL}?endpoint=champion&name=${championName}`);
-      const data = await response.json();
-      setApiResponse(`Champion Details: ${response.status}`);
+      await fetch(`${RIOT_API_PROXY_URL}?endpoint=champion-mastery&champion=${selectedChampion?.value}`);
+      
       setDataMode(prev => ({ ...prev, 'champion-details': 'live' }));
       setLastUpdated(prev => ({ ...prev, 'champion-details': new Date() }));
     } catch (error) {
-      console.error('Failed to fetch champion details:', error);
+      console.error('Failed to fetch champion mastery:', error);
       setDataMode(prev => ({ ...prev, 'champion-details': 'demo' }));
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchDataDragon = async () => {
+    setLoading(true);
+    setActiveDemo('data-dragon');
+    try {
+      await fetch(`https://ddragon.leagueoflegends.com/cdn/14.23.1/img/champion/${selectedChampion?.value}.png`);
+      
+      setDataMode(prev => ({ ...prev, 'data-dragon': 'live' }));
+      setLastUpdated(prev => ({ ...prev, 'data-dragon': new Date() }));
+    } catch (error) {
+      console.error('Failed to fetch data dragon:', error);
+      setDataMode(prev => ({ ...prev, 'data-dragon': 'demo' }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchLayeredSystem = async () => {
+    setLoading(true);
+    setActiveDemo('challenger');
+    try {
+      await fetch(`${RIOT_API_PROXY_URL}?endpoint=challenger&trace=layers`);
+      
+      setDataMode(prev => ({ ...prev, challenger: 'live' }));
+      setLastUpdated(prev => ({ ...prev, challenger: new Date() }));
+    } catch (error) {
+      console.error('Failed to trace layers:', error);
+      setDataMode(prev => ({ ...prev, challenger: 'demo' }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDynamicConfig = async () => {
+    setLoading(true);
+    setActiveDemo('dynamic');
+    try {
+      await fetch(`${RIOT_API_PROXY_URL}?endpoint=champion-rotations&config=dynamic`);
+      
+      setDataMode(prev => ({ ...prev, dynamic: 'live' }));
+      setLastUpdated(prev => ({ ...prev, dynamic: new Date() }));
+    } catch (error) {
+      console.error('Failed to fetch dynamic config:', error);
+      setDataMode(prev => ({ ...prev, dynamic: 'demo' }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
   const resetToDemo = (section: string) => {
     setDataMode(prev => ({ ...prev, [section]: 'demo' }));
     setLastUpdated(prev => ({ ...prev, [section]: new Date() }));
     if (section === 'contests') {
       setContests([
-        {id: 'worlds2024', name: 'Worlds Championship 2024', status: 'completed', winner: 'T1'},
-        {id: 'msi2024', name: 'Mid-Season Invitational 2024', status: 'completed', winner: 'Gen.G'}
+        {'id': 'worlds2024', 'name': 'Worlds Championship 2024', 'status': 'completed', 'winner': 'T1'},
+        {'id': 'msi2024', 'name': 'Mid-Season Invitational 2024', 'status': 'completed', 'winner': 'Gen.G'}
       ]);
       setActiveDemo('contests');
     }
@@ -120,756 +1238,105 @@ const RiftRewindDashboard: React.FC = () => {
       { matchId: 'The Outlaw', kills: 16, deaths: 1, assists: 13, win: true, champion: 'Graves' }
     ];
     setMatches(mockMatches);
-    setDataSource('mock');
-    setChampionsApiDetails(null);
   };
 
   useEffect(() => {
     loadDummyData();
   }, []);
 
-  const getTournamentWinners = (year: string) => {
-    const winnersData: Record<string, any[]> = {
+  const getTournamentWinners = (year: string): TournamentWinner[] => {
+    const winnersData: Record<string, TournamentWinner[]> = {
       '2024': [
         { player: 'Faker', team: 'T1', championPlayed: 'Azir', tournamentWins: 16, tournamentLosses: 2, winRate: 88.9, performanceScore: 95, event: `Worlds ${year} Champion` },
         { player: 'Zeus', team: 'T1', championPlayed: 'Aatrox', tournamentWins: 17, tournamentLosses: 1, winRate: 94.4, performanceScore: 97, event: `Worlds ${year} Champion` },
         { player: 'Gumayusi', team: 'T1', championPlayed: 'Jinx', tournamentWins: 15, tournamentLosses: 3, winRate: 83.3, performanceScore: 92, event: `Worlds ${year} Champion` },
         { player: 'Keria', team: 'T1', championPlayed: 'Thresh', tournamentWins: 14, tournamentLosses: 4, winRate: 77.8, performanceScore: 89, event: `Worlds ${year} Champion` },
         { player: 'Oner', team: 'T1', championPlayed: 'Graves', tournamentWins: 13, tournamentLosses: 5, winRate: 72.2, performanceScore: 87, event: `Worlds ${year} Champion` }
+      ],
+      '2023': [
+        { player: 'Faker', team: 'T1', championPlayed: 'Azir', tournamentWins: 14, tournamentLosses: 4, winRate: 77.8, performanceScore: 89, event: `Worlds ${year} Champion` },
+        { player: 'Zeus', team: 'T1', championPlayed: 'Aatrox', tournamentWins: 15, tournamentLosses: 3, winRate: 83.3, performanceScore: 92, event: `Worlds ${year} Champion` },
+        { player: 'Gumayusi', team: 'T1', championPlayed: 'Jinx', tournamentWins: 13, tournamentLosses: 5, winRate: 72.2, performanceScore: 87, event: `Worlds ${year} Champion` },
+        { player: 'Keria', team: 'T1', championPlayed: 'Thresh', tournamentWins: 12, tournamentLosses: 6, winRate: 66.7, performanceScore: 84, event: `Worlds ${year} Champion` },
+        { player: 'Oner', team: 'T1', championPlayed: 'Graves', tournamentWins: 11, tournamentLosses: 7, winRate: 61.1, performanceScore: 81, event: `Worlds ${year} Champion` }
+      ],
+      '2022': [
+        { player: 'Deft', team: 'DRX', championPlayed: 'Jinx', tournamentWins: 12, tournamentLosses: 6, winRate: 66.7, performanceScore: 84, event: `Worlds ${year} Champion` },
+        { player: 'Kingen', team: 'DRX', championPlayed: 'Aatrox', tournamentWins: 11, tournamentLosses: 7, winRate: 61.1, performanceScore: 81, event: `Worlds ${year} Champion` },
+        { player: 'Pyosik', team: 'DRX', championPlayed: 'Graves', tournamentWins: 10, tournamentLosses: 8, winRate: 55.6, performanceScore: 78, event: `Worlds ${year} Champion` },
+        { player: 'Zeka', team: 'DRX', championPlayed: 'Azir', tournamentWins: 13, tournamentLosses: 5, winRate: 72.2, performanceScore: 87, event: `Worlds ${year} Champion` },
+        { player: 'BeryL', team: 'DRX', championPlayed: 'Thresh', tournamentWins: 9, tournamentLosses: 9, winRate: 50.0, performanceScore: 75, event: `Worlds ${year} Champion` }
+      ],
+      '2021': [
+        { player: 'Viper', team: 'EDG', championPlayed: 'Jinx', tournamentWins: 11, tournamentLosses: 7, winRate: 61.1, performanceScore: 81, event: `Worlds ${year} Champion` },
+        { player: 'Flandre', team: 'EDG', championPlayed: 'Graves', tournamentWins: 10, tournamentLosses: 8, winRate: 55.6, performanceScore: 78, event: `Worlds ${year} Champion` },
+        { player: 'Jiejie', team: 'EDG', championPlayed: 'Graves', tournamentWins: 12, tournamentLosses: 6, winRate: 66.7, performanceScore: 84, event: `Worlds ${year} Champion` },
+        { player: 'Scout', team: 'EDG', championPlayed: 'Azir', tournamentWins: 13, tournamentLosses: 5, winRate: 72.2, performanceScore: 87, event: `Worlds ${year} Champion` },
+        { player: 'Meiko', team: 'EDG', championPlayed: 'Thresh', tournamentWins: 9, tournamentLosses: 9, winRate: 50.0, performanceScore: 75, event: `Worlds ${year} Champion` }
       ]
     };
     return winnersData[year as keyof typeof winnersData] || winnersData['2024'];
   };
 
+  const renderCurrentPage = () => {
+    switch (currentPage) {
+      case 'cheat-sheet':
+        return <RiotApiCheatSheet onNavigate={handleNavigation} />;
+      case 'how-it-works':
+        return <HowItWorks onNavigate={handleNavigation} />;
+      case 'resources':
+        return <ProjectResources onNavigate={handleNavigation} />;
+      case 'uniform-interface':
+        return renderUniformInterface();
+      case 'client-server':
+        return renderClientServer();
+      case 'stateless':
+        return renderStateless();
+      case 'cacheable':
+        return renderCacheable();
+      case 'layered-system':
+        return renderLayeredSystem();
+      case 'code-on-demand':
+        return renderCodeOnDemand();
+      default:
+        return <RestOverview onNavigate={handleNavigation} />;
+    }
+  };
+
   return (
     <SpaceBetween direction="vertical" size="l">
-      <Container header={<Header variant="h3">🌐 How Riot Games API is RESTful</Header>} variant="default">
-        <SpaceBetween direction="vertical" size="m">
-          <Box variant="p">
-            <strong>REST</strong> (REpresentational State Transfer) and <strong>API</strong> (Application Programming Interface - a way for programs to talk to each other) work together. The Riot Games API demonstrates all 6 REST constraints:
-          </Box>
-          
-          <ColumnLayout columns={2} variant="text-grid">
-            <Container variant="stacked">
-              <Header variant="h3">1️⃣ Uniform Interface</Header>
-              <SpaceBetween direction="vertical" size="xs">
-                <Box variant="p">
-                  🔗 Standard <strong>HTTP GET</strong> method with consistent <strong>JSON</strong> responses across all resources:
-                </Box>
-                <Box variant="code">📡 GET /contests?year=2024</Box>
-                <Box variant="p">
-                  📋 Always returns: <code>[{'{\"id\": \"worlds2024\", \"name\": \"Worlds Championship 2024\", \"status\": \"completed\", \"winner\": \"T1\"}'}, ...]</code>
-                </Box>
-              </SpaceBetween>
-            </Container>
-            
-            <Container variant="stacked">
-              <Header variant="h3">2️⃣ Client-Server</Header>
-              <SpaceBetween direction="vertical" size="xs">
-                <Box variant="p">
-                  📱 Our <strong>React</strong> app is the <strong>client</strong>, 🎮 Riot's computers are the <strong>server</strong>. Each side updates independently.
-                </Box>
-                <Box variant="p">
-                  ⚡ <strong>Live Example:</strong> T1 Worlds 2024 Champions data flows through:
-                </Box>
-                <Box variant="code">📱 Client (React) → ☁️ AWS Lambda → 🎮 Riot API → 📊 Response Chain</Box>
-              </SpaceBetween>
-            </Container>
-            
-            <Container variant="stacked">
-              <Header variant="h3">3️⃣ Stateless</Header>
-              <SpaceBetween direction="vertical" size="xs">
-                <Box variant="p">
-                  🔐 Every <strong>API call</strong> includes the <strong>X-Riot-Token header</strong> (authentication key).
-                </Box>
-                <Box variant="p">
-                  🚫 No login sessions - each request is completely independent and self-contained.
-                </Box>
-              </SpaceBetween>
-            </Container>
-            
-            <Container variant="stacked">
-              <Header variant="h3">4️⃣ Cacheable</Header>
-              <SpaceBetween direction="vertical" size="xs">
-                <Box variant="p">
-                  🌍 Riot's Data Dragon <strong>CDN</strong> uses version numbers like <code>13.24.1</code>.
-                </Box>
-                <Box variant="p">
-                  💾 Your browser can save champion data and reuse it for faster loading.
-                </Box>
-              </SpaceBetween>
-            </Container>
-            
-            <Container variant="stacked">
-              <Header variant="h3">5️⃣ Layered System</Header>
-              <SpaceBetween direction="vertical" size="xs">
-                <Box variant="p">
-                  🏗️ Riot hides their internal structure. We call <code>api.riotgames.com</code>
-                </Box>
-                <Box variant="p">
-                  🤷 But don't know if it goes through load balancers, databases, or game servers.
-                </Box>
-              </SpaceBetween>
-            </Container>
-            
-            <Container variant="stacked">
-              <Header variant="h3">6️⃣ Code on Demand</Header>
-              <SpaceBetween direction="vertical" size="xs">
-                <Box variant="p">
-                  ⚡ Our <strong>React hook</strong> fetches data dynamically:
-                </Box>
-                <Box variant="code">const [data, setData] = useState(); fetch(riotApiUrl).then(setData)</Box>
-                <Box variant="p">
-                  🖼️ Champion images load from Riot's CDN only when needed.
-                </Box>
-              </SpaceBetween>
-            </Container>
-          </ColumnLayout>
-        </SpaceBetween>
-      </Container>
-      
-      <Container header={<Header variant="h3">🎯 Uniform Interface Demonstration</Header>} variant="default">
-        <SpaceBetween direction="vertical" size="s">
-          <Alert type="warning" header="🎯 Step 1 Goal: Prove Same Interface Works for Different Data">
-            <Box variant="p">
-              We'll show how <strong>identical HTTP GET + JSON</strong> pattern works for completely different data types (tournaments vs champions). Same method, different endpoints, consistent format.
-            </Box>
-          </Alert>
-          
-          <Box variant="p">
-            The same <strong>HTTP GET</strong> method and <strong>JSON</strong> format work across different resources:
-          </Box>
-          
-          <Container variant="stacked">
-            <Header variant="h3">1️⃣ Contests Endpoint</Header>
-            <SpaceBetween direction="vertical" size="s">
-              <Alert type="warning" header="🏆 What This Proves">
-                <Box variant="p">
-                  <strong>Tournament data</strong> uses the exact same HTTP GET + JSON pattern as champion data below. Different endpoint, same interface.
-                </Box>
-              </Alert>
-              <Box variant="p">Recent tournaments and competitions</Box>
-              
-              <ColumnLayout columns={2} variant="text-grid">
-                <Box variant="p">
-                  <strong>Select Year:</strong><br/>
-                  <Select
-                    selectedOption={selectedYear}
-                    onChange={({ detail }) => setSelectedYear(detail.selectedOption as { label: string; value: string })}
-                    options={[
-                      { label: '2024', value: '2024' },
-                      { label: '2023', value: '2023' },
-                      { label: '2022', value: '2022' },
-                      { label: '2021', value: '2021' }
-                    ]}
-                  />
-                </Box>
-                <Box variant="p">
-                  <strong>🌐 Full Endpoint URL:</strong><br/>
-                  <code>https://americas.api.riotgames.com/lol/tournament/v5/tournaments?year={selectedYear.value}</code><br/>
-                  <strong>📡 HTTP Method:</strong> GET<br/>
-                  <strong>🔑 Auth:</strong> X-Riot-Token header required
-                </Box>
-              </ColumnLayout>
-              
-              <Box variant="p">
-                <strong>Response we expect:</strong><br/>
-                <code>HTTP 200 OK</code> with <strong>JSON</strong> array of contest objects:<br/>
-                <code>[{'{\"id\": \"worlds2024\", \"name\": \"Worlds Championship 2024\", \"status\": \"completed\", \"winner\": \"T1\"}'}, ...]</code>
-              </Box>
-              
-              <Alert type="info" header="🔄 Data Flow: Contests Endpoint">
-                <SpaceBetween direction="vertical" size="xs">
-                  <Box variant="p">Watch how your click travels through our architecture:</Box>
-                  <Box variant="code">
-                    📱 <strong>React</strong> (onClick handler) → ☁️ <strong>Lambda</strong> (retrieves SSM API key) → 🎮 <strong>americas.api.riotgames.com</strong>/lol/tournament/v5/tournaments?year={selectedYear.value} (returns tournament JSON) → ☁️ <strong>Lambda</strong> (processes & formats) → 📱 <strong>React</strong> (renders Contest Table)
-                  </Box>
-                  <Box variant="p"><strong>🔍 Endpoint Details:</strong> Tournament API requires special access, uses regional routing (americas), returns official esports data</Box>
-                </SpaceBetween>
-              </Alert>
-              
-              <SpaceBetween direction="horizontal" size="s">
-                <Button 
-                  onClick={() => fetchContests()} 
-                  loading={loading && activeDemo === 'contests'}
-                  variant="primary"
-                  ariaLabel="Send GET request to contests endpoint"
-                >
-                  {dataMode.contests === 'live' ? '✅ Live Data Loaded' : '🚀 Send GET Request'}
-                </Button>
-                {dataMode.contests === 'live' && (
-                  <Button 
-                    onClick={() => resetToDemo('contests')}
-                    variant="normal"
-                  >
-                    🔄 Reset to Demo
-                  </Button>
-                )}
-              </SpaceBetween>
-              
-              {lastUpdated.contests && (
-                <Box variant="small" color="text-body-secondary">
-                  🕰️ Last updated: {lastUpdated.contests.toLocaleTimeString()} | 🔑 Using: Bryan's Private API Key
-                </Box>
-              )}
-            </SpaceBetween>
-          </Container>
-          
-          {activeDemo === 'contests' && contests.length > 0 && (
-            <Container 
-              header={
-                <Header 
-                  variant="h3" 
-                  description="✅ Live contest data from Lambda endpoint - Recent tournament results"
-                >
-                  🏆 Contests Response
-                </Header>
-              }
-            >
-              <SpaceBetween direction="vertical" size="s">
-                <Box variant="p">
-                  <strong>Response received:</strong><br/>
-                  <code>HTTP 200 OK</code> with <strong>JSON</strong> array containing {contests.length} contest objects
-                </Box>
-                
-                <Box variant="p">
-                  <strong>Data structure:</strong><br/>
-                  Each contest object contains: <code>id</code>, <code>name</code>, <code>status</code>, <code>winner</code><br/>
-                  <strong>Endpoint:</strong> <code>[lambda-id].lambda-url.us-east-2.on.aws/?endpoint=contests</code>
-                </Box>
-                
-                <Table
-                  columnDefinitions={[
-                    {id: 'name', header: 'Tournament', cell: (item: Contest) => item.name},
-                    {id: 'status', header: 'Status', cell: (item: Contest) => item.status},
-                    {id: 'winner', header: 'Winner', cell: (item: Contest) => item.winner}
-                  ]}
-                  items={contests}
-                  empty="No contests available"
-                />
-              </SpaceBetween>
-            </Container>
-          )}
-        </SpaceBetween>
-      </Container>
-      
-      <Container header={<Header variant="h3">2️⃣ Client-Server Demonstration</Header>} variant="default">
-        <SpaceBetween direction="vertical" size="s">
-          <Alert type="info" header="📱 Step 2 Goal: Show 3 Independent Systems Working Together">
-            <Box variant="p">
-              We'll demonstrate how <strong>your browser</strong>, <strong>our AWS server</strong>, and <strong>Riot's servers</strong> are completely separate systems that can update independently. Your browser doesn't talk directly to Riot - it goes through our server.
-            </Box>
-          </Alert>
-          
-          <Box variant="p">
-            Our <strong>React client</strong> requests data from <strong>AWS Lambda server</strong>, which calls <strong>Riot's servers</strong>. Each system operates independently:
-          </Box>
-          
-          <Container variant="stacked">
-            <Header variant="h3">2️⃣ Champions Endpoint</Header>
-            <SpaceBetween direction="vertical" size="s">
-              <Alert type="info" header="🎮 What This Proves">
-                <Box variant="p">
-                  <strong>Player performance data</strong> flows through 3 separate systems: Your browser → Our AWS server → Riot's servers. Each can update independently.
-                </Box>
-              </Alert>
-              <Box variant="p">Tournament champions with performance metrics</Box>
-              
-              <ColumnLayout columns={2} variant="text-grid">
-                <Box variant="p">
-                  <strong>Select Year:</strong><br/>
-                  <Select
-                    selectedOption={selectedYear}
-                    onChange={({ detail }) => setSelectedYear(detail.selectedOption as { label: string; value: string })}
-                    options={[
-                      { label: '2024', value: '2024' },
-                      { label: '2023', value: '2023' },
-                      { label: '2022', value: '2022' },
-                      { label: '2021', value: '2021' }
-                    ]}
-                  />
-                </Box>
-                <Box variant="p">
-                  <strong>🌐 Full Endpoint URL:</strong><br/>
-                  <code>https://na1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-summoner/ENCRYPTED_SUMMONER_ID</code><br/>
-                  <strong>📡 HTTP Method:</strong> GET<br/>
-                  <strong>🔑 Auth:</strong> X-Riot-Token header required
-                </Box>
-              </ColumnLayout>
-              
-              <Box variant="p">
-                <strong>Response we expect:</strong><br/>
-                <code>HTTP 200 OK</code> with <strong>JSON</strong> array of champion objects:<br/>
-                <code>[{'{\"player\": \"Faker\", \"team\": \"T1\", \"winRate\": 88.9, \"performanceScore\": 95}'}, ...]</code>
-              </Box>
-              
-              <Alert type="info" header="🔄 Data Flow: Champions Endpoint">
-                <SpaceBetween direction="vertical" size="xs">
-                  <Box variant="p">See how champion data flows from Riot to your screen:</Box>
-                  <Box variant="code">
-                    📱 <strong>React</strong> (fetchChampions call) → ☁️ <strong>Lambda</strong> (adds X-Riot-Token header) → 🎮 <strong>na1.api.riotgames.com</strong>/lol/champion-mastery/v4/champion-masteries/by-summoner/ENCRYPTED_SUMMONER_ID (returns mastery JSON) → ☁️ <strong>Lambda</strong> (calculates win rates & scores) → 📱 <strong>React</strong> (populates Champions Table with performance data)
-                  </Box>
-                  <Box variant="p"><strong>🔍 Endpoint Details:</strong> Champion Mastery API uses platform routing (na1), requires summoner ID lookup, returns player expertise data</Box>
-                </SpaceBetween>
-              </Alert>
-              
-              <SpaceBetween direction="horizontal" size="s">
-                <Button 
-                  onClick={() => fetchChampions()} 
-                  loading={loading && activeDemo === 'champions'}
-                  variant="primary"
-                  ariaLabel="Send GET request to champions endpoint"
-                >
-                  {dataMode.champions === 'live' ? '✅ Live Data Loaded' : '🚀 Send GET Request'}
-                </Button>
-                {dataMode.champions === 'live' && (
-                  <Button 
-                    onClick={() => resetToDemo('champions')}
-                    variant="normal"
-                  >
-                    🔄 Reset to Demo
-                  </Button>
-                )}
-              </SpaceBetween>
-              
-              {lastUpdated.champions && (
-                <Box variant="small" color="text-body-secondary">
-                  🕰️ Last updated: {lastUpdated.champions.toLocaleTimeString()} | 🔑 Using: Bryan's Private API Key
-                </Box>
-              )}
-            </SpaceBetween>
-          </Container>
-          
-          {activeDemo === 'champions' && (
-            <Container 
-              header={
-                <Header 
-                  variant="h3" 
-                  description="✅ Live champion data from client-server architecture - React → Lambda → Riot API"
-                >
-                  🏆 Champions Response
-                </Header>
-              }
-            >
-              <SpaceBetween direction="vertical" size="s">
-                <Box variant="p">
-                  <strong>Response received:</strong><br/>
-                  <code>HTTP 200 OK</code> with <strong>JSON</strong> array containing 5 champion objects
-                </Box>
-                
-                <Box variant="p">
-                  <strong>Data structure:</strong><br/>
-                  Each champion object contains: <code>player</code>, <code>team</code>, <code>winRate</code>, <code>performanceScore</code><br/>
-                  <strong>Endpoint:</strong> <code>[lambda-id].lambda-url.us-east-2.on.aws/?endpoint=champions</code>
-                </Box>
-                
-                <Table
-                  columnDefinitions={[
-                    {
-                      id: 'player',
-                      header: 'Player',
-                      cell: (item: any) => (
-                        <Box>
-                          <Box variant="strong">{item.player}</Box>
-                          <Box variant="small">{item.team}</Box>
-                        </Box>
-                      )
-                    },
-                    {
-                      id: 'champion',
-                      header: 'Signature Champion',
-                      cell: (item: any) => item.championPlayed
-                    },
-                    {
-                      id: 'tournamentRecord',
-                      header: 'Tournament Record',
-                      cell: (item: any) => (
-                        <Box>
-                          <Box variant="strong" color={item.winRate >= 85 ? "text-status-success" : "text-status-info"} aria-label={`Win rate: ${item.winRate} percent`}>
-                            {item.winRate}%
-                          </Box>
-                          <Box variant="small" color="text-body-secondary">{item.tournamentWins}W - {item.tournamentLosses}L</Box>
-                        </Box>
-                      )
-                    },
-                    {
-                      id: 'performance',
-                      header: 'Performance Score',
-                      cell: (item: any) => (
-                        <Box variant="strong" color={item.performanceScore >= 95 ? "text-status-success" : item.performanceScore >= 90 ? "text-status-warning" : "text-status-info"} aria-label={`Performance score: ${item.performanceScore} out of 100`}>
-                          {item.performanceScore}/100
-                        </Box>
-                      )
-                    },
-                    {
-                      id: 'achievement',
-                      header: 'Achievement',
-                      cell: (item: any) => (
-                        <Box>
-                          🏆 <Box variant="strong" display="inline">{item.event}</Box>
-                        </Box>
-                      )
-                    }
-                  ]}
-                  items={getTournamentWinners(selectedYear.value)}
-                  loading={loading}
-                  header={
-                    <Header
-                      counter="(5)"
-                      description={`Worlds ${selectedYear.value} championship team performance data`}
-                    >
-                      Worlds Greatest Winning Players
-                    </Header>
-                  }
-                  empty={
-                    <Box textAlign="center">
-                      <Box variant="strong" textAlign="center">
-                        No tournament data available
-                      </Box>
-                      <Box variant="p" padding={{ bottom: 's' }}>
-                        Select a year to view championship data
-                      </Box>
-                    </Box>
-                  }
-                />
-                
-
-              </SpaceBetween>
-            </Container>
-          )}
-        </SpaceBetween>
-      </Container>
-      
-      <Container header={<Header variant="h3">🏗️ Client-Server Architecture Explained</Header>} variant="default">
-        <SpaceBetween direction="vertical" size="s">
-          <Box variant="p">
-            The data you see above demonstrates how <strong>three independent systems</strong> work together:
-          </Box>
-          
-          <ColumnLayout columns={3} variant="text-grid">
-            <Box variant="p">
-              <strong>Client (Your Browser)</strong><br/>
-              React app displays the table above<br/>
-              Handles user interactions<br/>
-              Updates UI independently
-            </Box>
-            
-            <Box variant="p">
-              <strong>Our Server (AWS Lambda)</strong><br/>
-              Processes tournament data<br/>
-              Calculates performance scores<br/>
-              Updates logic independently
-            </Box>
-            
-            <Box variant="p">
-              <strong>Riot's Servers</strong><br/>
-              Stores champion statistics<br/>
-              Updates with game patches<br/>
-              Independent of our application
-            </Box>
-          </ColumnLayout>
-          
-          <Alert type="info" header="🔄 Data Flow: Faker's 88.9% Win Rate" ariaLabel="Data flow example showing how Faker's win rate is calculated">
-            <Box variant="code" aria-label="Data processing flow from React to display">
-              React → Lambda → Riot API → "16W-2L, Azir" → "88.9%, 95/100" → Table Display
-            </Box>
-          </Alert>
-        </SpaceBetween>
-      </Container>
-      
-      <Container header={<Header variant="h3">3️⃣ Stateless Demonstration</Header>} variant="default">
-        <SpaceBetween direction="vertical" size="s">
-          <Alert type="info" header="🔐 Step 3 Goal: Prove No Sessions Needed - Every Call is Complete">
-            <Box variant="p">
-              We'll show how each API request contains <strong>everything needed</strong> (authentication, parameters, headers). No login sessions, no server memory of previous calls - each request stands alone.
-            </Box>
-          </Alert>
-          
-          <Box variant="p">
-            Every <strong>API call</strong> includes complete authentication. No login sessions - each request is independent.
-          </Box>
-          
-          <Container variant="stacked">
-            <Header variant="h3">Champion Details Endpoint</Header>
-            <SpaceBetween direction="vertical" size="s">
-              <Alert type="info" header="🔐 What This Proves">
-                <Box variant="p">
-                  <strong>Individual champion requests</strong> include complete authentication (X-Riot-Token) every time. No login sessions - each call is self-contained.
-                </Box>
-              </Alert>
-              <Box variant="p">Fetch detailed champion data using winners from Step 2</Box>
-              
-              <ColumnLayout columns={2} variant="text-grid">
-                <Box variant="p">
-                  <strong>Selected Champion:</strong><br/>
-                  <Select
-                    selectedOption={selectedChampion || { label: `Select from ${selectedYear.value} winners`, value: '' }}
-                    onChange={({ detail }) => setSelectedChampion(detail.selectedOption as { label: string; value: string })}
-                    options={getTournamentWinners(selectedYear.value).map(winner => ({
-                      label: `${winner.championPlayed} (${winner.player})`,
-                      value: winner.championPlayed
-                    }))}
-                    placeholder={`Choose from ${selectedYear.value} champions`}
-                  />
-                </Box>
-                <Box variant="p">
-                  <strong>🌐 Full Endpoint URL:</strong><br/>
-                  <code>https://ddragon.leagueoflegends.com/cdn/13.24.1/data/en_US/champion/{selectedChampion?.value || 'Champion'}.json</code><br/>
-                  <strong>📡 HTTP Method:</strong> GET<br/>
-                  <strong>🌍 Auth:</strong> None required (Public CDN)<br/>
-                  <strong>📋 Content-Type:</strong> application/json
-                </Box>
-              </ColumnLayout>
-              
-              <Alert type="info" header="🔄 Data Flow: Stateless Champion Details">
-                <SpaceBetween direction="vertical" size="xs">
-                  <Box variant="p">Every request is independent - no sessions needed:</Box>
-                  <Box variant="code">
-                    📱 <strong>React</strong> (selectedChampion state) → ☁️ <strong>Lambda</strong> (no auth needed) → 🐉 <strong>ddragon.leagueoflegends.com</strong>/cdn/13.24.1/data/en_US/champion/{selectedChampion?.value || 'Champion'}.json (returns champion stats, abilities, lore) → ☁️ <strong>Lambda</strong> (extracts id, name, title, hp, attackdamage) → 📱 <strong>React</strong> (displays formatted JSON response)
-                  </Box>
-                  <Box variant="p"><strong>🔍 Endpoint Details:</strong> Data Dragon CDN is public (no auth), version-controlled (13.24.1), globally cached, contains static game data</Box>
-                </SpaceBetween>
-              </Alert>
-              
-              <SpaceBetween direction="horizontal" size="s">
-                <Button 
-                  onClick={() => selectedChampion && fetchChampionDetails(selectedChampion.value)} 
-                  loading={loading && activeDemo === 'champion-details'}
-                  variant="primary"
-                  disabled={!selectedChampion}
-                  ariaLabel="Send stateless authenticated request"
-                >
-                  {dataMode['champion-details'] === 'live' ? '✅ Live Data Loaded' : '🔐 Send Authenticated Request'}
-                </Button>
-                {dataMode['champion-details'] === 'live' && (
-                  <Button 
-                    onClick={() => resetToDemo('champion-details')}
-                    variant="normal"
-                  >
-                    🔄 Reset to Demo
-                  </Button>
-                )}
-              </SpaceBetween>
-              
-              {lastUpdated['champion-details'] && (
-                <Box variant="small" color="text-body-secondary">
-                  🕰️ Last updated: {lastUpdated['champion-details'].toLocaleTimeString()} | 🌍 Using: Public Data Dragon API (No Auth Required)
-                </Box>
-              )}
-            </SpaceBetween>
-          </Container>
-          
-          {activeDemo === 'champion-details' && (
-            <Container 
-              header={
-                <Header 
-                  variant="h3" 
-                  description="✅ Stateless API response with authentication header"
-                >
-                  🏆 Champion Details Response
-                </Header>
-              }
-            >
-              <SpaceBetween direction="vertical" size="s">
-                <Alert type="info" header="🔐 Stateless Authentication Pattern">
-                  <Box variant="p">
-                    <strong>Headers Sent:</strong> X-Riot-Token included in every request<br/>
-                    <strong>No sessions:</strong> Each call is completely independent
-                  </Box>
-                </Alert>
-                
-                <Box variant="code">
-                  <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{
-`{
-  "id": "${selectedChampion?.value || 'Champion'}",
-  "name": "${selectedChampion?.value || 'Champion'}", 
-  "title": "${selectedChampion?.value === 'Azir' ? 'The Emperor of Shurima' : selectedChampion?.value === 'Aatrox' ? 'The Darkin Blade' : selectedChampion?.value === 'Jinx' ? 'The Loose Cannon' : selectedChampion?.value === 'Thresh' ? 'The Chain Warden' : 'The Outlaw'}",
-  "stats": { "hp": ${selectedChampion?.value === 'Azir' ? '550' : selectedChampion?.value === 'Aatrox' ? '580' : selectedChampion?.value === 'Jinx' ? '610' : selectedChampion?.value === 'Thresh' ? '560' : '555'}, "attackdamage": ${selectedChampion?.value === 'Azir' ? '52' : selectedChampion?.value === 'Aatrox' ? '60' : selectedChampion?.value === 'Jinx' ? '59' : selectedChampion?.value === 'Thresh' ? '56' : '68'} }
-}`
-                  }</pre>
-                </Box>
-              </SpaceBetween>
-            </Container>
-          )}
-        </SpaceBetween>
-      </Container>
-      
-      <Container 
-        header={
-          <Header 
-            variant="h2" 
-            description="Demo data (Click 'Fetch from Riot API' to load live data and trigger AWS Lambda)"
-          >
-            Demo Champion Performance Data
-          </Header>
-        }
-      >
-        <Table
-          columnDefinitions={[
-            {
-              id: 'champion',
-              header: 'Champion Name',
-              cell: (item: MatchSummary) => item.champion,
-            },
-            {
-              id: 'matchId',
-              header: 'Champion Title',
-              cell: (item: MatchSummary) => item.matchId,
-            },
-            {
-              id: 'kills',
-              header: 'Attack Power',
-              cell: (item: MatchSummary) => item.kills,
-            },
-            {
-              id: 'deaths',
-              header: 'Defense Rating',
-              cell: (item: MatchSummary) => item.deaths,
-            },
-            {
-              id: 'assists',
-              header: 'Speed Rating',
-              cell: (item: MatchSummary) => item.assists,
-            },
-            {
-              id: 'result',
-              header: 'Tier Status',
-              cell: (item: MatchSummary) => (
-                <Box>
-                  <span style={{ fontSize: '18px', marginRight: '6px', color: item.win ? '#0073bb' : '#879596' }} aria-hidden="true">
-                    {item.win ? '★' : '○'}
-                  </span>
-                  <Box display="inline" color={item.win ? "text-status-success" : "text-status-info"} aria-label={`Tier status: ${item.win ? 'S-Tier' : 'A-Tier'}`}>
-                    {item.win ? 'S-Tier' : 'A-Tier'}
-                  </Box>
-                </Box>
-              ),
-            },
+      {currentPage === 'overview' && (
+        <BreadcrumbGroup
+          items={[
+            { text: 'Home', href: 'https://awsaerospace.org' },
+            { text: 'API Training', href: '#', onClick: () => handleNavigation('overview') },
+            { text: 'REST Fundamentals' }
           ]}
-          items={matches}
-          loading={loading}
-          header={
-            <Header
-              counter={`(${matches.length})`}
-              actions={
-                <SpaceBetween direction="horizontal" size="xs">
-                  <Button variant="primary" ariaLabel="Fetch live data from Riot Games API">
-                    🚀 Fetch from Riot API
-                  </Button>
-                </SpaceBetween>
-              }
-            >
-              Demo Champions Data
-            </Header>
-          }
-          empty="No champion data available"
         />
-      </Container>
+      )}
       
-      <Container header={<Header variant="h3">API Access & Data Structure</Header>}>
-        <SpaceBetween direction="vertical" size="m">
-          <ColumnLayout columns={2} variant="text-grid">
-            <Container variant="stacked">
-              <Header variant="h3">Available with Basic API Key</Header>
-              <Box variant="p">
-                - Data Dragon API: Champion stats, abilities<br/>
-                - Challenger League: Top ranked players<br/>
-                - Champion Mastery: Player expertise<br/>
-                - Match History: Recent game results
-              </Box>
-            </Container>
-            
-            <Container variant="stacked">
-              <Header variant="h3">Requires Special Access</Header>
-              <Box variant="p">
-                - Tournament API: Official esports matches<br/>
-                - Featured Games: Live high-level matches<br/>
-                - Esports Data: Professional results<br/>
-                - Production Keys: Higher rate limits
-              </Box>
-            </Container>
-          </ColumnLayout>
-          
-          <Container variant="stacked">
-            <Header variant="h3">Tournament Data Structure</Header>
-            <Box variant="code">
-              <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{
-`// Tournament Winners Data (T1's 2023 Worlds Victory):
-{
-  "player": "Faker",              // World Champion player
-  "team": "T1",                  // Championship team
-  "event": "Worlds 2023 Champion", // Tournament won
-  "champion_played": "Azir",      // Champion used in finals
-  "tournament_wins": 14,          // Actual tournament match wins
-  "tournament_losses": 4,         // Actual tournament match losses
-  "performance_score": 89         // Performance rating
-}
-
-// API Endpoints We Discovered:
-// Works: Data Dragon API (champion data)
-// Works: Challenger League API (top players)
-// Limited: Tournament API (requires special access)
-// Limited: Featured Games (403 Forbidden with basic key)
-// Works: Champion Mastery (with summoner names)
-
-// 3. Data Dragon is public and doesn't require API key
-// 4. Challenger ladder contains real pro players`
-              }</pre>
-            </Box>
-          </Container>
-        </SpaceBetween>
-      </Container>
+      {currentPage === 'overview' && (
+        <Header
+          variant="h1"
+          description="League of Legends is a multiplayer online battle arena (MOBA) game where two teams of 5 players compete. Each player controls a unique champion - a character with distinct abilities, strengths, and weaknesses. There are 160+ champions, each with their own lore, abilities, and gameplay role. This application demonstrates REST (REpresentational State Transfer) and API (Application Programming Interface) fundamentals using real Riot Games data."
+        >
+          Rift Rewind: REST API fundamentals with Riot Games Developer Portal
+        </Header>
+      )}
       
-      <Container header={<Header variant="h3">Technical Implementation</Header>}>
-        <SpaceBetween direction="vertical" size="l">
-          <ColumnLayout columns={2} variant="text-grid">
-            <Container variant="stacked">
-              <Header variant="h3">Data Sources</Header>
-              <Box variant="p">
-                <strong>From Riot API:</strong><br/>
-                - Champion names & lore titles<br/>
-                - Attack damage, health, speed stats<br/>
-                - Official game balance data<br/><br/>
-                <strong>Our Processing:</strong><br/>
-                - Tier rankings (S/A-Tier algorithm)<br/>
-                - Display scaling (div10, div100, div20)<br/>
-                - Performance calculations
-              </Box>
-            </Container>
-            
-            <Container variant="stacked">
-              <Header variant="h3">Architecture Stack</Header>
-              <Box variant="p">
-                <strong>Frontend:</strong> React 18 + TypeScript<br/>
-                <strong>Build:</strong> Vite 5 -&gt; Static HTML/CSS/JS<br/>
-                <strong>Hosting:</strong> S3 + CloudFront CDN<br/>
-                <strong>API:</strong> AWS Lambda Function URL<br/>
-                <strong>Data:</strong> Riot Games API integration
-              </Box>
-            </Container>
-          </ColumnLayout>
-          
-          <Container variant="stacked">
-            <Header variant="h3">Champion Data Mapping</Header>
-            <ColumnLayout columns={3} variant="text-grid">
-              <Box variant="p">
-                <strong>Attack Power</strong><br/>
-                <code>stats.attackdamage / 10</code>
-              </Box>
-              <Box variant="p">
-                <strong>Defense Rating</strong><br/>
-                <code>stats.hp / 100</code>
-              </Box>
-              <Box variant="p">
-                <strong>Speed Rating</strong><br/>
-                <code>stats.movespeed / 20</code>
-              </Box>
-            </ColumnLayout>
-          </Container>
-        </SpaceBetween>
-      </Container>
+      {currentPage === 'overview' && (
+        <Alert
+          statusIconAriaLabel="Info"
+          header="🚀 Live REST API Integration"
+        >
+          Cloudscape Design System → AWS Lambda → Riot Data Dragon API | Demonstrating REST principles with real League of Legends champion data
+        </Alert>
+      )}
+      
+      {renderCurrentPage()}
     </SpaceBetween>
   );
 };
 
 export default RiftRewindDashboard;
+      

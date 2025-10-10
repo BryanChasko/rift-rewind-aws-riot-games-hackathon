@@ -1,0 +1,192 @@
+/* Cloudscape-Compliant REST Constraints Styling */
+
+/* Keyframe Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+/* REST Constraint Containers - Cloudscape Compatible */
+.rest-constraint-1 {
+  border-left: 4px solid #0073bb;
+  background: linear-gradient(135deg, rgba(0, 115, 187, 0.05) 0%, rgba(0, 115, 187, 0.02) 100%);
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.rest-constraint-2 {
+  border-left: 4px solid #d13212;
+  background: linear-gradient(135deg, rgba(209, 50, 18, 0.05) 0%, rgba(209, 50, 18, 0.02) 100%);
+  animation: fadeInUp 0.6s ease-out 0.1s both;
+}
+
+.rest-constraint-3 {
+  border-left: 4px solid #037f0c;
+  background: linear-gradient(135deg, rgba(3, 127, 12, 0.05) 0%, rgba(3, 127, 12, 0.02) 100%);
+  animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+.rest-constraint-4 {
+  border-left: 4px solid #8c4fff;
+  background: linear-gradient(135deg, rgba(140, 79, 255, 0.05) 0%, rgba(140, 79, 255, 0.02) 100%);
+  animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+
+.rest-constraint-5 {
+  border-left: 4px solid #ff9500;
+  background: linear-gradient(135deg, rgba(255, 149, 0, 0.05) 0%, rgba(255, 149, 0, 0.02) 100%);
+  animation: fadeInUp 0.6s ease-out 0.4s both;
+}
+
+.rest-constraint-6 {
+  border-left: 4px solid #e91e63;
+  background: linear-gradient(135deg, rgba(233, 30, 99, 0.05) 0%, rgba(233, 30, 99, 0.02) 100%);
+  animation: fadeInUp 0.6s ease-out 0.5s both;
+}
+
+/* Overview Cards - Cloudscape Compatible */
+.overview-card-1 {
+  border-top: 3px solid #0073bb;
+  background: linear-gradient(135deg, rgba(0, 115, 187, 0.03) 0%, transparent 100%);
+  transition: transform 0.2s ease;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.overview-card-1:hover {
+  transform: translateY(-2px);
+}
+
+.overview-card-2 {
+  border-top: 3px solid #d13212;
+  background: linear-gradient(135deg, rgba(209, 50, 18, 0.03) 0%, transparent 100%);
+  transition: transform 0.2s ease;
+  animation: fadeInUp 0.6s ease-out 0.1s both;
+}
+
+.overview-card-2:hover {
+  transform: translateY(-2px);
+}
+
+.overview-card-3 {
+  border-top: 3px solid #037f0c;
+  background: linear-gradient(135deg, rgba(3, 127, 12, 0.03) 0%, transparent 100%);
+  transition: transform 0.2s ease;
+  animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+.overview-card-3:hover {
+  transform: translateY(-2px);
+}
+
+.overview-card-4 {
+  border-top: 3px solid #8c4fff;
+  background: linear-gradient(135deg, rgba(140, 79, 255, 0.03) 0%, transparent 100%);
+  transition: transform 0.2s ease;
+  animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+
+.overview-card-4:hover {
+  transform: translateY(-2px);
+}
+
+.overview-card-5 {
+  border-top: 3px solid #ff9500;
+  background: linear-gradient(135deg, rgba(255, 149, 0, 0.03) 0%, transparent 100%);
+  transition: transform 0.2s ease;
+  animation: fadeInUp 0.6s ease-out 0.4s both;
+}
+
+.overview-card-5:hover {
+  transform: translateY(-2px);
+}
+
+.overview-card-6 {
+  border-top: 3px solid #e91e63;
+  background: linear-gradient(135deg, rgba(233, 30, 99, 0.03) 0%, transparent 100%);
+  transition: transform 0.2s ease;
+  animation: fadeInUp 0.6s ease-out 0.5s both;
+}
+
+.overview-card-6:hover {
+  transform: translateY(-2px);
+}
+
+/* Header Colors - Cloudscape Compatible */
+.header-color-1 { color: #0073bb; }
+.header-color-2 { color: #d13212; }
+.header-color-3 { color: #037f0c; }
+.header-color-4 { color: #8c4fff; }
+.header-color-5 { color: #ff9500; }
+.header-color-6 { color: #e91e63; }
+
+/* Button Colors - Cloudscape Compatible */
+.button-color-1 { background-color: #0073bb; }
+.button-color-2 { background-color: #d13212; }
+.button-color-3 { background-color: #037f0c; }
+.button-color-4 { background-color: #8c4fff; }
+.button-color-5 { background-color: #ff9500; }
+.button-color-6 { background-color: #e91e63; }
+
+/* Enhanced Typography */
+.enhanced-title {
+  font-weight: 700;
+  background: linear-gradient(45deg, #0073bb, #d13212);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.code-highlight {
+  font-family: 'Consolas', monospace;
+  background: #f8f9fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+/* Alert Enhancements */
+.alert-enhanced {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* GitHub Link Styling */
+.github-link {
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #f6f8fa;
+  border: 1px solid #d0d7de;
+  text-decoration: none;
+  color: #24292f;
+}
+
+.github-link:hover {
+  transform: translateY(-2px);
+  background: #ffffff;
+  border-color: #0969da;
+}
+
+.github-logo {
+  transition: transform 0.3s ease;
+  margin-right: 8px;
+}
+
+.github-link:hover .github-logo {
+  transform: rotate(360deg);
+}
