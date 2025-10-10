@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// Frontend deployment test - trigger workflow
 import { Table, Header, Container, Button, Box, SpaceBetween, ColumnLayout, Alert, Select } from '@cloudscape-design/components';
 import './rest-constraints.css';
 import RestOverview from './components/RestOverview';
