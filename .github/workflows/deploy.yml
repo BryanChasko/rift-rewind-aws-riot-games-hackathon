@@ -121,8 +121,15 @@ jobs:
       if: steps.aws-config.outcome == 'success'
       run: |
         echo "🔍 Validating Lambda deployment..."
-        aws lambda get-function --function-name riot-api-function --query 'Configuration.State' --output text
-        echo "✅ Lambda function is active"
+        FUNCTION_NAME=$(aws lambda list-functions --query 'Functions[?contains(FunctionName, `RiotApiCdkStack-RiotApiFunction`)].FunctionName' --output text)
+        if [ -n "$FUNCTION_NAME" ]; then
+          echo "✅ Found Lambda function: $FUNCTION_NAME"
+          STATE=$(aws lambda get-function --function-name "$FUNCTION_NAME" --query 'Configuration.State' --output text)
+          echo "✅ Lambda function state: $STATE"
+        else
+          echo "❌ Lambda function not found"
+          exit 1
+        fi
       continue-on-error: false
     
     - name: Get Lambda URL
