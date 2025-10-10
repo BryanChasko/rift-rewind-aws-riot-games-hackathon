@@ -56,6 +56,19 @@ riot-api-cdk/lambda/riot-api-source/wrapt/
 riot-api-cdk/lambda/riot-api-source/*-dist-info/
 riot-api-cdk/lambda/riot-api-source/*.dist-info/
 
+# Summoner lookup Lambda dependencies
+riot-api-cdk/lambda/summoner-lookup-source/bin/
+riot-api-cdk/lambda/summoner-lookup-source/aws_xray_sdk/
+riot-api-cdk/lambda/summoner-lookup-source/botocore/
+riot-api-cdk/lambda/summoner-lookup-source/jmespath/
+riot-api-cdk/lambda/summoner-lookup-source/dateutil/
+riot-api-cdk/lambda/summoner-lookup-source/urllib3/
+riot-api-cdk/lambda/summoner-lookup-source/six.py
+riot-api-cdk/lambda/summoner-lookup-source/wrapt/
+riot-api-cdk/lambda/summoner-lookup-source/*-dist-info/
+riot-api-cdk/lambda/summoner-lookup-source/*.dist-info/
+riot-api-cdk/lambda/summoner-lookup-source/python_dateutil-*.dist-info/
+
 # Agentic workshop Python environment
 agentic-ai-workshop/.venv/
 agentic-ai-workshop/__pycache__/

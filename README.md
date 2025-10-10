@@ -22,12 +22,13 @@
 - **Fallback Strategy**: Always provides meaningful data even when APIs are unavailable
 
 ### ✅ Live Infrastructure
-- **🚀 Frontend**: React 18 + Vite 5 + Cloudscape Design System with cost-effective demo mode
-- **⚡ Backend**: AWS Lambda with Function URL + Python 3.11 (comprehensive error handling)
-- **🏗️ Infrastructure**: AWS CDK (TypeScript) - Lambda + SSM + IAM with security best practices
-- **🔒 Security**: Encrypted API keys in SSM Parameter Store, no hardcoded secrets
-- **🌐 Hosting**: S3 Static Website + CloudFront CDN at https://awsaerospace.org/apitraining/
-- **🎮 Live Data**: T1 Worlds 2023 Champions with signature champions and performance metrics
+- **🚀 Frontend**: React 18 + Vite 5 + Cloudscape Design System with cost-effective demo mode and local test data
+- **⚡ Backend**: Dual AWS Lambda architecture - Main API + Summoner Lookup with Function URLs + Python 3.11
+- **🏗️ Infrastructure**: AWS CDK (TypeScript) - Dual Lambda + SSM + IAM with security best practices
+- **🔒 Security**: Encrypted API keys in SSM Parameter Store, comprehensive secret scanning
+- **🌐 Hosting**: S3 Static Website + CloudFront CDN at https://awsaerospace.org/learning/api/
+- **🔄 CI/CD**: GitHub Actions with OIDC authentication, automated deployment, and security scanning
+- **🎮 Live Data**: Real Challenger League rankings and summoner lookup functionality
 - **📊 REST Education**: Complete 6-constraint demonstration with live API transparency
 - **💡 Cost Optimization**: Demo mode reduces serverless costs by 90%+ through user-initiated calls
 
@@ -57,10 +58,14 @@ rift-rewind-aws-riot-games-hackathon/
 │   ├── lib/
 │   │   └── riot-api-cdk-stack.ts       # CDK stack definition
 │   ├── lambda/
-│   │   └── riot-api-source/
-│   │       └── lambda_function.py      # Comprehensive Lambda function
+│   │   ├── riot-api-source/
+│   │   │   └── lambda_function.py      # Main Lambda function
+│   │   └── summoner-lookup-source/
+│   │       └── summoner_lookup.py      # Summoner lookup Lambda function
 │   ├── package.json                    # CDK dependencies
 │   └── cdk.json                        # CDK configuration
+├── .github/workflows/
+│   └── deploy.yml                      # CI/CD pipeline with security scanning
 ├── .gitignore                          # Git exclusions
 ├── README.md                           # This documentation
 └── package.json                        # Root project configuration
@@ -84,20 +89,32 @@ rift-rewind-aws-riot-games-hackathon/
 - **`App.tsx`**: Cloudscape application shell with side navigation and event-driven routing
 - **`rest-constraints.css`**: Custom styling for REST constraint demonstrations
 
-#### Backend (`riot-api-cdk/lambda/riot-api-source/`)
-- **`lambda_function.py`**: Production-ready Lambda function with:
-  - Comprehensive documentation and type hints
+#### Backend (`riot-api-cdk/lambda/`)
+- **`riot-api-source/lambda_function.py`**: Main Lambda function with:
+  - Challenger League data retrieval
+  - Comprehensive error handling and X-Ray tracing
   - Secure SSM Parameter Store integration
-  - Multiple Riot API endpoint handling
-  - Detailed error classification and logging
   - Educational API attempt tracking
+- **`summoner-lookup-source/summoner_lookup.py`**: Dedicated summoner lookup Lambda with:
+  - Riot ID to summoner data conversion
+  - Champion mastery data retrieval
+  - Region-aware routing and validation
+  - X-Ray tracing and detailed error reporting
 
 #### Infrastructure (`riot-api-cdk/lib/`)
 - **`riot-api-cdk-stack.ts`**: AWS CDK stack including:
-  - Lambda function with proper IAM roles
+  - Dual Lambda functions with proper IAM roles
   - SSM Parameter Store for secure secrets
   - Function URLs with CORS configuration
-  - CloudWatch logging and monitoring
+  - X-Ray tracing and CloudWatch logging
+
+#### CI/CD Pipeline (`.github/workflows/`)
+- **`deploy.yml`**: GitHub Actions workflow with:
+  - OIDC authentication for secure AWS access
+  - Comprehensive security scanning (GitLeaks)
+  - Automated dual Lambda deployment
+  - Frontend build and S3 deployment
+  - CloudFront cache invalidation
 
 ## 🔑 Setup Instructions
 
@@ -185,34 +202,39 @@ aws s3 sync dist/ s3://your-bucket-name/path/ --profile your-aws-profile
 
 ## 🏗️ System Architecture
 
-### Cost-Effective Serverless Architecture
+### Dual Lambda Serverless Architecture
 ```
 ┌─────────────────────┐    ┌──────────────────────┐    ┌─────────────────────┐
-│   React + Vite      │    │  AWS Lambda          │    │  Riot Games APIs    │
-│   Cloudscape UI     │───▶│  Function URL        │───▶│  • Featured Games   │
-│   Demo Mode Default │    │  Python 3.11        │    │  • Data Dragon      │
-└─────────────────────┘    │  Comprehensive       │    │  • Champion Mastery │
-         │                 │  Error Handling      │    └─────────────────────┘
-         ▼                 └──────────────────────┘
-┌─────────────────────┐             │
-│ S3 Static Hosting   │             ▼
-│ CloudFront CDN      │    ┌──────────────────────┐
-│ Global Distribution │    │ SSM Parameter Store  │
-└─────────────────────┘    │ Encrypted API Keys   │
-                           │ Zero Hardcoded       │
-                           │ Secrets              │
-                           └──────────────────────┘
+│   React + Vite      │    │  Main Lambda         │    │  Riot Games APIs    │
+│   Cloudscape UI     │───▶│  Challenger Data     │───▶│  • Challenger League│
+│   Local Test Data   │    │  X-Ray Tracing       │    │  • Platform Status  │
+└─────────────────────┘    └──────────────────────┘    └─────────────────────┘
+         │                           │
+         ▼                           ▼
+┌─────────────────────┐    ┌──────────────────────┐    ┌─────────────────────┐
+│ S3 Static Hosting   │    │  Summoner Lambda     │    │  Riot Games APIs    │
+│ CloudFront CDN      │    │  Riot ID Lookup      │───▶│  • Account API      │
+│ CI/CD Deployment    │    │  Champion Mastery    │    │  • Summoner API     │
+└─────────────────────┘    └──────────────────────┘    │  • Mastery API      │
+         │                           │                 └─────────────────────┘
+         ▼                           ▼
+┌─────────────────────┐    ┌──────────────────────┐
+│ GitHub Actions      │    │ SSM Parameter Store  │
+│ OIDC Authentication │    │ Encrypted API Keys   │
+│ Security Scanning   │    │ Shared Across Lambda │
+└─────────────────────┘    └──────────────────────┘
 ```
 
 ### Data Flow & Cost Optimization
 ```
-1. User visits site → Demo data loads (No AWS costs)
-2. User clicks "Fetch Live Data" → Lambda invocation begins
+1. User visits site → Frontend test data loads (No AWS costs)
+2. User clicks "Fetch Live Data" → Main Lambda invocation
 3. Lambda retrieves encrypted API key from SSM
-4. Lambda attempts multiple Riot API endpoints
-5. Lambda returns curated data + API transparency info
-6. Frontend displays live data + detailed API status
-7. User can reset to demo mode (No additional costs)
+4. Lambda fetches real Challenger League data
+5. User enters Riot ID → Summoner Lambda invocation
+6. Summoner Lambda performs multi-step API calls
+7. Frontend displays live data + X-Ray diagnostics
+8. User can reset to demo mode (No additional costs)
 ```
 
 ### Security & Best Practices
@@ -232,16 +254,18 @@ aws s3 sync dist/ s3://your-bucket-name/path/ --profile your-aws-profile
 - **Yarn** - Fast, reliable package management
 
 ### Backend & Infrastructure
-- **AWS Lambda** - Serverless compute with Function URLs (Python 3.11 runtime)
+- **AWS Lambda** - Dual serverless functions with Function URLs (Python 3.11 runtime)
 - **AWS CDK** - Infrastructure as Code with TypeScript
 - **AWS SSM Parameter Store** - Encrypted secrets management
 - **AWS IAM** - Least privilege access control
+- **AWS X-Ray** - Distributed tracing and performance monitoring
 - **AWS CloudWatch** - Comprehensive logging and monitoring
 
 ### Deployment & Distribution
 - **AWS S3** - Static website hosting with versioning
 - **AWS CloudFront** - Global CDN with edge caching
-- **GitHub Actions** - CI/CD pipeline (ready for implementation)
+- **GitHub Actions** - Automated CI/CD pipeline with OIDC authentication
+- **GitLeaks** - Comprehensive secret scanning and security validation
 - **AWS CLI** - Deployment automation
 
 ### External Integrations
@@ -271,9 +295,10 @@ aws s3 sync dist/ s3://your-bucket-name/path/ --profile your-aws-profile
 - **Transparent Cost Awareness** - Users understand when they're triggering billable services
 
 ### 🎮 League of Legends Integration
-- **T1 Worlds 2023 Champions** - Curated data from the championship team (Azir, Aatrox, Jinx, Thresh, Graves)
-- **Performance Metrics** - Real tournament statistics converted to educational display format
-- **Multiple API Sources** - Featured Games, Data Dragon, and Champion Mastery endpoints
+- **Real Challenger Data** - Live rankings from North American Challenger League
+- **Summoner Lookup** - Riot ID to summoner data conversion with champion mastery
+- **Frontend Test Data** - Local fallback data for cost-effective demonstrations
+- **Multiple API Sources** - Challenger League, Account API, Summoner API, and Champion Mastery endpoints
 
 ### 🔒 Security & Best Practices
 - **Zero Hardcoded Secrets** - All API keys stored in encrypted AWS SSM Parameter Store
@@ -298,8 +323,9 @@ aws s3 sync dist/ s3://your-bucket-name/path/ --profile your-aws-profile
 - **Modern React Stack** - React 18 + Vite 5 + TypeScript for optimal performance
 - **AWS Cloudscape Design** - Professional UI components with consistent styling
 - **Infrastructure as Code** - Complete AWS CDK implementation with TypeScript
-- **Serverless Architecture** - Lambda Function URLs with auto-scaling and global distribution
-- **CI/CD Ready** - Git-based deployment workflow with proper versioning
+- **Dual Lambda Architecture** - Specialized functions for different API responsibilities
+- **Production CI/CD** - Automated GitHub Actions deployment with security scanning
+- **X-Ray Tracing** - Comprehensive distributed tracing and error diagnostics
 
 ## 🎓 Educational Outcomes
 

@@ -20,6 +20,13 @@ interface ClientServerState {
     loading: boolean;
     result?: any;
     error?: string;
+    xrayTraceId?: string;
+  };
+  xrayTrace?: any;
+  dataSourceStatus: {
+    live: boolean | null;
+    test: boolean | null;
+    summoner: boolean | null;
   };
 }
 
@@ -40,6 +47,12 @@ export class ClientServer extends RestConstraintBase {
       riotId: 'Doublelift#NA1',
       region: 'na1',
       loading: false
+    },
+    xrayTrace: null,
+    dataSourceStatus: {
+      live: null, // null = not tried, true = success, false = failed
+      test: null,
+      summoner: null
     }
   };
 
@@ -47,8 +60,12 @@ export class ClientServer extends RestConstraintBase {
     try {
       this.setState({ error: null, xrayTraceId: undefined, errorDetails: undefined });
       const summoners = await this.getTopSummoners();
-      this.setState({ summoners });
-      await this.props.apiService.fetchSummoners(this.props.selectedYear.value);
+      this.setState({ 
+        summoners,
+        dataSourceStatus: { live: true, test: null, summoner: null }
+      });
+      // Year parameter passed from Uniform Interface step
+      console.log(`Fetching summoners for year: ${this.props.selectedYear.value}`);
       this.props.stateManager.setDataMode(this.section, 'live');
     } catch (error: any) {
       console.error('Full error details:', error);
@@ -74,22 +91,35 @@ export class ClientServer extends RestConstraintBase {
         error: isApiKeyError ? 'api-key' : 'network',
         summoners: this.getDefaultSummoners(),
         xrayTraceId,
-        errorDetails
+        errorDetails,
+        dataSourceStatus: { live: false, test: null, summoner: null }
       });
       // Don't re-throw - let the error display show
     }
   }
   
   private async loadTestData() {
-    this.setState({ 
-      error: null, 
-      xrayTraceId: undefined, 
-      errorDetails: undefined,
-      summoners: this.getLocalFallbackSummoners()
-    });
-    this.props.stateManager.setDataMode(this.section, 'demo');
+    try {
+      this.setState({ 
+        error: null, 
+        xrayTraceId: undefined, 
+        errorDetails: undefined,
+        summoners: this.getLocalFallbackSummoners(),
+        dataSourceStatus: { live: null, test: true, summoner: null }
+      });
+      this.props.stateManager.setDataMode(this.section, 'demo');
+    } catch (error) {
+      this.setState({
+        dataSourceStatus: { live: null, test: false, summoner: null }
+      });
+    }
   }
   
+  private async fetchXRayTrace(traceId: string) {
+    // Skip X-Ray trace fetching for now - endpoint not implemented
+    console.log('X-Ray trace fetch skipped for:', traceId);
+  }
+
   private async lookupSummoner() {
     this.setState({
       summonerLookup: {
@@ -101,8 +131,17 @@ export class ClientServer extends RestConstraintBase {
     });
     
     try {
-      // This will be the summoner lookup Lambda URL - placeholder for now
-      const SUMMONER_LOOKUP_URL = 'https://placeholder-summoner-lookup-url.lambda-url.us-east-2.on.aws/';
+      const SUMMONER_LOOKUP_URL = import.meta.env.VITE_SUMMONER_LOOKUP_URL || '';
+      
+      console.log('Summoner lookup URL:', SUMMONER_LOOKUP_URL);
+      console.log('Making request with data:', {
+        summonerName: this.state.summonerLookup.riotId,
+        region: this.state.summonerLookup.region
+      });
+      
+      if (!SUMMONER_LOOKUP_URL) {
+        throw new Error('Summoner lookup service not configured - check VITE_SUMMONER_LOOKUP_URL');
+      }
       
       const response = await fetch(SUMMONER_LOOKUP_URL, {
         method: 'POST',
@@ -115,26 +154,120 @@ export class ClientServer extends RestConstraintBase {
         })
       });
       
-      const data = await response.json();
+      // Get X-Ray trace ID from headers
+      const xrayTraceId = response.headers.get('X-Trace-Id');
+      
+      let data;
+      const responseText = await response.text();
+      
+      // Handle non-JSON responses (like "Internal Server Error")
+      if (responseText.startsWith('{')) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
+        }
+      } else {
+        // Lambda returned plain text error
+        throw new Error(`Lambda error: ${responseText}`);
+      }
       
       if (!response.ok) {
-        throw new Error(data.error || `HTTP ${response.status}`);
+        const errorMsg = data?.error || `HTTP ${response.status}: ${responseText}`;
+        const error = new Error(errorMsg);
+        (error as any).xrayTraceId = xrayTraceId || data?.xray_trace_id;
+        throw error;
+      }
+      
+      // Convert summoner lookup result to table format
+      const getChampionName = (championId: number) => {
+        const championMap: {[key: number]: string} = {
+          157: 'Yasuo', 238: 'Zed', 64: 'Lee Sin', 91: 'Talon', 245: 'Ekko',
+          103: 'Ahri', 84: 'Akali', 12: 'Alistar', 32: 'Amumu', 34: 'Anivia',
+          1: 'Annie', 22: 'Ashe', 136: 'Aurelion Sol', 268: 'Azir', 432: 'Bard',
+          53: 'Blitzcrank', 63: 'Brand', 201: 'Braum', 51: 'Caitlyn', 164: 'Camille',
+          69: 'Cassiopeia', 31: 'Cho\'Gath', 42: 'Corki', 122: 'Darius', 131: 'Diana',
+          36: 'Dr. Mundo', 119: 'Draven', 60: 'Elise', 28: 'Evelynn', 81: 'Ezreal',
+          9: 'Fiddlesticks', 114: 'Fiora', 105: 'Fizz', 3: 'Galio', 41: 'Gangplank',
+          86: 'Garen', 150: 'Gnar', 79: 'Gragas', 104: 'Graves', 120: 'Hecarim',
+          74: 'Heimerdinger', 420: 'Illaoi', 39: 'Irelia', 427: 'Ivern', 40: 'Janna',
+          59: 'Jarvan IV', 24: 'Jax', 126: 'Jayce', 202: 'Jhin', 222: 'Jinx',
+          145: 'Kai\'Sa', 429: 'Kalista', 43: 'Karma', 30: 'Karthus', 38: 'Kassadin',
+          55: 'Katarina', 10: 'Kayle', 141: 'Kayn', 85: 'Kennen', 121: 'Kha\'Zix',
+          203: 'Kindred', 240: 'Kled', 96: 'Kog\'Maw', 7: 'LeBlanc', 127: 'Lissandra',
+          236: 'Lucian', 117: 'Lulu', 99: 'Lux', 54: 'Malphite', 90: 'Malzahar',
+          57: 'Maokai', 11: 'Master Yi', 21: 'Miss Fortune', 62: 'Wukong', 82: 'Mordekaiser',
+          25: 'Morgana', 267: 'Nami', 75: 'Nasus', 111: 'Nautilus', 76: 'Nidalee',
+          56: 'Nocturne', 20: 'Nunu', 2: 'Olaf', 61: 'Orianna', 516: 'Ornn',
+          80: 'Pantheon', 78: 'Poppy', 555: 'Pyke', 246: 'Qiyana', 133: 'Quinn',
+          497: 'Rakan', 33: 'Rammus', 421: 'Rek\'Sai', 58: 'Renekton', 107: 'Rengar',
+          92: 'Riven', 68: 'Rumble', 13: 'Ryze', 113: 'Sejuani', 235: 'Senna',
+          147: 'Seraphine', 875: 'Sett', 35: 'Shaco', 98: 'Shen', 102: 'Shyvana',
+          27: 'Singed', 14: 'Sion', 15: 'Sivir', 72: 'Skarner', 37: 'Sona',
+          16: 'Soraka', 50: 'Swain', 517: 'Sylas', 134: 'Syndra', 223: 'Tahm Kench',
+          163: 'Taliyah', 91: 'Talon', 44: 'Taric', 17: 'Teemo', 412: 'Thresh',
+          18: 'Tristana', 48: 'Trundle', 23: 'Tryndamere', 4: 'Twisted Fate',
+          29: 'Twitch', 77: 'Udyr', 6: 'Urgot', 110: 'Varus', 67: 'Vayne',
+          45: 'Veigar', 161: 'Vel\'Koz', 254: 'Vi', 112: 'Viktor', 8: 'Vladimir',
+          106: 'Volibear', 19: 'Warwick', 498: 'Xayah', 101: 'Xerath', 5: 'Xin Zhao',
+          83: 'Yorick', 350: 'Yuumi', 154: 'Zac', 238: 'Zed', 115: 'Ziggs',
+          26: 'Zilean', 142: 'Zoe', 143: 'Zyra'
+        };
+        return championMap[championId] || `Champion ${championId}`;
+      };
+      
+      const summonerTableData = [{
+        player: data.summoner.name,
+        team: `Level ${data.summoner.level}`,
+        championPlayed: data.topChampions?.[0] ? getChampionName(data.topChampions[0].championId) : 'Unknown',
+        tournamentWins: data.topChampions?.[0]?.championPoints || 0,
+        tournamentLosses: 0,
+        winRate: data.topChampions?.[0]?.championLevel ? data.topChampions[0].championLevel * 10 : 0,
+        performanceScore: data.topChampions?.[0]?.championLevel ? data.topChampions[0].championLevel * 14 : 0,
+        event: 'Individual Summoner Lookup'
+      }];
+      
+      this.setState({
+        summonerLookup: {
+          ...this.state.summonerLookup,
+          loading: false,
+          result: data,
+          error: undefined,
+          xrayTraceId: xrayTraceId || data?.xray_trace_id
+        },
+        summoners: summonerTableData,
+        dataSourceStatus: { live: null, test: null, summoner: true }
+      });
+      
+      // Fetch X-Ray trace data
+      if (xrayTraceId || data?.xray_trace_id) {
+        this.fetchXRayTrace(xrayTraceId || data?.xray_trace_id);
+      }
+    } catch (error: any) {
+      console.error('Summoner lookup error:', error);
+      console.error('Error type:', typeof error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
+      let errorMessage = 'Network error - check browser console for details';
+      let xrayTraceId = error.xrayTraceId;
+      
+      if (error.message) {
+        if (error.message.includes('Failed to fetch')) {
+          errorMessage = `CORS/Network error - URL: ${import.meta.env.VITE_SUMMONER_LOOKUP_URL}`;
+        } else {
+          errorMessage = error.message;
+        }
       }
       
       this.setState({
         summonerLookup: {
           ...this.state.summonerLookup,
           loading: false,
-          result: data
-        }
-      });
-    } catch (error: any) {
-      this.setState({
-        summonerLookup: {
-          ...this.state.summonerLookup,
-          loading: false,
-          error: error.message || 'Failed to lookup summoner'
-        }
+          error: errorMessage,
+          xrayTraceId: xrayTraceId
+        },
+        dataSourceStatus: { live: null, test: null, summoner: false }
       });
     }
   }
@@ -282,15 +415,15 @@ export class ClientServer extends RestConstraintBase {
               </Box>
               
               {this.state.xrayTraceId && (
-                <Box variant="p">
-                  <strong>🔍 X-Ray Trace ID:</strong> <code>{this.state.xrayTraceId}</code><br/>
-                  <a 
-                    href={`https://console.aws.amazon.com/xray/home?region=us-east-1#/traces/${this.state.xrayTraceId}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                  >
-                    📊 View detailed trace in AWS X-Ray Console
-                  </a>
+                <Box variant="p" padding={{vertical: 's', horizontal: 'm'}} style={{backgroundColor: '#fff2cc', borderRadius: '8px'}}>
+                  <strong>🔍 Request Journey:</strong><br/>
+                  <div style={{fontFamily: 'monospace', fontSize: '12px', marginTop: '8px'}}>
+                    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐<br/>
+                    │ React   │───▶│ Lambda  │───▶│Riot API │───▶│ ❌ Failed│<br/>
+                    │ Client  │    │Function │    │Request  │    │Fallback │<br/>
+                    └─────────┘    └─────────┘    └─────────┘    └─────────┘<br/>
+                    &nbsp;&nbsp;GET req&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;API call&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Local data
+                  </div>
                 </Box>
               )}
               
@@ -305,10 +438,10 @@ export class ClientServer extends RestConstraintBase {
                 </Box>
               )}
               
-              <Box variant="p">
+              <div>
                 Check the browser console for detailed error information. 
                 <a href="https://github.com/BryanChasko/rift-rewind-aws-riot-games-hackathon" target="_blank" rel="noopener noreferrer">🔗 View GitHub repo</a> for troubleshooting or contact <a href="https://linkedin.com/in/bryanchasko" target="_blank" rel="noopener noreferrer">Bryan Chasko</a>.
-              </Box>
+              </div>
             </SpaceBetween>
           </Alert>
         )}
@@ -316,55 +449,52 @@ export class ClientServer extends RestConstraintBase {
         {this.state.error === 'api-partial' && (
           <Alert type="info" header="📊 API Status with X-Ray Diagnostics">
             <SpaceBetween direction="vertical" size="s">
-              <Box variant="p">
+              <div>
                 Lambda executed successfully but Riot APIs are unavailable. Using local fallback data.
-              </Box>
+              </div>
               
               {this.state.xrayTraceId && (
-                <Box variant="p">
-                  <strong>🔍 X-Ray Trace ID:</strong> <code>{this.state.xrayTraceId}</code><br/>
-                  <a 
-                    href={`https://console.aws.amazon.com/xray/home?region=us-east-1#/traces/${this.state.xrayTraceId}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                  >
-                    📊 View detailed request flow in AWS X-Ray Console
-                  </a>
-                </Box>
+                <div style={{backgroundColor: '#e6f3ff', borderRadius: '8px', padding: '12px'}}>
+                  <strong>🔍 Request Journey:</strong><br/>
+                  <div style={{fontFamily: 'monospace', fontSize: '12px', marginTop: '8px'}}>
+                    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐<br/>
+                    │ React   │───▶│ Lambda  │───▶│Riot API │───▶│Fallback │<br/>
+                    │ Client  │    │Function │    │Timeout  │    │ Data    │<br/>
+                    └─────────┘    └─────────┘    └─────────┘    └─────────┘<br/>
+                    &nbsp;&nbsp;GET req&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Retry&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Demo data
+                  </div>
+                </div>
               )}
               
               {this.state.errorDetails?.api_attempts && (
-                <Box variant="p">
+                <div>
                   <strong>🛠️ API Attempt Details:</strong><br/>
                   {this.state.errorDetails.api_attempts.map((attempt: any, index: number) => (
                     <div key={index}>
                       <code>{attempt.endpoint}: {attempt.status} - {attempt.result}</code><br/>
                     </div>
                   ))}
-                </Box>
+                </div>
               )}
             </SpaceBetween>
           </Alert>
         )}
         
-        {this.props.stateManager.getDataMode('contests') === 'live' && (
-          <Alert type="success" header={`🔗 Data Context from Step 1: ${this.props.selectedYear.value} Tournament`}>
+        {(this.props.stateManager.getDataMode('contests') === 'live' || this.props.stateManager.getDataMode('contests') === 'demo') && (
+          <Alert type="success" header={`🔗 Data Context from Step 1: ${this.props.selectedYear.value} Tournament Data`}>
             <SpaceBetween direction="vertical" size="s">
-              <Box variant="p">
-                Year selection automatically carried forward from Uniform Interface demo. This shows how client-server architecture maintains state across different API endpoints.
-              </Box>
-              {this.state.xrayTraceId && (
-                <Box variant="p">
-                  <strong>🔍 X-Ray Trace:</strong> <code>{this.state.xrayTraceId}</code> - 
-                  <a 
-                    href={`https://console.aws.amazon.com/xray/home?region=us-east-1#/traces/${this.state.xrayTraceId}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                  >
-                    View request flow
-                  </a>
-                </Box>
-              )}
+              <div>
+                <strong>Year Filter Applied:</strong> {this.props.selectedYear.value} selection automatically carried forward from Uniform Interface demo. This shows how client-server architecture maintains state across different API endpoints while allowing independent evolution.
+              </div>
+              <div style={{backgroundColor: '#e8f5e8', padding: '12px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '12px'}}>
+                <strong>🔍 Data Flow Connection:</strong><br/>
+                Step 1 (Uniform Interface) → Year: {this.props.selectedYear.value} → Step 2 (Client-Server)<br/>
+                ┌─────────┐    ┌─────────┐    ┌─────────┐<br/>
+                │Contests │───▶│ Filter  │───▶│Summoners│<br/>
+                │API Call │    │ Year    │    │ for Year │<br/>
+                └─────────┘    └─────────┘    └─────────┘<br/>
+                &nbsp;&nbsp;{this.props.selectedYear.value}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Context&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{this.props.selectedYear.value} data
+              </div>
             </SpaceBetween>
           </Alert>
         )}
@@ -374,95 +504,189 @@ export class ClientServer extends RestConstraintBase {
           className="rest-constraint-2"
         >
           <SpaceBetween direction="vertical" size="s">
-            <Alert type="info" header="🎮 API Architecture & Rate Limits">
-              <SpaceBetween direction="vertical" size="s">
-                <Box variant="p">
-                  <strong>Rate Limits:</strong> Personal API Key (20/sec, 100/2min) • Production Keys (higher limits)<br/>
-                  <strong>CORS:</strong> Lambda handles cross-origin requests with proper headers<br/>
-                  <strong>Security:</strong> API keys stored in encrypted AWS SSM Parameter Store
-                </Box>
-                <Box variant="p">
-                  <strong>Challenger League Data Fields:</strong><br/>
-                  • <strong>puuid:</strong> Unique player ID • <strong>leaguePoints:</strong> Ranking score<br/>
-                  • <strong>wins/losses:</strong> Match records • <strong>veteran/hotStreak/freshBlood:</strong> Player status
-                </Box>
-              </SpaceBetween>
+            <Alert type="info" header="🎮 Architecture Overview">
+              <Box variant="p">
+                <strong>Dual Lambda:</strong> Main (Challenger data) + Summoner (Riot ID lookup)<br/>
+                <strong>Security:</strong> API keys in encrypted SSM Parameter Store<br/>
+                <strong>Process:</strong> Riot ID → Account API → Summoner API → Champion Mastery
+              </Box>
             </Alert>
             
-            <Box variant="p">
-              <strong>🌐 Live Challenger League Endpoint:</strong><br/>
-              <code>https://na1.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5</code><br/>
-              <strong>📡 HTTP Method:</strong> GET<br/>
-              <strong>🔑 Auth:</strong> X-Riot-Token header required<br/>
-              <strong>📊 Returns:</strong> Current top ~300 Challenger players with live ranking data
-            </Box>
+
             
-            <SpaceBetween direction="vertical" size="s">
-              <SpaceBetween direction="horizontal" size="s">
-                {this.renderApiButton(
-                  () => this.fetchSummoners(),
-                  'Fetch Top Summoners',
-                  'Live Summoner Data Loaded',
-                  this.props.stateManager.getDataMode(this.section) === 'live'
-                )}
-                {this.renderApiButton(
-                  () => this.loadTestData(),
-                  'Load Test Data',
-                  'Test Data Loaded',
-                  false
-                )}
-              </SpaceBetween>
-              
-              <Container header="🔍 Look Up Any Summoner">
-                <SpaceBetween direction="vertical" size="s">
-                  <Box variant="p">Try a Riot ID like <strong>Doublelift#NA1</strong> or <strong>Faker#Hide</strong></Box>
-                  <SpaceBetween direction="horizontal" size="s">
-                    <input 
-                      type="text" 
-                      placeholder="GameName#TAG" 
-                      value={this.state.summonerLookup.riotId}
-                      onChange={(e) => this.setState({
-                        summonerLookup: {...this.state.summonerLookup, riotId: (e.target as HTMLInputElement).value}
-                      })}
-                      style={{padding: '8px', borderRadius: '4px', border: '1px solid #ccc', minWidth: '200px'}}
-                    />
-                    <select 
-                      value={this.state.summonerLookup.region}
-                      onChange={(e) => this.setState({
-                        summonerLookup: {...this.state.summonerLookup, region: (e.target as HTMLSelectElement).value}
-                      })}
-                      style={{padding: '8px', borderRadius: '4px', border: '1px solid #ccc'}}
-                    >
-                      <option value="na1">North America</option>
-                      <option value="euw1">Europe West</option>
-                      <option value="kr">Korea</option>
-                    </select>
-                    <button 
-                      style={{padding: '8px 16px', borderRadius: '4px', border: 'none', background: '#0073bb', color: 'white', cursor: 'pointer'}}
-                      onClick={() => this.lookupSummoner()}
-                      disabled={this.state.summonerLookup.loading}
-                    >
-                      {this.state.summonerLookup.loading ? 'Looking up...' : 'Look Up'}
-                    </button>
-                  </SpaceBetween>
+            <Container header="🎮 Client-Server Data Sources">
+              <SpaceBetween direction="vertical" size="m">
+                <Box variant="p">
+                  Choose your data source to explore client-server architecture patterns:
+                </Box>
+                
+                <ColumnLayout columns={3} variant="text-grid">
+                  <div style={{textAlign: 'center'}}>
+                    {this.renderApiButton(
+                      () => this.fetchSummoners(),
+                      `${this.state.dataSourceStatus.live === true ? '✅' : this.state.dataSourceStatus.live === false ? '❌' : '🚀'} Fetch ${this.props.selectedYear.value} Summoners`,
+                      'Live Data Loaded',
+                      this.state.dataSourceStatus.live === true
+                    )}
+                    <Box variant="small" color={this.state.dataSourceStatus.live === true ? 'text-status-success' : this.state.dataSourceStatus.live === false ? 'text-status-error' : 'text-body-secondary'} margin={{top: 'xs'}}>
+                      {this.state.dataSourceStatus.live === true ? `✅ Live Challenger League (${this.state.summoners.length} players)` : this.state.dataSourceStatus.live === false ? '❌ Failed to load from Riot API' : `Live Challenger League for ${this.props.selectedYear.value}`}
+                    </Box>
+                  </div>
                   
-                  {this.state.summonerLookup.result && (
-                    <Alert type="success" header="🎮 Summoner Found">
+                  <div style={{textAlign: 'center'}}>
+                    <SpaceBetween direction="vertical" size="s">
+                      <button 
+                        style={{
+                          padding: '12px 24px', 
+                          borderRadius: '6px', 
+                          border: 'none', 
+                          background: '#0073bb', 
+                          color: 'white', 
+                          cursor: this.state.summonerLookup.loading ? 'not-allowed' : 'pointer',
+                          opacity: this.state.summonerLookup.loading ? 0.6 : 1,
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          width: '100%',
+                          boxSizing: 'border-box'
+                        }}
+                        onClick={() => this.lookupSummoner()}
+                        disabled={this.state.summonerLookup.loading}
+                      >
+                        {this.state.summonerLookup.loading ? 'Looking up...' : `${this.state.dataSourceStatus.summoner === true ? '✅' : this.state.dataSourceStatus.summoner === false ? '❌' : '🔍'} Look Up Summoner`}
+                      </button>
+                      <Box variant="small" color={this.state.dataSourceStatus.summoner === true ? 'text-status-success' : this.state.dataSourceStatus.summoner === false ? 'text-status-error' : 'text-body-secondary'}>
+                        {this.state.dataSourceStatus.summoner === true ? '✅ Individual lookup' : this.state.dataSourceStatus.summoner === false ? '❌ Failed lookup' : 'Individual lookup'}
+                      </Box>
+                      
+                      <SpaceBetween direction="vertical" size="xs">
+                        <input 
+                          type="text" 
+                          placeholder="Doublelift#NA1" 
+                          value={this.state.summonerLookup.riotId}
+                          onChange={(e) => this.setState({
+                            summonerLookup: {...this.state.summonerLookup, riotId: (e.target as HTMLInputElement).value}
+                          })}
+                          style={{
+                            padding: '6px 8px', 
+                            borderRadius: '4px', 
+                            border: '1px solid #d5dbdb', 
+                            width: '100%',
+                            fontSize: '12px',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                        <select 
+                          value={this.state.summonerLookup.region}
+                          onChange={(e) => this.setState({
+                            summonerLookup: {...this.state.summonerLookup, region: (e.target as HTMLSelectElement).value}
+                          })}
+                          style={{
+                            padding: '6px 8px', 
+                            borderRadius: '4px', 
+                            border: '1px solid #d5dbdb',
+                            fontSize: '12px',
+                            width: '100%',
+                            boxSizing: 'border-box'
+                          }}
+                        >
+                          <option value="na1">North America</option>
+                          <option value="euw1">Europe West</option>
+                          <option value="kr">Korea</option>
+                        </select>
+                      </SpaceBetween>
+                    </SpaceBetween>
+                  </div>
+                  
+                  <div style={{textAlign: 'center'}}>
+                    {this.renderApiButton(
+                      () => this.loadTestData(),
+                      `${this.state.dataSourceStatus.test === true ? '✅' : this.state.dataSourceStatus.test === false ? '❌' : '📊'} Load ${this.props.selectedYear.value} Test Data`,
+                      'Test Data Loaded',
+                      this.state.dataSourceStatus.test === true
+                    )}
+                    <Box variant="small" color={this.state.dataSourceStatus.test === true ? 'text-status-success' : this.state.dataSourceStatus.test === false ? 'text-status-error' : 'text-body-secondary'} margin={{top: 'xs'}}>
+                      {this.state.dataSourceStatus.test === true ? `✅ Local ${this.props.selectedYear.value} fallback data` : this.state.dataSourceStatus.test === false ? '❌ Failed to load' : `Local ${this.props.selectedYear.value} fallback data`}
+                    </Box>
+                  </div>
+                </ColumnLayout>
+
+                
+                {this.state.summonerLookup.result && (
+                  <Alert type="success" header="🎮 Summoner Found">
+                    <SpaceBetween direction="vertical" size="s">
                       <Box variant="p">
                         <strong>{this.state.summonerLookup.result.summoner.name}</strong> - Level {this.state.summonerLookup.result.summoner.level}<br/>
                         <strong>Top Champions:</strong> {this.state.summonerLookup.result.topChampions?.map((c: any) => `Champion ${c.championId} (${c.championPoints} pts)`).join(', ') || 'None'}
                       </Box>
-                    </Alert>
-                  )}
-                  
-                  {this.state.summonerLookup.error && (
-                    <Alert type="error" header="⚠️ Lookup Failed">
-                      <Box variant="p">{this.state.summonerLookup.error}</Box>
-                    </Alert>
-                  )}
-                </SpaceBetween>
-              </Container>
-            </SpaceBetween>
+                      
+                      {this.state.summonerLookup.xrayTraceId && (
+                        <div style={{backgroundColor: '#f2f3f3', borderRadius: '8px', padding: '12px'}}>
+                          <strong>🔍 Request Journey:</strong><br/>
+                          {this.state.xrayTrace ? (
+                            <div style={{fontFamily: 'monospace', fontSize: '11px', marginTop: '8px'}}>
+                              {this.state.xrayTrace.segments?.map((segment: any, i: number) => (
+                                <div key={i} style={{marginBottom: '4px'}}>
+                                  <strong>{segment.name}</strong>: {Math.round(segment.duration * 1000)}ms
+                                  {segment.subsegments?.map((sub: any, j: number) => (
+                                    <div key={j} style={{marginLeft: '16px', color: '#666'}}>
+                                      └─ {sub.name}: {Math.round(sub.duration * 1000)}ms
+                                    </div>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div style={{fontFamily: 'monospace', fontSize: '12px', marginTop: '8px'}}>
+                              ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐<br/>
+                              │ React   │───▶│ Lambda  │───▶│   SSM   │───▶│ Response│<br/>
+                              │ Client  │    │Function │    │Parameter│    │ Success │<br/>
+                              └─────────┘    └─────────┘    └─────────┘    └─────────┘<br/>
+                              &nbsp;&nbsp;POST req&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;API key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Demo data
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </SpaceBetween>
+                  </Alert>
+                )}
+                
+                {this.state.summonerLookup.error && (
+                  <Alert type="error" header="⚠️ Lookup Failed">
+                    <SpaceBetween direction="vertical" size="s">
+                      <Box variant="p">
+                        <strong>Error:</strong> {this.state.summonerLookup.error}
+                      </Box>
+                      
+                      <Box variant="p">
+                        {this.state.summonerLookup.xrayTraceId ? (
+                          <>
+                            <div style={{backgroundColor: '#fdf2f2', padding: '12px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '12px'}}>
+                              <strong>🔍 Error in Request Journey:</strong><br/>
+                              ┌─────────┐    ┌─────────┐    ┌─────────┐<br/>
+                              │ React   │───▶│ Lambda  │───▶│ ❌ Error │<br/>
+                              │ Client  │    │Function │    │Response │<br/>
+                              └─────────┘    └─────────┘    └─────────┘<br/>
+                              &nbsp;&nbsp;POST req&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Failed
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <strong>🔍 Network Diagnostics:</strong><br/>
+                            <em>Request failed before reaching Lambda - likely CORS or connectivity issue</em><br/>
+                            <strong>Check:</strong> Browser console, Lambda URL, CORS configuration
+                          </>
+                        )}
+                      </Box>
+                      
+                      <Box variant="p">
+                        <strong>🛠️ Architecture Flow:</strong><br/>
+                        React → POST {import.meta.env.VITE_SUMMONER_LOOKUP_URL ? 'to Lambda URL' : '(URL not configured)'} → SSM → Demo Response
+                      </Box>
+                    </SpaceBetween>
+                  </Alert>
+                )}
+              </SpaceBetween>
+            </Container>
           </SpaceBetween>
         </Container>
 
@@ -482,9 +706,9 @@ export class ClientServer extends RestConstraintBase {
                 <DataTable
                   items={this.state.summoners}
                   columns={summonerColumns}
-                  header="Top Challenger Summoners"
-                  description={`Top Challenger summoners and their signature champions. Select a row to view more about the champion as we explore stateless communication.`}
-                  counter="(5)"
+                  header={this.state.summoners.length === 1 && this.state.summoners[0]?.event === 'Individual Summoner Lookup' ? "Individual Summoner Lookup Result" : this.state.dataSourceStatus.live === true ? "Top Challenger Summoners (Live Data)" : "Top Ranked Summoners (Simulated Data)"}
+                  description={this.state.summoners.length === 1 && this.state.summoners[0]?.event === 'Individual Summoner Lookup' ? `Individual summoner data retrieved via Riot ID lookup. Shows summoner level and top champion mastery data from the Champion Mastery API. Select a row to view more about the champion as we explore stateless communication.` : this.state.dataSourceStatus.live === true ? `Live Challenger League data from Riot Games API. Players are identified by encrypted IDs (puuid/summonerId) - to get Riot IDs like 'Player#NA1', we'd need additional Account API calls using their puuid. Select a row to view more about the champion as we explore stateless communication.` : `Simulated summoner data for demonstration. Select a row to view more about the champion as we explore stateless communication.`}
+                  counter={`(${this.state.summoners.length})`}
                   emptyMessage="Click 'Fetch Top Summoners' to load data"
                   selectionType="single"
                   selectedItems={this.state.selectedChampion && this.state.selectionSource === 'table' ? 

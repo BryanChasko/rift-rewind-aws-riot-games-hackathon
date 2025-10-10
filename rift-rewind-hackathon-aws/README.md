@@ -1,73 +1,92 @@
-# React + TypeScript + Vite
+# Rift Rewind Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**React 18 + TypeScript + Vite + Cloudscape Design System**
 
-Currently, two official plugins are available:
+Cost-effective educational frontend for REST API demonstrations using League of Legends data. Features local test data by default to minimize AWS Lambda costs.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Live Demo
+**https://awsaerospace.org/learning/api/**
 
-## React Compiler
+## ✨ Key Features
+- **Local Test Data**: Comprehensive fallback data for cost-effective demonstrations
+- **Dual Lambda Integration**: Main API + Summoner Lookup Lambda functions
+- **REST Education**: Interactive demonstrations of all 6 REST architectural constraints
+- **X-Ray Diagnostics**: Real-time AWS tracing and error reporting
+- **Cloudscape UI**: Professional AWS-native design system
+- **Cost Optimization**: User-initiated API calls only
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🏗️ Architecture
+- **Frontend Responsibility**: Provides all test data locally to minimize Lambda costs
+- **Lambda Integration**: Only calls AWS services when user explicitly requests live data
+- **Error Handling**: Graceful degradation with detailed diagnostics
+- **Security**: No hardcoded secrets, environment variable configuration
 
-## Expanding the ESLint configuration
+## 🛠️ Development Setup
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+```bash
+# Install dependencies
+yarn install
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+# Start development server
+yarn dev
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+# Build for production
+yarn build
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Preview production build
+yarn preview
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🔧 Environment Configuration
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Create `.env.local` with Lambda URLs:
+```bash
+# Main Lambda Function URL
+VITE_API_URL=https://your-main-lambda-url.lambda-url.us-east-2.on.aws/
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Summoner Lookup Lambda URL
+VITE_SUMMONER_LOOKUP_URL=https://your-summoner-lambda-url.lambda-url.us-east-2.on.aws/
 ```
+
+## 📁 Project Structure
+```
+src/
+├── components/
+│   ├── RestConstraints/        # Individual REST constraint components
+│   ├── RestOverview.tsx        # Landing page
+│   ├── RiotApiCheatSheet.tsx   # API documentation
+│   └── ProjectResources.tsx    # GitHub links
+├── data/
+│   └── testData.ts            # Local fallback data
+├── services/
+│   └── ApiService.ts          # Lambda integration
+├── RiftRewindDashboard.tsx    # Main application
+└── App.tsx                    # Cloudscape shell
+```
+
+## 🎯 Cost-Effective Design
+- **Test Data First**: All demonstrations work without Lambda calls
+- **User-Initiated APIs**: Explicit buttons for live data fetching
+- **Smart Fallbacks**: Always provides meaningful content
+- **Transparent Costs**: Users understand when triggering billable services
+
+## 🔗 Integration
+- **Main Lambda**: Challenger League data and API validation
+- **Summoner Lambda**: Riot ID lookup and champion mastery
+- **X-Ray Tracing**: Real-time diagnostics and error reporting
+- **CI/CD**: Automated deployment via GitHub Actions
+
+## 🎓 Educational Value
+Interactive demonstrations of REST architectural constraints:
+1. **Uniform Interface** - Consistent API patterns
+2. **Client-Server** - Architectural separation with summoner lookup
+3. **Stateless** - Self-contained requests with champion mastery
+4. **Cacheable** - CDN optimization strategies
+5. **Layered System** - Infrastructure transparency
+6. **Code on Demand** - Dynamic UI configuration
+
+## 🚀 Deployment
+Automatically deployed via GitHub Actions to S3 + CloudFront:
+- **S3 Bucket**: `awsaerospace.org/learning/api/`
+- **CloudFront**: Global CDN with cache invalidation
+- **CI/CD**: Triggered on `rift-rewind-hackathon-aws/` changes

@@ -13,21 +13,29 @@ export class ApiService {
 
   async fetchContests(year: string): Promise<Contest[]> {
     try {
+      console.log(`Fetching contests for year: ${year}`);
       const response = await fetch(`${this.baseUrl}?endpoint=contests&year=${year}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
+      console.log('Contests API response:', data);
+      
+      // Lambda returns empty data for contests endpoint - this is expected
+      // The API call succeeds but returns no data, demonstrating the uniform interface
       return data.data || [];
     } catch (error) {
       console.error('Failed to fetch contests:', error);
-      return [
-        {id: 'worlds2024', name: 'Worlds Championship 2024', status: 'completed', winner: 'T1'},
-        {id: 'msi2024', name: 'Mid-Season Invitational 2024', status: 'completed', winner: 'Gen.G'}
-      ];
+      throw error; // Let the component handle the error and fallback
     }
   }
 
   async fetchSummoners(year: string): Promise<TournamentWinner[]> {
     try {
-      const response = await fetch(`${this.baseUrl}?endpoint=summoners&year=${year}`);
+      console.log(`Fetching summoners for year: ${year}`);
+      const response = await fetch(`${this.baseUrl}?endpoint=challenger-league&year=${year}`);
       const data = await response.json();
       
       if (response.status === 403) {
@@ -40,6 +48,7 @@ export class ApiService {
         throw new Error(`API error: ${response.status}. Response: ${JSON.stringify(data)}. 🔗 Check repo: https://github.com/BryanChasko/rift-rewind-aws-riot-games-hackathon`);
       }
       
+      console.log('Summoners API response:', data);
       return data.data || [];
     } catch (error) {
       console.error('Failed to fetch summoners:', error);
@@ -47,9 +56,14 @@ export class ApiService {
     }
   }
 
-  async fetchChampionProficiency(champion: string): Promise<MasteryData[]> {
+  async fetchChampionProficiency(champion: string, year?: string): Promise<MasteryData[]> {
     try {
-      const response = await fetch(`${this.baseUrl}?endpoint=champion-mastery&champion=${champion}`);
+      const url = year ? 
+        `${this.baseUrl}?endpoint=champion-mastery&champion=${champion}&year=${year}` :
+        `${this.baseUrl}?endpoint=champion-mastery&champion=${champion}`;
+      
+      console.log(`Fetching champion proficiency for: ${champion}${year ? ` (year: ${year})` : ''}`);
+      const response = await fetch(url);
       const data = await response.json();
       
       if (response.status === 403) {
@@ -62,6 +76,7 @@ export class ApiService {
         throw new Error(`API error: ${response.status}. Response: ${JSON.stringify(data)}. 🔗 Check repo: https://github.com/BryanChasko/rift-rewind-aws-riot-games-hackathon`);
       }
       
+      console.log('Champion proficiency API response:', data);
       return data.data || [];
     } catch (error) {
       console.error('Failed to fetch champion proficiency:', error);
@@ -77,10 +92,16 @@ export class ApiService {
     }
   }
 
-  async fetchLayeredSystem(): Promise<LayerData[]> {
+  async fetchLayeredSystem(year?: string): Promise<LayerData[]> {
     try {
-      const response = await fetch(`${this.baseUrl}?endpoint=challenger&trace=layers`);
+      const url = year ? 
+        `${this.baseUrl}?endpoint=challenger&trace=layers&year=${year}` :
+        `${this.baseUrl}?endpoint=challenger&trace=layers`;
+      
+      console.log(`Fetching layered system data${year ? ` for year: ${year}` : ''}`);
+      const response = await fetch(url);
       const data = await response.json();
+      console.log('Layered system API response:', data);
       return data.data || [];
     } catch (error) {
       console.error('Failed to trace layers:', error);
@@ -88,10 +109,16 @@ export class ApiService {
     }
   }
 
-  async fetchDynamicConfig(): Promise<ConfigData[]> {
+  async fetchDynamicConfig(year?: string): Promise<ConfigData[]> {
     try {
-      const response = await fetch(`${this.baseUrl}?endpoint=champion-rotations&config=dynamic`);
+      const url = year ? 
+        `${this.baseUrl}?endpoint=champion-rotations&config=dynamic&year=${year}` :
+        `${this.baseUrl}?endpoint=champion-rotations&config=dynamic`;
+      
+      console.log(`Fetching dynamic config${year ? ` for year: ${year}` : ''}`);
+      const response = await fetch(url);
       const data = await response.json();
+      console.log('Dynamic config API response:', data);
       return data.data || [];
     } catch (error) {
       console.error('Failed to fetch dynamic config:', error);

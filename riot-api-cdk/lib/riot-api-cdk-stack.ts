@@ -22,7 +22,21 @@ export class RiotApiCdkStack extends cdk.Stack {
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
         iam.ManagedPolicy.fromAwsManagedPolicyName('AWSXRayDaemonWriteAccess')
-      ]
+      ],
+      inlinePolicies: {
+        XRayReadPolicy: new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'xray:GetTraceSummaries',
+                'xray:BatchGetTraces'
+              ],
+              resources: ['*']
+            })
+          ]
+        })
+      }
     });
 
     // Grant Lambda permission to read the SSM parameter
@@ -70,7 +84,7 @@ export class RiotApiCdkStack extends cdk.Stack {
       cors: {
         allowedOrigins: ['*'],
         allowedMethods: [lambda.HttpMethod.POST],
-        allowedHeaders: ['Content-Type'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
         maxAge: cdk.Duration.seconds(300)
       }
     });

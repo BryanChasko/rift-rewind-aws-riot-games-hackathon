@@ -19,21 +19,42 @@ export class UniformInterface extends RestConstraintBase {
   };
 
   private async fetchContests() {
-    const contests = await this.props.apiService.fetchContests(this.props.selectedYear.value);
-    this.setState({ contests });
-    this.props.stateManager.setDataMode(this.section, 'live');
+    try {
+      const contests = await this.props.apiService.fetchContests(this.props.selectedYear.value);
+      this.setState({ contests });
+      this.props.stateManager.setDataMode(this.section, 'live');
+    } catch (error) {
+      console.error('Failed to fetch contests:', error);
+      this.setState({ 
+        contests: [
+          {id: 'worlds2024', name: 'Worlds Championship 2024', status: 'completed', winner: 'T1'},
+          {id: 'msi2024', name: 'Mid-Season Invitational 2024', status: 'completed', winner: 'Gen.G'}
+        ]
+      });
+      this.props.stateManager.setDataMode(this.section, 'demo');
+    }
+  }
+
+  private loadTestData() {
+    this.setState({ 
+      contests: [
+        {id: 'worlds2024', name: 'Worlds Championship 2024', status: 'completed', winner: 'T1'},
+        {id: 'msi2024', name: 'Mid-Season Invitational 2024', status: 'completed', winner: 'Gen.G'}
+      ]
+    });
+    this.props.stateManager.setDataMode(this.section, 'demo');
   }
 
   renderContent(): React.JSX.Element {
     const contestColumns: TableColumn<Contest>[] = [
-      { id: 'name', header: 'Tournament', cell: (item) => item.name },
+      { id: 'name', header: 'Challenge Contest', cell: (item) => item.name },
       { id: 'status', header: 'Status', cell: (item) => item.status },
       { id: 'winner', header: 'Winner', cell: (item) => item.winner }
     ];
 
     return (
       <>
-        <Alert statusIconAriaLabel="Info" header="🎯 Tournament API Demo">
+        <Alert statusIconAriaLabel="Info" header="🎯 Challenges API Demo">
           Consistent patterns → Standard HTTP methods → Uniform JSON responses | One interface, all data types
         </Alert>
         
@@ -43,14 +64,12 @@ export class UniformInterface extends RestConstraintBase {
         >
           <SpaceBetween direction="vertical" size="s">
             <Alert type="info" header="🏆 Uniform Interface Constraints in Practice">
-              <Box variant="p">
-                <strong>Watch uniform interface constraints:</strong> Resource ID (<code>/contests</code>), JSON representation, self-descriptive HTTP responses, and navigation links working together.
-              </Box>
+              Watch uniform interface constraints: Resource ID (<code>/challenges/config</code>), JSON representation, self-descriptive HTTP responses, and navigation links working together. Challenges API data transformed to contest format.
             </Alert>
             
             <ColumnLayout columns={2} variant="text-grid">
-              <Box variant="p">
-                <strong>Select Year:</strong><br/>
+              <SpaceBetween direction="vertical" size="xs">
+                <Box variant="strong">Select Year:</Box>
                 <Select
                   selectedOption={this.props.selectedYear}
                   onChange={() => {}} // Handled by parent
@@ -61,29 +80,56 @@ export class UniformInterface extends RestConstraintBase {
                     { label: '2021', value: '2021' }
                   ]}
                 />
-              </Box>
-              <Box variant="p">
-                <strong>🌐 Full Endpoint URL:</strong><br/>
-                <code>https://americas.api.riotgames.com/lol/tournament/v5/tournaments?year={this.props.selectedYear.value}</code><br/>
-                <strong>📡 HTTP Method:</strong> GET<br/>
-                <strong>🔑 Auth:</strong> X-Riot-Token header required
-              </Box>
+              </SpaceBetween>
+              <SpaceBetween direction="vertical" size="xs">
+                <Box variant="strong">🌐 Full Endpoint URL:</Box>
+                <Box variant="code">{import.meta.env.VITE_API_URL}?endpoint=contests&year={this.props.selectedYear.value}</Box>
+                <Box variant="small" color="text-body-secondary">→ Challenges Config API transformed to contest format</Box>
+                <Box variant="strong">📡 HTTP Method:</Box>
+                <Box>GET</Box>
+                <Box variant="strong">🔑 Auth:</Box>
+                <Box>X-Riot-Token header required</Box>
+              </SpaceBetween>
             </ColumnLayout>
             
-            {this.renderApiButton(
-              () => this.fetchContests(),
-              'Send GET Request',
-              'Live Data Loaded - See Below!',
-              false
-            )}
+            <ColumnLayout columns={2} variant="text-grid">
+              <div>
+                {this.renderApiButton(
+                  () => this.fetchContests(),
+                  '🚀 Send GET Request',
+                  'API Called - See Below!',
+                  this.props.stateManager.getDataMode(this.section) === 'live'
+                )}
+              </div>
+              <div>
+                <button 
+                  style={{
+                    padding: '12px 24px', 
+                    borderRadius: '6px', 
+                    border: 'none', 
+                    background: '#0073bb', 
+                    color: 'white', 
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    width: '100%'
+                  }}
+                  onClick={() => this.loadTestData()}
+                >
+                  📊 Send Test Data
+                </button>
+              </div>
+            </ColumnLayout>
           </SpaceBetween>
         </Container>
 
-        {(this.props.stateManager.getDataMode(this.section) === 'live' || this.state.contests.length > 0) && (
+        {(this.state.contests.length > 0 || this.props.stateManager.getDataMode(this.section) === 'live' || this.props.stateManager.getDataMode(this.section) === 'demo') && (
           <>
             <Alert 
-              type="success" 
-              header="🎉 API Response Received! Fresh tournament data loaded below."
+              type={this.props.stateManager.getDataMode(this.section) === 'live' ? 'success' : 'info'} 
+              header={this.props.stateManager.getDataMode(this.section) === 'live' ? 
+                '🎉 Live API Data! Challenge data transformed to contest format.' :
+                '📊 Test Data Loaded! Demonstrating uniform JSON structure.'}
               dismissible
             />
             <Container 
@@ -97,8 +143,12 @@ export class UniformInterface extends RestConstraintBase {
                   {id: 'msi2024', name: 'Mid-Season Invitational 2024', status: 'completed', winner: 'Gen.G'}
                 ]}
                 columns={contestColumns}
-                header="🏆 Tournament Data (Uniform Interface Applied)"
-                description="Uniform JSON representation with consistent structure"
+                header="🏆 Challenge Contest Data (Uniform Interface Applied)"
+                description={this.props.stateManager.getDataMode(this.section) === 'live' ? 
+                  this.state.contests.length > 0 ? 
+                    `Live data from Riot Games Challenges API transformed to contest format for ${this.props.selectedYear.value}. Shows 3 randomly selected challenges from 400+ available. Demonstrates uniform HTTP methods (GET), consistent JSON structure, and real API integration.` :
+                    `API called successfully for ${this.props.selectedYear.value} but no challenges available. Using fallback data to demonstrate uniform JSON structure.` :
+                  `Test data demonstrating uniform JSON representation with consistent structure for ${this.props.selectedYear.value} challenge contests.`}
                 emptyMessage="No contests available"
               />
             </Container>
@@ -106,7 +156,7 @@ export class UniformInterface extends RestConstraintBase {
             {this.renderNextStep(
               'client-server',
               'Client-Server Architecture',
-              `Ready to see how the ${this.props.selectedYear.value} championship summoners demonstrate client-server separation?`
+              `Ready to see how the ${this.props.selectedYear.value} challenge winners demonstrate client-server separation?`
             )}
           </>
         )}
