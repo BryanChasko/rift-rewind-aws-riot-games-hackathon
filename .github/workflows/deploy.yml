@@ -94,9 +94,13 @@ jobs:
         echo "✅ CDK application is valid"
     
     - name: Install Lambda dependencies
-      working-directory: riot-api-cdk/lambda/riot-api-source
       run: |
         echo "🐍 Installing Lambda dependencies..."
+        cd riot-api-cdk/lambda/riot-api-source
+        pip install aws-xray-sdk -t . --quiet
+        find . -name "*.pyc" -delete
+        find . -name "__pycache__" -type d -exec rm -rf {} + || true
+        cd ../summoner-lookup-source
         pip install aws-xray-sdk -t . --quiet
         find . -name "*.pyc" -delete
         find . -name "__pycache__" -type d -exec rm -rf {} + || true
