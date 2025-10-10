@@ -4,7 +4,7 @@ import ContentLayout from '@cloudscape-design/components/content-layout';
 import Navigation from './components/navigation';
 import Breadcrumbs from './components/breadcrumbs';
 import Shell from './layouts/shell';
-import RiftRewindDashboard from './RiftRewindDashboard';
+import RiftRewindDashboardModular from './RiftRewindDashboardModular';
 
 function App() {
   useEffect(() => {
@@ -46,7 +46,7 @@ function App() {
       }
     >
       <ContentLayout>
-        <RiftRewindDashboard />
+        <RiftRewindDashboardModular />
       </ContentLayout>
     </Shell>
   );
