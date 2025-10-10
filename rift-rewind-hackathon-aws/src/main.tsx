@@ -4,6 +4,8 @@ import App from './App.tsx';
 import '@cloudscape-design/global-styles/index.css';
 import './index.css';
 
+// Test deployment trigger
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
