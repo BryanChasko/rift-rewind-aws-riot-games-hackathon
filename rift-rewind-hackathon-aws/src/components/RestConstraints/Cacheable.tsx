@@ -70,13 +70,13 @@ export class Cacheable extends RestConstraintBase {
         header: 'CDN URL Structure',
         cell: (item) => (
           <SpaceBetween direction="vertical" size="xs">
-            <Box variant="small" fontFamily="monospace">
+            <Box variant="small" variant="code">
               ddragon.leagueoflegends.com
             </Box>
-            <Box variant="small" fontFamily="monospace">
+            <Box variant="small" variant="code">
               /cdn/14.23.1/img/champion/
             </Box>
-            <Box variant="small" fontFamily="monospace">
+            <Box variant="small" variant="code">
               {item.championPlayed}.png
             </Box>
           </SpaceBetween>

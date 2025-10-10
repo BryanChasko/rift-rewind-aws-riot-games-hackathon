@@ -73,7 +73,7 @@ export function DataTable<T>({
         </Header>
       ) : undefined}
       empty={
-        <Box textAlign="center" role="status" aria-live="polite">
+        <Box textAlign="center"  aria-live="polite">
           <Box variant="strong" textAlign="center">
             {emptyMessage}
           </Box>

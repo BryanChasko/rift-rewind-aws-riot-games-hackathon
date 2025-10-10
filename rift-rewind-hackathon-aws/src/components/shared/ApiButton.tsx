@@ -51,8 +51,8 @@ export const ApiButton: React.FC<ApiButtonProps> = ({
   return (
     <SpaceBetween direction="vertical" size="s">
       <Grid gridDefinition={[
-        { colspan: { default: isMobile ? 12 : 'auto', xs: 12 } },
-        { colspan: { default: isMobile ? 12 : 'auto', xs: 12 } }
+        { colspan: { default: 12, xs: 12 } },
+        { colspan: { default: 12, xs: 12 } }
       ]}>
         <Button 
           onClick={handleFetch}

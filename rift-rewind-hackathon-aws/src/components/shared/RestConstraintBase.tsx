@@ -83,7 +83,7 @@ export abstract class RestConstraintBase extends React.Component<RestConstraintB
     return (
       <Container 
         variant="stacked" 
-        role="navigation" 
+         
         aria-label="Navigate to next REST constraint"
       >
         <Header variant="h3">🚀 Next Step: {nextTitle}</Header>
@@ -105,7 +105,7 @@ export abstract class RestConstraintBase extends React.Component<RestConstraintB
     return (
       <section 
         aria-labelledby={`constraint-${this.constraintNumber}`} 
-        role="region"
+        
         data-testid={`constraint-${this.constraintNumber}`}
         className="responsive-container"
       >
