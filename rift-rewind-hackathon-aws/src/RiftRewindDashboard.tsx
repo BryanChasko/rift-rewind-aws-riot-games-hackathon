@@ -353,10 +353,10 @@ const RiftRewindDashboard: React.FC = () => {
                     header: 'Tournament Record',
                     'cell': (item: TournamentWinner) => (
                       <SpaceBetween direction="vertical" size="xs">
-                        <Box variant="strong" color={item.winRate >= 85 ? "text-status-success" : "text-status-info"}>
+                        <Box variant="strong">
                           {item.winRate}%
                         </Box>
-                        <Box variant="small" color="text-body-secondary">{item.tournamentWins}W - {item.tournamentLosses}L</Box>
+                        <Box variant="small">{item.tournamentWins}W - {item.tournamentLosses}L</Box>
                       </SpaceBetween>
                     )
                   },
@@ -364,7 +364,7 @@ const RiftRewindDashboard: React.FC = () => {
                     id: 'performance',
                     header: 'Performance Score',
                     'cell': (item: TournamentWinner) => (
-                      <Box variant="strong" color={item.performanceScore >= 95 ? "text-status-success" : item.performanceScore >= 90 ? "text-status-warning" : "text-status-info"}>
+                      <Box variant="strong">
                         {item.performanceScore}/100
                       </Box>
                     )
@@ -587,7 +587,7 @@ const RiftRewindDashboard: React.FC = () => {
                   id: 'masteryLevel',
                   header: 'Mastery Level',
                   'cell': (item: TournamentWinner) => (
-                    <Box variant="strong" color="text-status-success">
+                    <Box variant="strong">
                       Level {Math.min(7, Math.floor(item.performanceScore / 15))}
                     </Box>
                   )
@@ -605,7 +605,7 @@ const RiftRewindDashboard: React.FC = () => {
                   id: 'lastPlayed',
                   header: 'Last Played',
                   'cell': () => (
-                    <Box variant="small" color="text-body-secondary">
+                    <Box variant="small">
                       {new Date().toLocaleDateString()}
                     </Box>
                   )
