@@ -67,87 +67,84 @@ export class ClientServer extends RestConstraintBase {
       // Don't re-throw - let the error display show
     }
   }
+  
+  private async loadTestData() {
+    this.setState({ 
+      error: null, 
+      xrayTraceId: undefined, 
+      errorDetails: undefined,
+      summoners: this.getLocalFallbackSummoners()
+    });
+    this.props.stateManager.setDataMode(this.section, 'demo');
+  }
 
   private async getTopSummoners(): Promise<TournamentWinner[]> {
-    const response = await fetch(`${RIOT_API_PROXY_URL}?endpoint=challenger-league`);
-    
-    if (response.status === 403 || response.status === 401) {
-      const responseText = await response.text().catch(() => '');
-      const error = new Error('API key expired or invalid') as any;
-      error.response = { 
-        status: response.status,
-        headers: Object.fromEntries(response.headers.entries()),
-        data: responseText
-      };
-      throw error;
+    try {
+      const response = await fetch(`${RIOT_API_PROXY_URL}?endpoint=challenger-league`);
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Store X-Ray trace ID
+      const xrayTraceId = response.headers.get('X-Trace-Id') || data.xray_trace_id;
+      if (xrayTraceId) {
+        this.setState({ xrayTraceId });
+      }
+      
+      // Check if Lambda got real data (not fallback)
+      const challengerAttempt = data.api_attempts?.find((attempt: any) => 
+        attempt.endpoint === 'Challenger League API'
+      );
+      
+      if (challengerAttempt?.status === 'Success' && data.data?.length > 0) {
+        // Use real API data
+        this.setState({ error: null });
+        return data.data.slice(0, 5).map((entry: any, index: number) => ({
+          player: entry.summonerName || `Player ${index + 1}`,
+          team: 'Challenger',
+          championPlayed: ['Azir', 'Aatrox', 'Jinx', 'Thresh', 'Graves'][index],
+          tournamentWins: entry.wins || 0,
+          tournamentLosses: entry.losses || 0,
+          winRate: entry.wins && entry.losses ? Math.round((entry.wins / (entry.wins + entry.losses)) * 100) : 0,
+          performanceScore: entry.leaguePoints ? Math.min(100, Math.round(entry.leaguePoints / 10)) : 0,
+          event: 'Challenger League'
+        }));
+      } else {
+        // API failed, show diagnostic info and use local fallback
+        this.setState({ 
+          error: 'api-partial',
+          errorDetails: { api_attempts: data.api_attempts }
+        });
+        throw new Error('Riot API unavailable');
+      }
+    } catch (error) {
+      // Use local fallback data
+      return this.getLocalFallbackSummoners();
     }
-    if (!response.ok) {
-      const responseText = await response.text().catch(() => '');
-      const error = new Error(`API error: ${response.status}`) as any;
-      error.response = { 
-        status: response.status,
-        headers: Object.fromEntries(response.headers.entries()),
-        data: responseText
-      };
-      throw error;
-    }
-    
-    const result = await response.json();
-    
-    // Handle error responses from Lambda
-    if (result.statusCode >= 400) {
-      const error = new Error(`Lambda error: ${result.statusCode}`) as any;
-      error.response = {
-        status: result.statusCode,
-        headers: result.headers || {},
-        data: result.body
-      };
-      throw error;
-    }
-    
-    const data = JSON.parse(result.body);
-    
-    // Store X-Ray trace ID and API attempt information
-    if (data.xray_trace_id) {
-      this.setState({ xrayTraceId: data.xray_trace_id });
-    }
-    
-    // Check if any API attempts failed
-    const failedAttempts = data.api_attempts?.filter((attempt: any) => 
-      attempt.status === 'Failed' || attempt.status === 'No Data'
-    ) || [];
-    
-    if (failedAttempts.length > 0) {
-      this.setState({ 
-        error: 'api-partial',
-        errorDetails: { api_attempts: data.api_attempts }
-      });
-    }
-    
-    if (data.data && Array.isArray(data.data)) {
-      return data.data.slice(0, 5).map((entry: any, index: number) => ({
-        player: entry.summonerName || `Player ${index + 1}`,
-        team: 'Challenger',
-        championPlayed: ['Azir', 'Aatrox', 'Jinx', 'Thresh', 'Graves'][index],
-        tournamentWins: entry.wins || 0,
-        tournamentLosses: entry.losses || 0,
-        winRate: entry.wins && entry.losses ? Math.round((entry.wins / (entry.wins + entry.losses)) * 100) : 0,
-        performanceScore: entry.leaguePoints ? Math.min(100, Math.round(entry.leaguePoints / 10)) : 0,
-        event: 'Challenger League'
-      }));
-    }
-    return [];
+  }
+  
+  private getLocalFallbackSummoners(): TournamentWinner[] {
+    return [
+      { player: 'Faker', team: 'T1', championPlayed: 'Azir', tournamentWins: 150, tournamentLosses: 50, winRate: 75, performanceScore: 95, event: 'Local Demo Data' },
+      { player: 'Canyon', team: 'Gen.G', championPlayed: 'Aatrox', tournamentWins: 140, tournamentLosses: 60, winRate: 70, performanceScore: 92, event: 'Local Demo Data' },
+      { player: 'Showmaker', team: 'DK', championPlayed: 'Jinx', tournamentWins: 130, tournamentLosses: 70, winRate: 65, performanceScore: 88, event: 'Local Demo Data' },
+      { player: 'Chovy', team: 'HLE', championPlayed: 'Thresh', tournamentWins: 125, tournamentLosses: 75, winRate: 63, performanceScore: 85, event: 'Local Demo Data' },
+      { player: 'Ruler', team: 'JDG', championPlayed: 'Graves', tournamentWins: 120, tournamentLosses: 80, winRate: 60, performanceScore: 83, event: 'Local Demo Data' }
+    ];
   }
 
   private getDefaultSummoners(): TournamentWinner[] {
     return [
-      { player: 'Loading...', team: 'Challenger', championPlayed: 'Azir', tournamentWins: 0, tournamentLosses: 0, winRate: 0, performanceScore: 0, event: 'Demo Data' }
+      { player: 'Loading...', team: 'Challenger', championPlayed: 'Azir', tournamentWins: 0, tournamentLosses: 0, winRate: 0, performanceScore: 0, event: 'Loading...' }
     ];
   }
 
   renderContent(): React.JSX.Element {
     const dataMode = this.props.stateManager.getDataMode(this.section);
-    const winners = true; // Always show table like in original
+    const winners = this.state.summoners.length > 0 && this.state.summoners[0].player !== 'Loading...';
 
     const summonerColumns: TableColumn<TournamentWinner>[] = [
       {
@@ -259,7 +256,7 @@ export class ClientServer extends RestConstraintBase {
           <Alert type="info" header="📊 API Status with X-Ray Diagnostics">
             <SpaceBetween direction="vertical" size="s">
               <Box variant="p">
-                Lambda executed successfully but some Riot APIs are unavailable. Using fallback demo data.
+                Lambda executed successfully but Riot APIs are unavailable. Using local fallback data.
               </Box>
               
               {this.state.xrayTraceId && (
@@ -348,12 +345,20 @@ export class ClientServer extends RestConstraintBase {
               </Box>
             </ColumnLayout>
             
-            {this.renderApiButton(
-              () => this.fetchSummoners(),
-              'Fetch Top Summoners',
-              'Live Summoner Data Loaded',
-              false
-            )}
+            <SpaceBetween direction="horizontal" size="s">
+              {this.renderApiButton(
+                () => this.fetchSummoners(),
+                'Fetch Top Summoners',
+                'Live Summoner Data Loaded',
+                this.props.stateManager.getDataMode(this.section) === 'live'
+              )}
+              {this.renderApiButton(
+                () => this.loadTestData(),
+                'Load Test Data',
+                'Test Data Loaded',
+                false
+              )}
+            </SpaceBetween>
           </SpaceBetween>
         </Container>
 
@@ -371,7 +376,7 @@ export class ClientServer extends RestConstraintBase {
             >
               <SpaceBetween direction="vertical" size="m">
                 <DataTable
-                  items={this.state.summoners.length > 0 ? this.state.summoners : this.getDefaultSummoners()}
+                  items={this.state.summoners}
                   columns={summonerColumns}
                   header="Top Challenger Summoners"
                   description={`Top Challenger summoners and their signature champions. Select a row to view more about the champion as we explore stateless communication.`}

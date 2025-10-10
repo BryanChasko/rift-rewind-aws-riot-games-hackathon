@@ -88,50 +88,41 @@ def handle_players_endpoint(api_attempts: List[Dict[str, Any]], headers: Dict[st
     """
     Handle players endpoint - demonstrates uniform interface for player data.
     """
-    # Try Challenger League API for top players
-    try:
-        challenger_url = "https://na1.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5"
-        challenger_data = make_request(challenger_url, headers)
+    challenger_url = "https://na1.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5"
+    challenger_data, status_code, error_details = make_request(challenger_url, headers)
+    
+    if challenger_data and 'entries' in challenger_data:
+        top_players = challenger_data['entries'][:5]
+        players_data = [{
+            'summonerId': player.get('summonerId', 'unknown'),
+            'summonerName': player.get('summonerName', 'Unknown'),
+            'leaguePoints': player.get('leaguePoints', 0),
+            'rank': player.get('rank', 'I'),
+            'wins': player.get('wins', 0),
+            'losses': player.get('losses', 0)
+        } for player in top_players]
         
-        if challenger_data and 'entries' in challenger_data:
-            top_players = challenger_data['entries'][:5]
-            players_data = [{
-                'summonerId': player.get('summonerId', 'unknown'),
-                'summonerName': player.get('summonerName', 'Unknown'),
-                'leaguePoints': player.get('leaguePoints', 0),
-                'rank': player.get('rank', 'I'),
-                'wins': player.get('wins', 0),
-                'losses': player.get('losses', 0)
-            } for player in top_players]
-            
-            api_attempts.append({
-                'endpoint': 'Challenger League API',
-                'status': 'Success',
-                'method': 'GET',
-                'url': 'na1.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5',
-                'auth': 'X-Riot-Token required',
-                'result': f'Top {len(players_data)} challenger players',
-                'data_count': len(players_data)
-            })
-        else:
-            raise Exception("No challenger data available")
-            
-    except Exception as e:
-        # Fallback to demo data
-        players_data = [
-            {'summonerId': 'demo1', 'summonerName': 'Faker', 'leaguePoints': 1500, 'rank': 'I', 'wins': 150, 'losses': 50},
-            {'summonerId': 'demo2', 'summonerName': 'Canyon', 'leaguePoints': 1450, 'rank': 'I', 'wins': 140, 'losses': 60},
-            {'summonerId': 'demo3', 'summonerName': 'Showmaker', 'leaguePoints': 1400, 'rank': 'I', 'wins': 130, 'losses': 70}
-        ]
-        
+        api_attempts.append({
+            'endpoint': 'Challenger League API',
+            'status': 'Success',
+            'method': 'GET',
+            'url': challenger_url,
+            'auth': 'X-Riot-Token required',
+            'result': f'Retrieved {len(players_data)} challenger players',
+            'status_code': status_code,
+            'data_count': len(players_data)
+        })
+    else:
+        players_data = []
         api_attempts.append({
             'endpoint': 'Challenger League API',
             'status': 'Failed',
             'method': 'GET',
-            'url': 'na1.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5',
+            'url': challenger_url,
             'auth': 'X-Riot-Token required',
-            'result': f'API failed, using demo data: {str(e)}',
-            'data_count': len(players_data)
+            'result': error_details,
+            'status_code': status_code,
+            'data_count': 0
         })
     
     trace_id = xray_recorder.get_trace_entity().trace_id if xray_recorder.get_trace_entity() else 'unknown'
@@ -215,16 +206,12 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         headers = {RIOT_API_HEADER: api_key}
         
         @xray_recorder.capture('make_request')
-        def make_request(url: str, headers: Optional[Dict[str, str]] = None) -> Optional[Dict[str, Any]]:
+        def make_request(url: str, headers: Optional[Dict[str, str]] = None) -> tuple[Optional[Dict[str, Any]], int, str]:
             """
-            Helper function to make HTTP requests with proper error handling.
+            Helper function to make HTTP requests with detailed error reporting.
             
-            Args:
-                url (str): The URL to request
-                headers (Optional[Dict[str, str]]): HTTP headers to include
-                
             Returns:
-                Optional[Dict[str, Any]]: Parsed JSON response or None if failed
+                tuple: (response_data, status_code, error_details)
             """
             req = urllib.request.Request(url)
             if headers:
@@ -233,152 +220,25 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             try:
                 with urllib.request.urlopen(req) as response:
-                    return json.loads(response.read().decode())
+                    return json.loads(response.read().decode()), response.status, 'Success'
+            except urllib.error.HTTPError as e:
+                error_body = e.read().decode() if e.fp else 'No response body'
+                return None, e.code, f'HTTP {e.code}: {e.reason}. Response: {error_body[:200]}'
+            except urllib.error.URLError as e:
+                return None, 0, f'Network error: {str(e.reason)}'
+            except json.JSONDecodeError as e:
+                return None, 200, f'Invalid JSON response: {str(e)}'
             except Exception as e:
-                # Log error for CloudWatch monitoring
-                print(f"Request failed for {url}: {e}")
-                return None
+                return None, 0, f'Unexpected error: {str(e)}'
         
         # Initialize tracking structures for educational transparency
         # These provide detailed information about API calls for learning purposes
         api_attempts: List[Dict[str, Any]] = []
         live_data: List[Dict[str, Any]] = []
         
-        # PRIMARY DATA SOURCE: T1 Worlds 2023 Champions
-        # This curated data ensures the application always has meaningful content
-        # and reduces dependency on external API availability
-        t1_champions = [
-            {'champion': 'Azir', 'title': 'The Emperor of Shurima', 'performance': 89},
-            {'champion': 'Aatrox', 'title': 'The Darkin Blade', 'performance': 92}, 
-            {'champion': 'Jinx', 'title': 'The Loose Cannon', 'performance': 87},
-            {'champion': 'Thresh', 'title': 'The Chain Warden', 'performance': 85},
-            {'champion': 'Graves', 'title': 'The Outlaw', 'performance': 83}
-        ]
+        # Remove dummy data - focus on real API calls only
         
-        # Track the curated data source for transparency
-        api_attempts.append({
-            'endpoint': 'T1 Champions Data',
-            'status': 'Success',
-            'method': 'INTERNAL',
-            'url': 'lambda://curated-data',
-            'auth': 'None (internal data)',
-            'result': 'T1 Worlds 2023 championship data loaded',
-            'data_count': len(t1_champions)
-        })
-        
-        # Transform curated champion data into match-like format for frontend consumption
-        # Performance scores are converted to game-like statistics for educational display
-        for champ in t1_champions:
-            live_data.append({
-                'matchId': champ['title'],  # Champion lore title
-                'kills': champ['performance'] // 5,  # Attack power derived from performance
-                'deaths': (100 - champ['performance']) // 10,  # Defense rating (inverse)
-                'assists': champ['performance'] // 6,  # Speed rating
-                'win': champ['performance'] > 85,  # S-Tier vs A-Tier classification
-                'champion': champ['champion']  # Champion name
-            })
-        
-        # SECONDARY DATA SOURCE: Riot Games Featured Games API
-        # This endpoint provides live high-level matches but requires special access
-        # Note: This endpoint has been deprecated (HTTP 410) as of recent API changes
-        try:
-            featured_url = "https://na1.api.riotgames.com/lol/spectator/v5/featured-games"
-            featured_data = make_request(featured_url, headers)
-            
-            # Handle successful response with game list
-            if featured_data and 'gameList' in featured_data:
-                api_attempts.append({
-                    'endpoint': 'Featured Games API',
-                    'status': 'Success',
-                    'method': 'GET',
-                    'url': 'na1.api.riotgames.com/lol/spectator/v5/featured-games',
-                    'auth': 'X-Riot-Token required',
-                    'result': f"Live matches ({len(featured_data.get('gameList', []))} games)",
-                    'data_count': len(featured_data.get('gameList', []))
-                })
-            # Handle deprecated endpoint response (HTTP 410)
-            elif featured_data and 'status' in featured_data:
-                api_attempts.append({
-                    'endpoint': 'Featured Games API',
-                    'status': 'Deprecated',
-                    'method': 'GET',
-                    'url': 'na1.api.riotgames.com/lol/spectator/v5/featured-games',
-                    'auth': 'X-Riot-Token required',
-                    'result': f"HTTP {featured_data.get('status', {}).get('status_code', 410)}: {featured_data.get('status', {}).get('message', 'Gone')}",
-                    'data_count': 0
-                })
-            # Handle empty or malformed response
-            else:
-                api_attempts.append({
-                    'endpoint': 'Featured Games API',
-                    'status': 'No Data',
-                    'method': 'GET',
-                    'url': 'na1.api.riotgames.com/lol/spectator/v5/featured-games',
-                    'auth': 'X-Riot-Token required',
-                    'result': 'Empty response or invalid format',
-                    'data_count': 0
-                })
-        except Exception as e:
-            # Handle network errors and API failures gracefully
-            error_msg = str(e)
-            # Detect deprecated endpoint (HTTP 410 Gone)
-            if '410' in error_msg or 'Gone' in error_msg:
-                status = 'Deprecated'
-                result = 'Endpoint no longer available (HTTP 410)'
-            else:
-                status = 'Failed'
-                result = f'Request failed: {error_msg}'
-            
-            api_attempts.append({
-                'endpoint': 'Featured Games API',
-                'status': status,
-                'method': 'GET',
-                'url': 'na1.api.riotgames.com/lol/spectator/v5/featured-games',
-                'auth': 'X-Riot-Token required',
-                'result': result,
-                'data_count': 0
-            })
-        
-        # TERTIARY DATA SOURCE: Riot Data Dragon API
-        # This is a public CDN that provides static game data without authentication
-        # It's highly reliable and doesn't count against API rate limits
-        try:
-            champions_url = f"https://ddragon.leagueoflegends.com/cdn/{DATA_DRAGON_VERSION}/data/en_US/champion.json"
-            champions_data = make_request(champions_url)  # No auth headers needed
-            
-            # Handle successful Data Dragon response
-            if champions_data and 'data' in champions_data:
-                api_attempts.append({
-                    'endpoint': 'Data Dragon API',
-                    'status': 'Success',
-                    'method': 'GET',
-                    'url': f'ddragon.leagueoflegends.com/cdn/{DATA_DRAGON_VERSION}/data/en_US/champion.json',
-                    'auth': 'Public (no auth required)',
-                    'result': f"Champion metadata loaded successfully",
-                    'data_count': len(champions_data['data'])
-                })
-            # Handle empty or malformed Data Dragon response
-            else:
-                api_attempts.append({
-                    'endpoint': 'Data Dragon API',
-                    'status': 'No Data',
-                    'method': 'GET',
-                    'url': f'ddragon.leagueoflegends.com/cdn/{DATA_DRAGON_VERSION}/data/en_US/champion.json',
-                    'auth': 'Public (no auth required)',
-                    'result': 'Empty response or invalid JSON format',
-                    'data_count': 0
-                })
-        except Exception as e:
-            # Handle Data Dragon API failures (rare but possible)
-            api_attempts.append({
-                'endpoint': 'Data Dragon API',
-                'status': 'Failed',
-                'method': 'GET',
-                'url': f'ddragon.leagueoflegends.com/cdn/{DATA_DRAGON_VERSION}/data/en_US/champion.json',
-                'auth': 'Public (no auth required)',
-                'result': f'Request failed: {str(e)}',
-                'data_count': 0
-            })
+        # Remove non-essential API calls - focus on challenger league only
         
         # Handle different endpoint types for uniform interface demonstration
         if endpoint_type == 'contests':
@@ -389,19 +249,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         elif endpoint_type == 'challenger-league':
             return handle_players_endpoint(api_attempts, headers, make_request)
         else:
-            # Default champions endpoint - add detailed API request information
-            champions_api_details = {
-                'expected_url': f'https://ddragon.leagueoflegends.com/cdn/{DATA_DRAGON_VERSION}/data/en_US/champion.json',
-                'expected_response': 'HTTP 200 OK with JSON containing champion metadata',
-                'actual_status': 'Success' if any(attempt['status'] == 'Success' and 'Data Dragon' in attempt['endpoint'] for attempt in api_attempts) else 'Failed',
-                'actual_response': next((attempt['result'] for attempt in api_attempts if 'Data Dragon' in attempt['endpoint']), 'No Data Dragon attempt found'),
-                'data_source': 'Riot Games Data Dragon CDN (Public API)',
-                'authentication': 'None required (public endpoint)',
-                'rate_limits': 'No rate limits (CDN cached)',
-                'response_format': 'JSON with champion objects containing id, name, title, stats'
-            }
-            
-            # Add X-Ray trace information for successful responses
+            # Default endpoint - no dummy data, just return empty with API attempts
             trace_id = xray_recorder.get_trace_entity().trace_id if xray_recorder.get_trace_entity() else 'unknown'
             
             return {
@@ -412,10 +260,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'X-Trace-Id': trace_id
                 },
                 'body': json.dumps({
-                    'data': live_data,
-                    'source': 'T1_CHAMPIONS',
+                    'data': [],
+                    'source': 'EMPTY',
                     'api_attempts': api_attempts,
-                    'champions_api_details': champions_api_details,
                     'xray_trace_id': trace_id,
                     'xray_console_url': f'https://console.aws.amazon.com/xray/home?region=us-east-1#/traces/{trace_id}' if trace_id != 'unknown' else None
                 })
