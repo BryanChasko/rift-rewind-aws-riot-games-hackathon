@@ -1,21 +1,14 @@
 import React from 'react';
-import { Container, Header, Box, SpaceBetween, ColumnLayout, Button, BreadcrumbGroup, Alert } from '@cloudscape-design/components';
+import { Container, Header, Box, SpaceBetween, ColumnLayout, Alert } from '@cloudscape-design/components';
 
 interface ProjectResourcesProps {
   onNavigate: (page: string) => void;
 }
 
-const ProjectResources: React.FC<ProjectResourcesProps> = ({ onNavigate }) => {
+const ProjectResources: React.FC<ProjectResourcesProps> = () => {
   return (
     <SpaceBetween direction="vertical" size="l">
-      <BreadcrumbGroup
-        items={[
-          { text: 'Home', href: 'https://awsaerospace.org' },
-          { text: 'API Training', href: '#', onClick: () => onNavigate('overview') },
-          { text: 'REST Fundamentals', href: '#overview', onClick: () => onNavigate('overview') },
-          { text: 'Project Resources' }
-        ]}
-      />
+
       
       <Header
         variant="h1"

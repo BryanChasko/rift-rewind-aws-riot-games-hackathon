@@ -1,21 +1,14 @@
 import React from 'react';
-import { Container, Header, Box, SpaceBetween, ColumnLayout, Button, Alert, BreadcrumbGroup } from '@cloudscape-design/components';
+import { Container, Header, Box, SpaceBetween, ColumnLayout, Alert } from '@cloudscape-design/components';
 
 interface HowItWorksProps {
   onNavigate: (page: string) => void;
 }
 
-const HowItWorks: React.FC<HowItWorksProps> = ({ onNavigate }) => {
+const HowItWorks: React.FC<HowItWorksProps> = () => {
   return (
     <SpaceBetween direction="vertical" size="l">
-      <BreadcrumbGroup
-        items={[
-          { text: 'Home', href: 'https://awsaerospace.org' },
-          { text: 'API Training', href: '#', onClick: () => onNavigate('overview') },
-          { text: 'REST Fundamentals', href: '#overview', onClick: () => onNavigate('overview') },
-          { text: 'How It Works' }
-        ]}
-      />
+
       
       <Header
         variant="h1"
@@ -43,7 +36,7 @@ const HowItWorks: React.FC<HowItWorksProps> = ({ onNavigate }) => {
             <Header variant="h3">🛠️ Technical Implementation</Header>
             <ColumnLayout columns={3} variant="text-grid">
               <Container variant="stacked">
-                <Header variant="h4">📊 Data Sources</Header>
+                <Header variant="h3">📊 Data Sources</Header>
                 <SpaceBetween direction="vertical" size="xs">
                   <Box variant="p">
                     <strong>✅ From Riot API:</strong><br/>
@@ -61,7 +54,7 @@ const HowItWorks: React.FC<HowItWorksProps> = ({ onNavigate }) => {
               </Container>
               
               <Container variant="stacked">
-                <Header variant="h4">🏧 Architecture Stack</Header>
+                <Header variant="h3">🏧 Architecture Stack</Header>
                 <SpaceBetween direction="vertical" size="xs">
                   <Box variant="p">
                     <strong>Frontend:</strong> React 18 + TypeScript<br/>
@@ -77,7 +70,7 @@ const HowItWorks: React.FC<HowItWorksProps> = ({ onNavigate }) => {
               </Container>
               
               <Container variant="stacked">
-                <Header variant="h4">🎯 Champion Data Mapping</Header>
+                <Header variant="h3">🎯 Champion Data Mapping</Header>
                 <SpaceBetween direction="vertical" size="xs">
                   <Box variant="p">
                     <strong>⚔️ Attack Power</strong><br/>

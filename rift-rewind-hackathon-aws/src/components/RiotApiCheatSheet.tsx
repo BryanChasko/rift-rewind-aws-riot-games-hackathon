@@ -1,21 +1,14 @@
 import React from 'react';
-import { Container, Header, Box, SpaceBetween, ColumnLayout, Button, BreadcrumbGroup, Alert } from '@cloudscape-design/components';
+import { Container, Header, Box, SpaceBetween, ColumnLayout, Alert } from '@cloudscape-design/components';
 
 interface RiotApiCheatSheetProps {
   onNavigate: (page: string) => void;
 }
 
-const RiotApiCheatSheet: React.FC<RiotApiCheatSheetProps> = ({ onNavigate }) => {
+const RiotApiCheatSheet: React.FC<RiotApiCheatSheetProps> = () => {
   return (
     <SpaceBetween direction="vertical" size="l">
-      <BreadcrumbGroup
-        items={[
-          { text: 'Home', href: 'https://awsaerospace.org' },
-          { text: 'API Training', href: '#', onClick: () => onNavigate('overview') },
-          { text: 'REST Fundamentals', href: '#overview', onClick: () => onNavigate('overview') },
-          { text: 'API Cheat Sheet' }
-        ]}
-      />
+
       
       <Header
         variant="h1"
@@ -35,21 +28,21 @@ const RiotApiCheatSheet: React.FC<RiotApiCheatSheetProps> = ({ onNavigate }) => 
         <SpaceBetween direction="vertical" size="m">
           <ColumnLayout columns={3} variant="text-grid">
             <Container variant="stacked">
-              <Header variant="h4">1️⃣ Get Your API Key</Header>
+              <Header variant="h3">1️⃣ Get Your API Key</Header>
               <Box variant="p">
                 Free developer access to Riot Games data<br/>
                 <a href="https://developer.riotgames.com/" target="_blank" rel="noopener noreferrer">developer.riotgames.com</a>
               </Box>
             </Container>
             <Container variant="stacked">
-              <Header variant="h4">2️⃣ Explore the Data</Header>
+              <Header variant="h3">2️⃣ Explore the Data</Header>
               <Box variant="p">
                 Interactive API documentation and testing<br/>
                 <a href="https://developer.riotgames.com/apis" target="_blank" rel="noopener noreferrer">developer.riotgames.com/apis</a>
               </Box>
             </Container>
             <Container variant="stacked">
-              <Header variant="h4">3️⃣ View Source Code</Header>
+              <Header variant="h3">3️⃣ View Source Code</Header>
               <Box variant="p">
                 Complete implementation on GitHub<br/>
                 <a href="https://github.com/BryanChasko/rift-rewind-aws-riot-games-hackathon" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
@@ -61,7 +54,7 @@ const RiotApiCheatSheet: React.FC<RiotApiCheatSheetProps> = ({ onNavigate }) => 
             <Header variant="h3">📊 API Access & Data Structure</Header>
             <ColumnLayout columns={2} variant="text-grid">
               <Container variant="stacked">
-                <Header variant="h4">✅ Available with Basic API Key (RGAPI-xxx)</Header>
+                <Header variant="h3">✅ Available with Basic API Key (RGAPI-xxx)</Header>
                 <SpaceBetween direction="vertical" size="s">
                   <Box variant="p">
                     <strong>Data Dragon API:</strong> Champion stats, abilities<br/>
@@ -77,7 +70,7 @@ const RiotApiCheatSheet: React.FC<RiotApiCheatSheetProps> = ({ onNavigate }) => 
               </Container>
               
               <Container variant="stacked">
-                <Header variant="h4">❌ Requires Special Access</Header>
+                <Header variant="h3">❌ Requires Special Access</Header>
                 <SpaceBetween direction="vertical" size="s">
                   <Box variant="p">
                     <strong>Tournament API:</strong> Official esports matches<br/>

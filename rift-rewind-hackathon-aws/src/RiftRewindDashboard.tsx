@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Header, Container, Button, Box, SpaceBetween, ColumnLayout, Alert, Select, BreadcrumbGroup } from '@cloudscape-design/components';
+import { Table, Header, Container, Button, Box, SpaceBetween, ColumnLayout, Alert, Select } from '@cloudscape-design/components';
 import './rest-constraints.css';
 import RestOverview from './components/RestOverview';
 import RiotApiCheatSheet from './components/RiotApiCheatSheet';
@@ -61,20 +61,29 @@ const RiftRewindDashboard: React.FC = () => {
     const handleNavigateEvent = (event: CustomEvent) => {
       setCurrentPage(event.detail);
     };
+    
+    const handleHashChange = () => {
+      const hash = window.location.hash.substring(1);
+      if (hash) {
+        setCurrentPage(hash);
+      }
+    };
+    
     window.addEventListener('navigate', handleNavigateEvent as EventListener);
-    return () => window.removeEventListener('navigate', handleNavigateEvent as EventListener);
+    window.addEventListener('hashchange', handleHashChange);
+    
+    // Handle initial hash on load
+    handleHashChange();
+    
+    return () => {
+      window.removeEventListener('navigate', handleNavigateEvent as EventListener);
+      window.removeEventListener('hashchange', handleHashChange);
+    };
   }, []);
 
   const renderUniformInterface = () => (
     <SpaceBetween direction="vertical" size="l">
-      <BreadcrumbGroup
-        items={[
-          { text: 'Home', href: 'https://awsaerospace.org' },
-          { text: 'API Training', href: '#', onClick: () => handleNavigation('overview') },
-          { text: 'REST Fundamentals', href: '#overview', onClick: () => handleNavigation('overview') },
-          { text: 'Uniform Interface' }
-        ]}
-      />
+
       <Header
         variant="h1"
         description="Experience consistent HTTP methods and JSON structure across all endpoints. See how one pattern works for all data types in the Riot Games API."
@@ -208,14 +217,7 @@ const RiftRewindDashboard: React.FC = () => {
 
   const renderClientServer = () => (
     <SpaceBetween direction="vertical" size="l">
-      <BreadcrumbGroup
-        items={[
-          { text: 'Home', href: 'https://awsaerospace.org' },
-          { text: 'API Training', href: '#', onClick: () => handleNavigation('overview') },
-          { text: 'REST Fundamentals', href: '#overview', onClick: () => handleNavigation('overview') },
-          { text: 'Client-Server' }
-        ]}
-      />
+
       <Header
         variant="h1"
         description="Explore separation of concerns between frontend and backend. Watch how UI and data storage evolve independently through stable contracts."
@@ -463,14 +465,7 @@ const RiftRewindDashboard: React.FC = () => {
 
   const renderStateless = () => (
     <SpaceBetween direction="vertical" size="l">
-      <BreadcrumbGroup
-        items={[
-          { text: 'Home', href: 'https://awsaerospace.org' },
-          { text: 'API Training', href: '#', onClick: () => handleNavigation('overview') },
-          { text: 'REST Fundamentals', href: '#overview', onClick: () => handleNavigation('overview') },
-          { text: 'Stateless' }
-        ]}
-      />
+
       <Header
         variant="h1"
         description="Test self-contained requests with complete authentication. Every API call includes all necessary context - no server memory required."
@@ -649,14 +644,7 @@ const RiftRewindDashboard: React.FC = () => {
 
   const renderCacheable = () => (
     <SpaceBetween direction="vertical" size="l">
-      <BreadcrumbGroup
-        items={[
-          { text: 'Home', href: 'https://awsaerospace.org' },
-          { text: 'API Training', href: '#', onClick: () => handleNavigation('overview') },
-          { text: 'REST Fundamentals', href: '#overview', onClick: () => handleNavigation('overview') },
-          { text: 'Cacheable' }
-        ]}
-      />
+
       <Header
         variant="h1"
         description="Experience version-based performance and CDN caching. See how immutable URLs enable permanent caching for lightning-fast responses."
@@ -852,14 +840,7 @@ const RiftRewindDashboard: React.FC = () => {
 
   const renderLayeredSystem = () => (
     <SpaceBetween direction="vertical" size="l">
-      <BreadcrumbGroup
-        items={[
-          { text: 'Home', href: 'https://awsaerospace.org' },
-          { text: 'API Training', href: '#', onClick: () => handleNavigation('overview') },
-          { text: 'REST Fundamentals', href: '#overview', onClick: () => handleNavigation('overview') },
-          { text: 'Layered System' }
-        ]}
-      />
+
       <Header
         variant="h1"
         description="Explore hidden complexity behind simple API calls. Discover multiple infrastructure layers processing your requests invisibly."
@@ -1044,14 +1025,7 @@ const RiftRewindDashboard: React.FC = () => {
 
   const renderCodeOnDemand = () => (
     <SpaceBetween direction="vertical" size="l">
-      <BreadcrumbGroup
-        items={[
-          { text: 'Home', href: 'https://awsaerospace.org' },
-          { text: 'API Training', href: '#', onClick: () => handleNavigation('overview') },
-          { text: 'REST Fundamentals', href: '#overview', onClick: () => handleNavigation('overview') },
-          { text: 'Code on Demand' }
-        ]}
-      />
+
       <Header
         variant="h1"
         description="Watch runtime adaptation and dynamic UI behavior. See how server-sent instructions create responsive interfaces that adapt to data."
@@ -1408,16 +1382,6 @@ const RiftRewindDashboard: React.FC = () => {
 
   return (
     <SpaceBetween direction="vertical" size="l">
-      {currentPage === 'overview' && (
-        <BreadcrumbGroup
-          items={[
-            { text: 'Home', href: 'https://awsaerospace.org' },
-            { text: 'API Training', href: '#', onClick: () => handleNavigation('overview') },
-            { text: 'REST Fundamentals' }
-          ]}
-        />
-      )}
-      
       {currentPage === 'overview' && (
         <Header
           variant="h1"
