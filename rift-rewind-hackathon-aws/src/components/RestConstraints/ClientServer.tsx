@@ -12,6 +12,8 @@ interface ClientServerState {
   selectionSource: 'table' | 'dropdown' | null;
   summoners: TournamentWinner[];
   error: string | null;
+  xrayTraceId?: string;
+  errorDetails?: any;
 }
 
 export class ClientServer extends RestConstraintBase {
@@ -24,12 +26,14 @@ export class ClientServer extends RestConstraintBase {
     selectedChampion: null,
     selectionSource: null,
     summoners: [],
-    error: null
+    error: null,
+    xrayTraceId: undefined,
+    errorDetails: undefined
   };
 
   private async fetchSummoners() {
     try {
-      this.setState({ error: null });
+      this.setState({ error: null, xrayTraceId: undefined, errorDetails: undefined });
       const summoners = await this.getTopSummoners();
       this.setState({ summoners });
       await this.props.apiService.fetchSummoners(this.props.selectedYear.value);
@@ -37,9 +41,28 @@ export class ClientServer extends RestConstraintBase {
     } catch (error: any) {
       console.error('Full error details:', error);
       const isApiKeyError = error.message?.includes('API key');
+      
+      // Extract X-Ray trace information if available
+      let xrayTraceId: string | undefined;
+      let errorDetails: any;
+      
+      if (error.response) {
+        xrayTraceId = error.response.headers?.['x-trace-id'];
+        try {
+          const responseData = typeof error.response.data === 'string' ? 
+            JSON.parse(error.response.data) : error.response.data;
+          errorDetails = responseData.error;
+          xrayTraceId = xrayTraceId || responseData.xray_trace_id;
+        } catch (e) {
+          // Ignore JSON parsing errors
+        }
+      }
+      
       this.setState({ 
         error: isApiKeyError ? 'api-key' : 'network',
-        summoners: this.getDefaultSummoners()
+        summoners: this.getDefaultSummoners(),
+        xrayTraceId,
+        errorDetails
       });
       // Re-throw to show detailed error in console
       throw error;
@@ -50,14 +73,31 @@ export class ClientServer extends RestConstraintBase {
     const response = await fetch(`${RIOT_API_PROXY_URL}?endpoint=challenger-league`);
     
     if (response.status === 403 || response.status === 401) {
-      throw new Error('API key expired or invalid');
+      const error = new Error('API key expired or invalid') as any;
+      error.response = { 
+        status: response.status,
+        headers: Object.fromEntries(response.headers.entries()),
+        data: await response.text().catch(() => '')
+      };
+      throw error;
     }
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      const error = new Error(`API error: ${response.status}`) as any;
+      error.response = { 
+        status: response.status,
+        headers: Object.fromEntries(response.headers.entries()),
+        data: await response.text().catch(() => '')
+      };
+      throw error;
     }
     
     const result = await response.json();
     const data = JSON.parse(result.body);
+    
+    // Store X-Ray trace ID for successful requests
+    if (data.xray_trace_id) {
+      this.setState({ xrayTraceId: data.xray_trace_id });
+    }
     
     if (data.data && Array.isArray(data.data)) {
       return data.data.slice(0, 5).map((entry: any, index: number) => ({
@@ -153,19 +193,62 @@ export class ClientServer extends RestConstraintBase {
         
         {this.state.error === 'network' && (
           <Alert type="warning" header="⚠️ API Communication Issue">
-            <Box variant="p">
-              The Lambda API is not responding as expected. This could be due to API key expiration, Lambda function issues, or Riot API rate limits. 
-              Check the browser console for detailed error information. 
-              <a href="https://github.com/BryanChasko/rift-rewind-aws-riot-games-hackathon" target="_blank" rel="noopener noreferrer">🔗 View GitHub repo</a> for troubleshooting or contact <a href="https://linkedin.com/in/bryanchasko" target="_blank" rel="noopener noreferrer">Bryan Chasko</a>.
-            </Box>
+            <SpaceBetween direction="vertical" size="s">
+              <Box variant="p">
+                The Lambda API is not responding as expected. This could be due to API key expiration, Lambda function issues, or Riot API rate limits.
+              </Box>
+              
+              {this.state.xrayTraceId && (
+                <Box variant="p">
+                  <strong>🔍 X-Ray Trace ID:</strong> <code>{this.state.xrayTraceId}</code><br/>
+                  <a 
+                    href={`https://console.aws.amazon.com/xray/home?region=us-east-1#/traces/${this.state.xrayTraceId}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    📊 View detailed trace in AWS X-Ray Console
+                  </a>
+                </Box>
+              )}
+              
+              {this.state.errorDetails && (
+                <Box variant="p">
+                  <strong>🛠️ Error Details:</strong><br/>
+                  <code>Type: {this.state.errorDetails.error_type}</code><br/>
+                  <code>Message: {this.state.errorDetails.error_message}</code><br/>
+                  {this.state.errorDetails.lambda_request_id && (
+                    <><code>Lambda Request ID: {this.state.errorDetails.lambda_request_id}</code><br/></>
+                  )}
+                </Box>
+              )}
+              
+              <Box variant="p">
+                Check the browser console for detailed error information. 
+                <a href="https://github.com/BryanChasko/rift-rewind-aws-riot-games-hackathon" target="_blank" rel="noopener noreferrer">🔗 View GitHub repo</a> for troubleshooting or contact <a href="https://linkedin.com/in/bryanchasko" target="_blank" rel="noopener noreferrer">Bryan Chasko</a>.
+              </Box>
+            </SpaceBetween>
           </Alert>
         )}
         
         {this.props.stateManager.getDataMode('contests') === 'live' && (
           <Alert type="success" header={`🔗 Data Context from Step 1: ${this.props.selectedYear.value} Tournament`}>
-            <Box variant="p">
-              Year selection automatically carried forward from Uniform Interface demo. This shows how client-server architecture maintains state across different API endpoints.
-            </Box>
+            <SpaceBetween direction="vertical" size="s">
+              <Box variant="p">
+                Year selection automatically carried forward from Uniform Interface demo. This shows how client-server architecture maintains state across different API endpoints.
+              </Box>
+              {this.state.xrayTraceId && (
+                <Box variant="p">
+                  <strong>🔍 X-Ray Trace:</strong> <code>{this.state.xrayTraceId}</code> - 
+                  <a 
+                    href={`https://console.aws.amazon.com/xray/home?region=us-east-1#/traces/${this.state.xrayTraceId}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    View request flow
+                  </a>
+                </Box>
+              )}
+            </SpaceBetween>
           </Alert>
         )}
         

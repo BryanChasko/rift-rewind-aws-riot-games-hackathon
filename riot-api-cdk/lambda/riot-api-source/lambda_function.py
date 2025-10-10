@@ -67,12 +67,20 @@ def handle_contests_endpoint(api_attempts: List[Dict[str, Any]], year: str = '20
         'data_count': len(contests_data)
     })
     
+    trace_id = xray_recorder.get_trace_entity().trace_id if xray_recorder.get_trace_entity() else 'unknown'
+    
     return {
         'statusCode': 200,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'X-Trace-Id': trace_id
+        },
         'body': json.dumps({
             'data': contests_data,
             'source': 'CONTESTS',
-            'api_attempts': api_attempts
+            'api_attempts': api_attempts,
+            'xray_trace_id': trace_id
         })
     }
 
@@ -126,12 +134,20 @@ def handle_players_endpoint(api_attempts: List[Dict[str, Any]], headers: Dict[st
             'data_count': len(players_data)
         })
     
+    trace_id = xray_recorder.get_trace_entity().trace_id if xray_recorder.get_trace_entity() else 'unknown'
+    
     return {
         'statusCode': 200,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'X-Trace-Id': trace_id
+        },
         'body': json.dumps({
             'data': players_data,
             'source': 'PLAYERS',
-            'api_attempts': api_attempts
+            'api_attempts': api_attempts,
+            'xray_trace_id': trace_id
         })
     }
 
@@ -385,24 +401,38 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'response_format': 'JSON with champion objects containing id, name, title, stats'
             }
             
+            # Add X-Ray trace information for successful responses
+            trace_id = xray_recorder.get_trace_entity().trace_id if xray_recorder.get_trace_entity() else 'unknown'
+            
             return {
                 'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'X-Trace-Id': trace_id
+                },
                 'body': json.dumps({
                     'data': live_data,
                     'source': 'T1_CHAMPIONS',
                     'api_attempts': api_attempts,
-                    'champions_api_details': champions_api_details
+                    'champions_api_details': champions_api_details,
+                    'xray_trace_id': trace_id,
+                    'xray_console_url': f'https://console.aws.amazon.com/xray/home?region=us-east-1#/traces/{trace_id}' if trace_id != 'unknown' else None
                 })
             }
         
     except Exception as e:
         # Handle any unexpected errors gracefully with detailed diagnostics
+        trace_id = xray_recorder.get_trace_entity().trace_id if xray_recorder.get_trace_entity() else 'unknown'
+        
         error_details = {
             'error_type': type(e).__name__,
             'error_message': str(e),
             'traceback': traceback.format_exc(),
             'timestamp': int(time.time()),
             'lambda_request_id': context.aws_request_id if context else 'unknown',
+            'xray_trace_id': trace_id,
+            'xray_console_url': f'https://console.aws.amazon.com/xray/home?region=us-east-1#/traces/{trace_id}' if trace_id != 'unknown' else None,
             'event_details': {
                 'query_params': event.get('queryStringParameters', {}),
                 'headers': event.get('headers', {}),
@@ -419,7 +449,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'next_steps': [
                     'Check CloudWatch logs for detailed error traces',
                     'Verify API key in SSM Parameter Store',
-                    'Check X-Ray traces for request flow analysis',
+                    f'View X-Ray trace: {trace_id}' if trace_id != 'unknown' else 'X-Ray trace not available',
                     'Contact Bryan Chasko via GitHub issues'
                 ]
             }
@@ -428,15 +458,17 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Log comprehensive error details for CloudWatch
         print(f"LAMBDA ERROR: {json.dumps(error_details, indent=2)}")
         
-        # Add X-Ray annotation for error tracking
+        # Add X-Ray annotations for error tracking
         xray_recorder.put_annotation('error_type', type(e).__name__)
         xray_recorder.put_annotation('endpoint', event.get('queryStringParameters', {}).get('endpoint', 'unknown'))
+        xray_recorder.put_annotation('error_occurred', True)
         
         return {
             'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+                'Access-Control-Allow-Origin': '*',
+                'X-Trace-Id': trace_id
             },
             'body': json.dumps({
                 'error': error_details,
