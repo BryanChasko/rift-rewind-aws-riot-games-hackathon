@@ -1,6 +1,6 @@
 
 import { Container, Alert, ColumnLayout, Box, Select, SpaceBetween, Button, StatusIndicator } from '@cloudscape-design/components';
-import { CodeView } from '@cloudscape-design/code-view';
+import CodeView from '@cloudscape-design/code-view/code-view';
 import { RestConstraintBase } from '../shared/RestConstraintBase';
 import { DataTable, type TableColumn } from '../shared/DataTable';
 import type { Contest } from '../../services/types';
@@ -96,7 +96,7 @@ export class UniformInterface extends RestConstraintBase {
               Watch uniform interface constraints: Resource ID, JSON representation, self-descriptive HTTP responses, and navigation links working together. Challenges API data transformed to contest format.
             </Alert>
             <Alert type="info" header="Resource Endpoint">
-              <CodeView content="/lol/challenges/v1/challenges/config" lineNumbers={false} />
+              <CodeView content="/lol/challenges/v1/challenges/config" />
             </Alert>
             
             <ColumnLayout columns={2} variant="text-grid">
@@ -107,10 +107,10 @@ export class UniformInterface extends RestConstraintBase {
                   onChange={({ detail }) => {
                     // Reset state when year changes
                     this.setState({ contests: [] });
-                    this.props.stateManager.setDataMode(this.section, 'none');
+                    this.props.stateManager.setDataMode(this.section, 'demo');
                     // Let parent handle year change
                     if (this.props.onYearChange) {
-                      this.props.onYearChange(detail.selectedOption);
+                      this.props.onYearChange(detail.selectedOption as { label: string; value: string });
                     }
                   }}
                   options={[
@@ -123,12 +123,12 @@ export class UniformInterface extends RestConstraintBase {
               </SpaceBetween>
               <SpaceBetween direction="vertical" size="xs">
                 <Box variant="strong">🌐 Full Endpoint URL:</Box>
-                <CodeView content={`${import.meta.env.VITE_API_URL}?endpoint=contests&year=${this.props.selectedYear.value}`} lineNumbers={false} />
+                <CodeView content={`${import.meta.env.VITE_API_URL}?endpoint=contests&year=${this.props.selectedYear.value}`} />
                 <Box variant="small" color="text-body-secondary">→ Challenges Config API transformed to contest format</Box>
                 <Box variant="strong">📡 HTTP Method:</Box>
                 <Box><StatusIndicator type="success">GET</StatusIndicator></Box>
                 <Box variant="strong">🔑 Auth Header:</Box>
-                <CodeView content="X-Riot-Token: RGAPI-your-key-here" lineNumbers={false} />
+                <CodeView content="X-Riot-Token: RGAPI-your-key-here" />
               </SpaceBetween>
             </ColumnLayout>
             

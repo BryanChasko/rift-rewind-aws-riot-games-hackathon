@@ -38,7 +38,7 @@ const ProjectResources: React.FC<ProjectResourcesProps> = () => {
           
           <ColumnLayout columns={3} variant="text-grid">
             <Container variant="stacked">
-              <Header variant="h4">🏗️ Infrastructure Code</Header>
+              <Header variant="h3">🏗️ Infrastructure Code</Header>
               <Box variant="p">
                 <strong>riot-api-cdk/</strong><br/>
                 • AWS CDK TypeScript stack<br/>
@@ -49,7 +49,7 @@ const ProjectResources: React.FC<ProjectResourcesProps> = () => {
             </Container>
             
             <Container variant="stacked">
-              <Header variant="h4">⚙️ Lambda Functions</Header>
+              <Header variant="h3">⚙️ Lambda Functions</Header>
               <Box variant="p">
                 <strong>lambda/</strong><br/>
                 • riot-api-source/ (Python 3.11)<br/>
@@ -60,7 +60,7 @@ const ProjectResources: React.FC<ProjectResourcesProps> = () => {
             </Container>
             
             <Container variant="stacked">
-              <Header variant="h4">📱 Frontend Application</Header>
+              <Header variant="h3">📱 Frontend Application</Header>
               <Box variant="p">
                 <strong>rift-rewind-hackathon-aws/</strong><br/>
                 • React 18 + TypeScript<br/>

@@ -30,10 +30,11 @@ export class ErrorBoundary extends React.Component<
           statusIconAriaLabel="Error"
           type="error"
           header="Something went wrong"
-          action={{
-            children: 'Reload page',
-            onClick: () => window.location.reload()
-          }}
+          action={
+            <button onClick={() => window.location.reload()}>
+              Reload page
+            </button>
+          }
         >
           An unexpected error occurred. Please reload the page to continue.
         </Alert>

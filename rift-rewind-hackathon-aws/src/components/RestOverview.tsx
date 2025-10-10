@@ -1,5 +1,6 @@
 import React from 'react';
-import { Container, Header, Box, SpaceBetween, ColumnLayout, Button, Grid } from '@cloudscape-design/components';
+import { Container, Header, Box, SpaceBetween, Button, Grid } from '@cloudscape-design/components';
+import CodeView from '@cloudscape-design/code-view/code-view';
 
 interface RestOverviewProps {
   onNavigate: (page: string) => void;
@@ -22,14 +23,12 @@ const RestOverview: React.FC<RestOverviewProps> = ({ onNavigate }) => {
                   <Box variant="p"><strong>Same pattern for all data requests.</strong> Player info, match history, champion details use identical request methods.</Box>
                   <Box variant="small">• <strong>Endpoints</strong>: Unique web addresses per data type<br/>• <strong>HTTP GET</strong>: Standard "retrieve data" command<br/>• <strong>JSON</strong>: Text format for returned data<br/>• <strong>Status codes</strong>: Numbers indicating success/failure</Box>
                   <Box variant="small" color="text-body-secondary">Example:</Box>
-                  <Box variant="code">
-                    {`// Same GET pattern for different data types
+                  <CodeView content={`// Same GET pattern for different data types
 GET /summoner/by-name/Faker        (player info)
 GET /match/by-player/{id}          (match history) 
 GET /champions/config              (character list)
 
-// All return data in JSON format: {"data": [...]}`}
-                  </Box>
+// All return data in JSON format: {"data": [...]}`} />
                   <Button variant="primary" onClick={() => onNavigate('uniform-interface')}>
                     🎯 Try Challenges API
                   </Button>
@@ -43,14 +42,12 @@ GET /champions/config              (character list)
                   <Box variant="p"><strong>Two separate systems working together.</strong> Chrome requests data from Riot Games API independently.</Box>
                   <Box variant="small">• <strong>Client</strong>: Chrome, Safari, mobile apps requesting data<br/>• <strong>Server</strong>: Riot Games API storing game data<br/>• <strong>Independent</strong>: Each updates separately<br/>• <strong>Contract</strong>: Agreed communication format</Box>
                   <Box variant="small" color="text-body-secondary">Example:</Box>
-                  <Box variant="code">
-                    {`// Chrome sends request
+                  <CodeView content={`// Chrome sends request
 fetch('https://api.riotgames.com/summoner/by-name/Faker')
 
 // Riot Games API responds with player data
 // Chrome and Riot API update independently
-// Request format stays consistent`}
-                  </Box>
+// Request format stays consistent`} />
                   <Button variant="primary" onClick={() => onNavigate('client-server')}>
                     🏗️ See Architecture in Action
                   </Button>
@@ -64,16 +61,14 @@ fetch('https://api.riotgames.com/summoner/by-name/Faker')
                   <Box variant="p"><strong>Each request stands alone.</strong> Riot Games API doesn't remember previous requests, every call includes complete information.</Box>
                   <Box variant="small">• <strong>No memory</strong>: Riot API forgets each request after responding<br/>• <strong>API Key</strong>: Unique identifier proving authorization<br/>• <strong>Headers</strong>: Metadata fields containing API key<br/>• <strong>Self-contained</strong>: Each request has everything needed</Box>
                   <Box variant="small" color="text-body-secondary">Example:</Box>
-                  <Box variant="code">
-                    {`// Every request must include API key
+                  <CodeView content={`// Every request must include API key
 fetch('/summoner/by-name/Faker', {
   headers: {
     'X-Riot-Token': 'RGAPI-your-key-here'
   }
 });
 
-// Riot API processes request with no memory of previous ones`}
-                  </Box>
+// Riot API processes request with no memory of previous ones`} />
                   <Button variant="primary" onClick={() => onNavigate('stateless')}>
                     🔑 Test Authentication Flow
                   </Button>
@@ -87,14 +82,12 @@ fetch('/summoner/by-name/Faker', {
                   <Box variant="p"><strong>Save data locally for faster loading.</strong> Game data never changes, applications store copies instead of repeated requests.</Box>
                   <Box variant="small">• <strong>Caching</strong>: Storing local data copy<br/>• <strong>Versioned URLs</strong>: Web addresses including version numbers<br/>• <strong>Cache-Control</strong>: Riot instructions for data retention<br/>• <strong>CDN</strong>: Global network storing copies</Box>
                   <Box variant="small" color="text-body-secondary">Example:</Box>
-                  <Box variant="code">
-                    {`// Version numbers in URLs mean data never changes
+                  <CodeView content={`// Version numbers in URLs mean data never changes
 /cdn/13.24.1/champion-list.json    (game version 13.24.1)
 /cdn/13.24.1/champion-ahri.png     (character image)
 
 // Applications can save this data permanently
-// Cache-Control: max-age=31536000 (1 year)`}
-                  </Box>
+// Cache-Control: max-age=31536000 (1 year)`} />
                   <Button variant="primary" onClick={() => onNavigate('cacheable')}>
                     🌍 Experience CDN Speed
                   </Button>
@@ -108,16 +101,14 @@ fetch('/summoner/by-name/Faker', {
                   <Box variant="p"><strong>Complex systems hidden behind simple requests.</strong> Simple API calls pass through multiple invisible computer systems.</Box>
                   <Box variant="small">• <strong>API Gateway</strong>: Entry point routing requests<br/>• <strong>Load Balancer</strong>: Distributes traffic across Riot computers<br/>• <strong>Rate Limiting</strong>: Controls requests per minute<br/>• <strong>Microservices</strong>: Small programs handling specific tasks</Box>
                   <Box variant="small" color="text-body-secondary">Example:</Box>
-                  <Box variant="code">
-                    {`// Chrome makes one simple request
+                  <CodeView content={`// Chrome makes one simple request
 fetch('/summoner/by-name/Faker')
 
 // Hidden Riot infrastructure processes request:
 // 1. API Gateway (routes request)
 // 2. Rate Limiter (checks request limits) 
 // 3. Load Balancer (picks available computer)
-// 4. Database (retrieves player data)`}
-                  </Box>
+// 4. Database (retrieves player data)`} />
                   <Button variant="primary" onClick={() => onNavigate('layered-system')}>
                     🔍 Explore Hidden Layers
                   </Button>
@@ -131,14 +122,12 @@ fetch('/summoner/by-name/Faker')
                   <Box variant="p"><strong>Optional: Send programs to run.</strong> Instead of data only, websites can send small programs adding new browser features.</Box>
                   <Box variant="small">• <strong>Optional</strong>: Not required for REST APIs<br/>• <strong>Executable code</strong>: Programs running in browser<br/>• <strong>JavaScript</strong>: Programming language for web browsers<br/>• <strong>Dynamic</strong>: New functionality delivered when needed</Box>
                   <Box variant="small" color="text-body-secondary">Example:</Box>
-                  <Box variant="code">
-                    {`// Website sends program file to Chrome
+                  <CodeView content={`// Website sends program file to Chrome
 <script src="/player-stats-widget.js"></script>
 
 // Program knows how to get and display player data
 fetch('/summoner/by-name/Faker')
-  .then(data => displayPlayerStats(data));`}
-                  </Box>
+  .then(data => displayPlayerStats(data));`} />
                   <Button variant="primary" onClick={() => onNavigate('code-on-demand')}>
                     ⚡ Watch Dynamic Loading
                   </Button>
