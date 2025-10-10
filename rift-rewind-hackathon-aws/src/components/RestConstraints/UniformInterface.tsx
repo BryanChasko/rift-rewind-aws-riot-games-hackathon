@@ -1,5 +1,5 @@
 
-import { Container, Alert, ColumnLayout, Box, Select, SpaceBetween, Button, StatusIndicator } from '@cloudscape-design/components';
+import { Container, Alert, ColumnLayout, Box, Select, SpaceBetween, Button, StatusIndicator, Header } from '@cloudscape-design/components';
 import CodeView from '@cloudscape-design/code-view/code-view';
 import { RestConstraintBase } from '../shared/RestConstraintBase';
 import { DataTable, type TableColumn } from '../shared/DataTable';
@@ -8,6 +8,7 @@ import type { Contest } from '../../services/types';
 interface UniformInterfaceState {
   contests: Contest[];
   loading: boolean;
+  selectedContest: Contest | null;
 }
 
 export class UniformInterface extends RestConstraintBase {
@@ -18,25 +19,31 @@ export class UniformInterface extends RestConstraintBase {
 
   state: UniformInterfaceState = {
     contests: [],
-    loading: false
+    loading: false,
+    selectedContest: null
   };
 
   private async fetchContests() {
     this.setState({ loading: true });
     try {
-      const contests = await this.props.apiService.fetchContests(this.props.selectedYear.value);
+      // Direct API call since we don't have apiService prop in this architecture
+      const baseUrl = import.meta.env.VITE_API_URL || '';
+      const response = await fetch(`${baseUrl}?endpoint=contests&year=${this.props.selectedYear.value}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      const contests = data.data || [];
+      
       this.setState({ contests, loading: false });
       this.props.stateManager.setDataMode(this.section, 'live');
     } catch (error) {
       console.error('Failed to fetch contests:', error);
-      this.setState({ 
-        contests: [
-          {id: 'worlds2024', name: 'Worlds Championship 2024', status: 'completed', winner: 'T1', points: 15000, participants: 2500000, difficulty: 'Legendary', category: 'Tournament', year: this.props.selectedYear.value},
-          {id: 'msi2024', name: 'Mid-Season Invitational 2024', status: 'completed', winner: 'Gen.G', points: 12000, participants: 1800000, difficulty: 'Master', category: 'Tournament', year: this.props.selectedYear.value}
-        ],
-        loading: false
-      });
-      this.props.stateManager.setDataMode(this.section, 'demo');
+      // Use fallback data on error
+      this.loadTestData();
+      this.setState({ loading: false });
     }
   }
 
@@ -71,32 +78,32 @@ export class UniformInterface extends RestConstraintBase {
     this.props.stateManager.setDataMode(this.section, 'demo');
   }
 
-  private getTopWinner(): string {
-    if (this.state.contests.length > 0) {
-      const topContest = this.state.contests[0];
-      const winner = topContest.winner || 'Unknown Player';
+  private getSelectedWinner(): string {
+    if (this.state.selectedContest) {
+      const winner = this.state.selectedContest.winner || 'Unknown Player';
       // Extract player name from format like "PlayerName (15,847 points)" or "Player #1 (points)"
       const nameMatch = winner.match(/^([^(]+)\s*\(/);
       if (nameMatch) {
         const playerName = nameMatch[1].trim();
-        return playerName.startsWith('Player #') ? `${playerName} Champion` : `${playerName}`;
+        return playerName.startsWith('Player #') ? `${playerName}` : `${playerName}`;
       }
       return winner;
     }
-    return 'Challenge Winner';
+    return this.state.contests.length > 0 ? 'a challenge winner' : 'Challenge Winner';
   }
 
   renderContent(): React.JSX.Element {
-    const contestColumns: TableColumn<Contest>[] = [
-      { id: 'name', header: 'Challenge Contest', cell: (item) => item.name },
-      { id: 'difficulty', header: 'Difficulty', cell: (item) => item.difficulty },
-      { id: 'participants', header: 'Participants', cell: (item) => item.participants?.toLocaleString() || 'N/A' },
-      { id: 'points', header: 'Top Score', cell: (item) => item.points?.toLocaleString() || 'N/A' },
-      { id: 'category', header: 'Category', cell: (item) => item.category },
-      { id: 'status', header: 'Status', cell: (item) => item.status }
-    ];
+    try {
+      const contestColumns: TableColumn<Contest>[] = [
+        { id: 'name', header: 'Challenge Contest', cell: (item) => item.name },
+        { id: 'difficulty', header: 'Difficulty', cell: (item) => item.difficulty },
+        { id: 'participants', header: 'Participants', cell: (item) => item.participants?.toLocaleString() || 'N/A' },
+        { id: 'points', header: 'Top Score', cell: (item) => item.points?.toLocaleString() || 'N/A' },
+        { id: 'category', header: 'Category', cell: (item) => item.category },
+        { id: 'status', header: 'Status', cell: (item) => item.status }
+      ];
 
-    return (
+      return (
       <>
         <Alert statusIconAriaLabel="Info" header="🎯 Challenges API Demo">
           Consistent patterns → Standard HTTP methods → Uniform JSON responses | One interface, all data types
@@ -195,21 +202,58 @@ export class UniformInterface extends RestConstraintBase {
                 header="🏆 Challenge Contest Data (Uniform Interface Applied)"
                 description={this.props.stateManager.getDataMode(this.section) === 'live' ? 
                   this.state.contests.length > 0 ? 
-                    `Live data from Riot Games Challenges API transformed to contest format for ${this.props.selectedYear.value}. Shows top 3 highest-scoring challenges from 400+ available. Demonstrates uniform HTTP methods (GET), consistent JSON structure, and real API integration.` :
+                    `Live data from Riot Games Challenges API transformed to contest format for ${this.props.selectedYear.value}. Shows ${this.state.contests.length} highest-scoring challenges from 400+ available. Select a contest winner to explore in the next step.` :
                     `API called successfully for ${this.props.selectedYear.value} but no challenges available. Using fallback data to demonstrate uniform JSON structure.` :
-                  `Test data demonstrating uniform JSON representation with consistent structure for ${this.props.selectedYear.value} challenge contests.`}
+                  `Test data demonstrating uniform JSON representation with consistent structure for ${this.props.selectedYear.value} challenge contests. Select a contest winner to continue.`}
                 emptyMessage="No contests available"
+                selectionType="single"
+                selectedItems={this.state.selectedContest ? [this.state.selectedContest] : []}
+                onSelectionChange={(event: any) => {
+                  this.setState({ 
+                    selectedContest: event.detail.selectedItems.length > 0 ? event.detail.selectedItems[0] as Contest : null 
+                  });
+                }}
+                trackBy="id"
               />
             </Container>
             
-            {this.renderNextStep(
-              'client-server',
-              'Client-Server Architecture',
-              `Ready to see how ${this.getTopWinner()} demonstrates client-server separation?`
-            )}
+            <Container variant="stacked">
+              <Header variant="h3">🚀 Next Step: Client-Server Architecture</Header>
+              <SpaceBetween direction="vertical" size="s">
+                <Box variant="p">
+                  {this.state.selectedContest ? 
+                    `Ready to see how ${this.getSelectedWinner()} demonstrates client-server separation?` :
+                    'Select a contest winner above, then explore client-server architecture with their data.'
+                  }
+                </Box>
+                <Button 
+                  variant="primary" 
+                  onClick={() => this.props.onNavigate('client-server')}
+                  disabled={!this.state.selectedContest}
+                >
+                  ➡️ Continue to Client-Server Architecture
+                </Button>
+              </SpaceBetween>
+            </Container>
           </>
         )}
       </>
-    );
+      );
+    } catch (error) {
+      console.error('Render error in UniformInterface:', error);
+      return (
+        <Alert
+          type="error"
+          header="Component Error"
+          action={
+            <Button onClick={() => window.location.reload()}>
+              Reload Page
+            </Button>
+          }
+        >
+          An error occurred while rendering the Uniform Interface demo. Please reload the page to continue.
+        </Alert>
+      );
+    }
   }
 }
