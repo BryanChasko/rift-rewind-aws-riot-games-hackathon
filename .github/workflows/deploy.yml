@@ -255,10 +255,8 @@ jobs:
       if: steps.aws-config.outcome == 'success'
       run: |
         echo "🚀 Deploying to S3..."
-        echo "Syncing to learning/api path..."
+        echo "Syncing to learning/api path only..."
         aws s3 sync dist/ s3://awsaerospace.org/learning/api/ --delete --exact-timestamps
-        echo "Syncing to apitraining path..."
-        aws s3 sync dist/ s3://awsaerospace.org/apitraining/ --delete --exact-timestamps
         echo "✅ S3 deployment complete"
       continue-on-error: false
     
@@ -272,17 +270,11 @@ jobs:
           echo "❌ index.html not found in learning/api"
           exit 1
         fi
-        if aws s3 ls s3://awsaerospace.org/apitraining/index.html; then
-          echo "✅ index.html deployed to apitraining"
-        else
-          echo "❌ index.html not found in apitraining"
-          exit 1
-        fi
     
     - name: Invalidate CloudFront
       if: steps.aws-config.outcome == 'success'
       run: |
         echo "🔄 Invalidating CloudFront cache..."
-        INVALIDATION_ID=$(aws cloudfront create-invalidation --distribution-id ECC3LP1BL2CZS --paths "/learning/api/*" "/apitraining/*" --query 'Invalidation.Id' --output text)
+        INVALIDATION_ID=$(aws cloudfront create-invalidation --distribution-id ECC3LP1BL2CZS --paths "/learning/api/*" --query 'Invalidation.Id' --output text)
         echo "✅ CloudFront invalidation created: $INVALIDATION_ID"
       continue-on-error: false
