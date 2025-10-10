@@ -71,6 +71,17 @@ export class UniformInterface extends RestConstraintBase {
     this.props.stateManager.setDataMode(this.section, 'demo');
   }
 
+  private getTopWinner(): string {
+    if (this.state.contests.length > 0) {
+      const topContest = this.state.contests[0];
+      const winner = topContest.winner || 'Unknown Player';
+      // Extract player name from format like "#1 Player (15,847 points)"
+      const match = winner.match(/#(\d+)\s+Player/);
+      return match ? `Rank ${match[1]} Champion` : winner;
+    }
+    return 'Challenge Winner';
+  }
+
   renderContent(): React.JSX.Element {
     const contestColumns: TableColumn<Contest>[] = [
       { id: 'name', header: 'Challenge Contest', cell: (item) => item.name },
@@ -190,7 +201,7 @@ export class UniformInterface extends RestConstraintBase {
             {this.renderNextStep(
               'client-server',
               'Client-Server Architecture',
-              `Ready to see how the ${this.props.selectedYear.value} challenge winners demonstrate client-server separation?`
+              `Ready to see how ${this.getTopWinner()} demonstrates client-server separation?`
             )}
           </>
         )}
