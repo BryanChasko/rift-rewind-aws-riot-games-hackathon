@@ -11,7 +11,7 @@ interface ClientServerState {
   selectedChampion: { label: string; value: string } | null;
   selectionSource: 'table' | 'dropdown' | null;
   summoners: TournamentWinner[];
-  error: string | null;
+  error: 'api-key' | 'network' | 'api-partial' | null;
   xrayTraceId?: string;
   errorDetails?: any;
 }
@@ -47,7 +47,7 @@ export class ClientServer extends RestConstraintBase {
       let errorDetails: any;
       
       if (error.response) {
-        xrayTraceId = error.response.headers?.['x-trace-id'];
+        xrayTraceId = error.response.headers?.['x-trace-id'] || error.response.headers?.['X-Trace-Id'];
         try {
           const responseData = typeof error.response.data === 'string' ? 
             JSON.parse(error.response.data) : error.response.data;
@@ -64,8 +64,7 @@ export class ClientServer extends RestConstraintBase {
         xrayTraceId,
         errorDetails
       });
-      // Re-throw to show detailed error in console
-      throw error;
+      // Don't re-throw - let the error display show
     }
   }
 
@@ -73,30 +72,56 @@ export class ClientServer extends RestConstraintBase {
     const response = await fetch(`${RIOT_API_PROXY_URL}?endpoint=challenger-league`);
     
     if (response.status === 403 || response.status === 401) {
+      const responseText = await response.text().catch(() => '');
       const error = new Error('API key expired or invalid') as any;
       error.response = { 
         status: response.status,
         headers: Object.fromEntries(response.headers.entries()),
-        data: await response.text().catch(() => '')
+        data: responseText
       };
       throw error;
     }
     if (!response.ok) {
+      const responseText = await response.text().catch(() => '');
       const error = new Error(`API error: ${response.status}`) as any;
       error.response = { 
         status: response.status,
         headers: Object.fromEntries(response.headers.entries()),
-        data: await response.text().catch(() => '')
+        data: responseText
       };
       throw error;
     }
     
     const result = await response.json();
+    
+    // Handle error responses from Lambda
+    if (result.statusCode >= 400) {
+      const error = new Error(`Lambda error: ${result.statusCode}`) as any;
+      error.response = {
+        status: result.statusCode,
+        headers: result.headers || {},
+        data: result.body
+      };
+      throw error;
+    }
+    
     const data = JSON.parse(result.body);
     
-    // Store X-Ray trace ID for successful requests
+    // Store X-Ray trace ID and API attempt information
     if (data.xray_trace_id) {
       this.setState({ xrayTraceId: data.xray_trace_id });
+    }
+    
+    // Check if any API attempts failed
+    const failedAttempts = data.api_attempts?.filter((attempt: any) => 
+      attempt.status === 'Failed' || attempt.status === 'No Data'
+    ) || [];
+    
+    if (failedAttempts.length > 0) {
+      this.setState({ 
+        error: 'api-partial',
+        errorDetails: { api_attempts: data.api_attempts }
+      });
     }
     
     if (data.data && Array.isArray(data.data)) {
@@ -226,6 +251,40 @@ export class ClientServer extends RestConstraintBase {
                 Check the browser console for detailed error information. 
                 <a href="https://github.com/BryanChasko/rift-rewind-aws-riot-games-hackathon" target="_blank" rel="noopener noreferrer">🔗 View GitHub repo</a> for troubleshooting or contact <a href="https://linkedin.com/in/bryanchasko" target="_blank" rel="noopener noreferrer">Bryan Chasko</a>.
               </Box>
+            </SpaceBetween>
+          </Alert>
+        )}
+        
+        {this.state.error === 'api-partial' && (
+          <Alert type="info" header="📊 API Status with X-Ray Diagnostics">
+            <SpaceBetween direction="vertical" size="s">
+              <Box variant="p">
+                Lambda executed successfully but some Riot APIs are unavailable. Using fallback demo data.
+              </Box>
+              
+              {this.state.xrayTraceId && (
+                <Box variant="p">
+                  <strong>🔍 X-Ray Trace ID:</strong> <code>{this.state.xrayTraceId}</code><br/>
+                  <a 
+                    href={`https://console.aws.amazon.com/xray/home?region=us-east-1#/traces/${this.state.xrayTraceId}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    📊 View detailed request flow in AWS X-Ray Console
+                  </a>
+                </Box>
+              )}
+              
+              {this.state.errorDetails?.api_attempts && (
+                <Box variant="p">
+                  <strong>🛠️ API Attempt Details:</strong><br/>
+                  {this.state.errorDetails.api_attempts.map((attempt: any, index: number) => (
+                    <div key={index}>
+                      <code>{attempt.endpoint}: {attempt.status} - {attempt.result}</code><br/>
+                    </div>
+                  ))}
+                </Box>
+              )}
             </SpaceBetween>
           </Alert>
         )}
