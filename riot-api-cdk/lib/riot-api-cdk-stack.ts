@@ -28,7 +28,7 @@ export class RiotApiCdkStack extends cdk.Stack {
     // Grant Lambda permission to read the SSM parameter
     apiKeyParameter.grantRead(lambdaRole);
 
-    // Create Lambda Function
+    // Create main Riot API Lambda Function
     const riotApiFunction = new lambda.Function(this, 'RiotApiFunction', {
       runtime: lambda.Runtime.PYTHON_3_11,
       handler: 'lambda_function.lambda_handler',
@@ -41,22 +41,51 @@ export class RiotApiCdkStack extends cdk.Stack {
       }
     });
 
-    // Create Function URL with CORS
+    // Create summoner lookup Lambda Function
+    const summonerLookupFunction = new lambda.Function(this, 'SummonerLookupFunction', {
+      runtime: lambda.Runtime.PYTHON_3_11,
+      handler: 'summoner_lookup.lambda_handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/summoner-lookup-source')),
+      role: lambdaRole,
+      timeout: cdk.Duration.seconds(30),
+      tracing: lambda.Tracing.ACTIVE,
+      environment: {
+        PARAMETER_NAME: apiKeyParameter.parameterName
+      }
+    });
+
+    // Create Function URLs with CORS
     const functionUrl = riotApiFunction.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
       cors: {
-        allowedOrigins: ['*'], // In production, restrict to your CloudFront domain
+        allowedOrigins: ['*'],
         allowedMethods: [lambda.HttpMethod.GET],
         allowedHeaders: ['Content-Type'],
         maxAge: cdk.Duration.seconds(300)
       }
     });
 
-    // Output the Function URL
+    const summonerLookupUrl = summonerLookupFunction.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+      cors: {
+        allowedOrigins: ['*'],
+        allowedMethods: [lambda.HttpMethod.POST],
+        allowedHeaders: ['Content-Type'],
+        maxAge: cdk.Duration.seconds(300)
+      }
+    });
+
+    // Output the Function URLs
     new cdk.CfnOutput(this, 'LambdaFunctionUrl', {
       value: functionUrl.url,
       description: 'URL for the Riot API Lambda Function',
       exportName: 'RiotApiLambdaUrl'
+    });
+
+    new cdk.CfnOutput(this, 'SummonerLookupUrl', {
+      value: summonerLookupUrl.url,
+      description: 'URL for the Summoner Lookup Lambda Function',
+      exportName: 'SummonerLookupUrl'
     });
   }
 }

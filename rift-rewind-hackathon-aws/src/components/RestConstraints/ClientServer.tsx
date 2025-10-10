@@ -14,6 +14,13 @@ interface ClientServerState {
   error: 'api-key' | 'network' | 'api-partial' | null;
   xrayTraceId?: string;
   errorDetails?: any;
+  summonerLookup: {
+    riotId: string;
+    region: string;
+    loading: boolean;
+    result?: any;
+    error?: string;
+  };
 }
 
 export class ClientServer extends RestConstraintBase {
@@ -28,7 +35,12 @@ export class ClientServer extends RestConstraintBase {
     summoners: [],
     error: null,
     xrayTraceId: undefined,
-    errorDetails: undefined
+    errorDetails: undefined,
+    summonerLookup: {
+      riotId: 'Doublelift#NA1',
+      region: 'na1',
+      loading: false
+    }
   };
 
   private async fetchSummoners() {
@@ -76,6 +88,55 @@ export class ClientServer extends RestConstraintBase {
       summoners: this.getLocalFallbackSummoners()
     });
     this.props.stateManager.setDataMode(this.section, 'demo');
+  }
+  
+  private async lookupSummoner() {
+    this.setState({
+      summonerLookup: {
+        ...this.state.summonerLookup,
+        loading: true,
+        result: undefined,
+        error: undefined
+      }
+    });
+    
+    try {
+      // This will be the summoner lookup Lambda URL - placeholder for now
+      const SUMMONER_LOOKUP_URL = 'https://placeholder-summoner-lookup-url.lambda-url.us-east-2.on.aws/';
+      
+      const response = await fetch(SUMMONER_LOOKUP_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          summonerName: this.state.summonerLookup.riotId,
+          region: this.state.summonerLookup.region
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP ${response.status}`);
+      }
+      
+      this.setState({
+        summonerLookup: {
+          ...this.state.summonerLookup,
+          loading: false,
+          result: data
+        }
+      });
+    } catch (error: any) {
+      this.setState({
+        summonerLookup: {
+          ...this.state.summonerLookup,
+          loading: false,
+          error: error.message || 'Failed to lookup summoner'
+        }
+      });
+    }
   }
 
   private async getTopSummoners(): Promise<TournamentWinner[]> {
@@ -313,51 +374,94 @@ export class ClientServer extends RestConstraintBase {
           className="rest-constraint-2"
         >
           <SpaceBetween direction="vertical" size="s">
-            <Alert type="info" header="🎮 Separation of Concerns in Action">
-              <Box variant="p">
-                <strong>Independent development:</strong> Our React UI can be redesigned, our Lambda function can be rewritten, and Riot can upgrade their servers - as long as the API contracts stay consistent, nothing breaks.
-              </Box>
+            <Alert type="info" header="🎮 API Architecture & Rate Limits">
+              <SpaceBetween direction="vertical" size="s">
+                <Box variant="p">
+                  <strong>Rate Limits:</strong> Personal API Key (20/sec, 100/2min) • Production Keys (higher limits)<br/>
+                  <strong>CORS:</strong> Lambda handles cross-origin requests with proper headers<br/>
+                  <strong>Security:</strong> API keys stored in encrypted AWS SSM Parameter Store
+                </Box>
+                <Box variant="p">
+                  <strong>Challenger League Data Fields:</strong><br/>
+                  • <strong>puuid:</strong> Unique player ID • <strong>leaguePoints:</strong> Ranking score<br/>
+                  • <strong>wins/losses:</strong> Match records • <strong>veteran/hotStreak/freshBlood:</strong> Player status
+                </Box>
+              </SpaceBetween>
             </Alert>
             
-            <ColumnLayout columns={2} variant="text-grid">
-              <Box variant="p">
-                <strong>Select Tournament Year:</strong><br/>
-                <Select
-                  selectedOption={this.props.selectedYear}
-                  onChange={({ detail }) => {
-                    if (this.props.onYearChange) {
-                      this.props.onYearChange(detail.selectedOption as { label: string; value: string });
-                    }
-                  }}
-                  options={[
-                    { label: '2024', value: '2024' },
-                    { label: '2023', value: '2023' },
-                    { label: '2022', value: '2022' },
-                    { label: '2021', value: '2021' }
-                  ]}
-                />
-              </Box>
-              <Box variant="p">
-                <strong>🌐 Full Endpoint URL:</strong><br/>
-                <code>https://americas.api.riotgames.com/lol/tournament/v5/summoners?year={this.props.selectedYear.value}</code><br/>
-                <strong>📡 HTTP Method:</strong> GET<br/>
-                <strong>🔑 Auth:</strong> X-Riot-Token header required
-              </Box>
-            </ColumnLayout>
+            <Box variant="p">
+              <strong>🌐 Live Challenger League Endpoint:</strong><br/>
+              <code>https://na1.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5</code><br/>
+              <strong>📡 HTTP Method:</strong> GET<br/>
+              <strong>🔑 Auth:</strong> X-Riot-Token header required<br/>
+              <strong>📊 Returns:</strong> Current top ~300 Challenger players with live ranking data
+            </Box>
             
-            <SpaceBetween direction="horizontal" size="s">
-              {this.renderApiButton(
-                () => this.fetchSummoners(),
-                'Fetch Top Summoners',
-                'Live Summoner Data Loaded',
-                this.props.stateManager.getDataMode(this.section) === 'live'
-              )}
-              {this.renderApiButton(
-                () => this.loadTestData(),
-                'Load Test Data',
-                'Test Data Loaded',
-                false
-              )}
+            <SpaceBetween direction="vertical" size="s">
+              <SpaceBetween direction="horizontal" size="s">
+                {this.renderApiButton(
+                  () => this.fetchSummoners(),
+                  'Fetch Top Summoners',
+                  'Live Summoner Data Loaded',
+                  this.props.stateManager.getDataMode(this.section) === 'live'
+                )}
+                {this.renderApiButton(
+                  () => this.loadTestData(),
+                  'Load Test Data',
+                  'Test Data Loaded',
+                  false
+                )}
+              </SpaceBetween>
+              
+              <Container header="🔍 Look Up Any Summoner">
+                <SpaceBetween direction="vertical" size="s">
+                  <Box variant="p">Try a Riot ID like <strong>Doublelift#NA1</strong> or <strong>Faker#Hide</strong></Box>
+                  <SpaceBetween direction="horizontal" size="s">
+                    <input 
+                      type="text" 
+                      placeholder="GameName#TAG" 
+                      value={this.state.summonerLookup.riotId}
+                      onChange={(e) => this.setState({
+                        summonerLookup: {...this.state.summonerLookup, riotId: (e.target as HTMLInputElement).value}
+                      })}
+                      style={{padding: '8px', borderRadius: '4px', border: '1px solid #ccc', minWidth: '200px'}}
+                    />
+                    <select 
+                      value={this.state.summonerLookup.region}
+                      onChange={(e) => this.setState({
+                        summonerLookup: {...this.state.summonerLookup, region: (e.target as HTMLSelectElement).value}
+                      })}
+                      style={{padding: '8px', borderRadius: '4px', border: '1px solid #ccc'}}
+                    >
+                      <option value="na1">North America</option>
+                      <option value="euw1">Europe West</option>
+                      <option value="kr">Korea</option>
+                    </select>
+                    <button 
+                      style={{padding: '8px 16px', borderRadius: '4px', border: 'none', background: '#0073bb', color: 'white', cursor: 'pointer'}}
+                      onClick={() => this.lookupSummoner()}
+                      disabled={this.state.summonerLookup.loading}
+                    >
+                      {this.state.summonerLookup.loading ? 'Looking up...' : 'Look Up'}
+                    </button>
+                  </SpaceBetween>
+                  
+                  {this.state.summonerLookup.result && (
+                    <Alert type="success" header="🎮 Summoner Found">
+                      <Box variant="p">
+                        <strong>{this.state.summonerLookup.result.summoner.name}</strong> - Level {this.state.summonerLookup.result.summoner.level}<br/>
+                        <strong>Top Champions:</strong> {this.state.summonerLookup.result.topChampions?.map((c: any) => `Champion ${c.championId} (${c.championPoints} pts)`).join(', ') || 'None'}
+                      </Box>
+                    </Alert>
+                  )}
+                  
+                  {this.state.summonerLookup.error && (
+                    <Alert type="error" header="⚠️ Lookup Failed">
+                      <Box variant="p">{this.state.summonerLookup.error}</Box>
+                    </Alert>
+                  )}
+                </SpaceBetween>
+              </Container>
             </SpaceBetween>
           </SpaceBetween>
         </Container>
