@@ -1,0 +1,1260 @@
+
+
+Riot Hackathon-Getting Started with Bedrock
+Amazon Bedrock Workshop
+
+Prerequisites
+Prompt Engineering
+Text Generation with Amazon Bedrock
+
+Knowledge Bases and RAG
+Model Customization
+Image and Video Generation Applications
+
+Agents
+Open Source With Bedrock
+
+AWS account access
+Open AWS console
+(us-east-1)
+Get AWS CLI credentials
+
+Content preferences
+Language
+
+English
+Exit event
+Event ends in 2 days 22 hours 53 minutes.
+
+Event dashboard
+Amazon Bedrock Workshop
+Event dashboard
+Amazon Bedrock Workshop
+Riot Hackathon-Getting Started with Bedrock
+Event information
+Start time
+10/10/2025 02:00 PM
+Duration
+72 hours
+Accessible regions
+us-east-1
+Description
+This event is for Riot Hackathon participants to get to know bedrock
+Workshop
+Get started
+Title
+Amazon Bedrock Workshop
+Complexity level
+300
+AWS services
+Amazon Bedrock
+Topics
+Machine Learning (ML/AI), Generative AI
+Description
+Amazon Bedrock workshop with main design patterns
+Event Outputs (0)
+
+
+1
+
+
+Key
+Value
+Stack name
+Description
+Type
+No stack outputs
+No stack outputs to display.Workshop Studio
+
+
+bryanj
+
+Event ends in 2 days 22 hours 41 minutes.
+
+Event dashboard
+Prerequisites
+At an AWS Event (Setup)
+Event dashboard
+Prerequisites
+At an AWS Event (Setup)
+At an AWS Event (Setup)
+If you are running this workshop in an AWS event, an AWS account will be provisioned for you.
+
+To get started, go to AWS Console. Go to Amazon Bedrock console and on left menu, click on Model access:
+
+overview
+
+On the Model access screen, on top right, click on the button "Enable specific models":
+
+overview
+
+On model access screen, select only following models and click on "Next" button:
+
+Amazon
+select all models
+Anthropic
+Claude 3 Sonnet
+Claude 3 Haiku
+Claude 3.5 Haiku
+Claude 3.5 Sonnet
+Claude 3.5 Sonnet (V2)
+Claude 3.7 Sonnet
+DeepSeek
+DeepSeek-R1
+Meta
+Llama 3.1 8B Instruct
+Llama 3.1 70B Instruct
+A "Review and submit" screen will appear, review selected models, review Terms, and click on Submit:
+
+overview
+
+Follow the below steps to launch SageMaker Studio (JupyterLab) environment
+Launch the Amazon SageMaker AI console  and click on Domains in the left pane:
+overview
+
+Click on the already created Domain amazon-bedrock-workshop:
+overview
+
+Under User profiles, click on the Launch dropdown and click on Studio to launch studio in another window:
+overview
+
+Within the SageMaker Studio window, click on JupyterLab under Applications to launch SageMaker JupyterLab:
+overview
+
+On the JupyterLab screen, click on the JupyterLab environment Name to open a detailed screen about it:
+overview
+
+On the details screen, verfiy that the Instance is set to ml.t3.medium. and the Image is set to the latest SageMaker Distribution.
+
+Note: if you intend to run the Model Customization module, you will need to change the instance to a higher spec instance such as ml.m5.2xlarge. This module is currently only available to run in your own account, and cannot be run as part of an AWS Workshop Studio event.
+
+Click on Run space to launch JupyterLab environment:
+
+overview
+
+Note: A small message will appear on the bottom of the screen, showing that your environment is being updated.
+overview
+
+After the update proccess finishes, you can click on Open JupyterLab button to open your Jupyter environment:
+overview
+
+Click on File Browser to view already cloned git repository and to launch available notebooks:
+overview
+
+Important
+Make sure the source code has been downloaded in SageMaker Studio (JupyterLab) environment. If not, please execute the Download code sample repository step below.
+
+When you open your first notebook, you will be prompted to pick default kernel for your code execution. Keep as it shown up and click on Select:
+overview
+
+Download code sample repository
+If you cannot see the source code in SageMaker Studio (JupyterLab), clone it by running the following command in a Terminal window in SageMaker Studio (JupyterLab):
+
+1
+git clone https://github.com/aws-samples/amazon-bedrock-workshop
+
+Conclusion and Next Steps
+Congratulations! In this section, you've completed all prerequisites to start the workshop. As all workshop modules are independent of each other, you can choose any of the available modules to explore next.
+
+
+Workshop Studio
+
+
+bryanj
+
+Event ends in 2 days 22 hours 41 minutes.
+
+Event dashboard
+Prerequisites
+At an AWS Event (Setup)
+Event dashboard
+Prerequisites
+At an AWS Event (Setup)
+At an AWS Event (Setup)
+If you are running this workshop in an AWS event, an AWS account will be provisioned for you.
+
+To get started, go to AWS Console. Go to Amazon Bedrock console and on left menu, click on Model access:
+
+overview
+
+On the Model access screen, on top right, click on the button "Enable specific models":
+
+overview
+
+On model access screen, select only following models and click on "Next" button:
+
+Amazon
+select all models
+Anthropic
+Claude 3 Sonnet
+Claude 3 Haiku
+Claude 3.5 Haiku
+Claude 3.5 Sonnet
+Claude 3.5 Sonnet (V2)
+Claude 3.7 Sonnet
+DeepSeek
+DeepSeek-R1
+Meta
+Llama 3.1 8B Instruct
+Llama 3.1 70B Instruct
+A "Review and submit" screen will appear, review selected models, review Terms, and click on Submit:
+
+overview
+
+Follow the below steps to launch SageMaker Studio (JupyterLab) environment
+Launch the Amazon SageMaker AI console  and click on Domains in the left pane:
+overview
+
+Click on the already created Domain amazon-bedrock-workshop:
+overview
+
+Under User profiles, click on the Launch dropdown and click on Studio to launch studio in another window:
+overview
+
+Within the SageMaker Studio window, click on JupyterLab under Applications to launch SageMaker JupyterLab:
+overview
+
+On the JupyterLab screen, click on the JupyterLab environment Name to open a detailed screen about it:
+overview
+
+On the details screen, verfiy that the Instance is set to ml.t3.medium. and the Image is set to the latest SageMaker Distribution.
+
+Note: if you intend to run the Model Customization module, you will need to change the instance to a higher spec instance such as ml.m5.2xlarge. This module is currently only available to run in your own account, and cannot be run as part of an AWS Workshop Studio event.
+
+Click on Run space to launch JupyterLab environment:
+
+overview
+
+Note: A small message will appear on the bottom of the screen, showing that your environment is being updated.
+overview
+
+After the update proccess finishes, you can click on Open JupyterLab button to open your Jupyter environment:
+overview
+
+Click on File Browser to view already cloned git repository and to launch available notebooks:
+overview
+
+Important
+Make sure the source code has been downloaded in SageMaker Studio (JupyterLab) environment. If not, please execute the Download code sample repository step below.
+
+When you open your first notebook, you will be prompted to pick default kernel for your code execution. Keep as it shown up and click on Select:
+overview
+
+Download code sample repository
+If you cannot see the source code in SageMaker Studio (JupyterLab), clone it by running the following command in a Terminal window in SageMaker Studio (JupyterLab):
+
+1
+git clone https://github.com/aws-samples/amazon-bedrock-workshop
+
+Conclusion and Next Steps
+Congratulations! In this section, you've completed all prerequisites to start the workshop. As all workshop modules are independent of each other, you can choose any of the available modules to explore next.
+
+Now, you can start the workshop.
+
+
+Workshop Studio
+
+
+bryanj
+
+Event ends in 2 days 22 hours 40 minutes.
+
+Event dashboard
+Prerequisites
+Self paced (Setup)
+Event dashboard
+Prerequisites
+Self paced (Setup)
+Self paced (Setup)
+Please note the following recommendations:
+We recommend you run this workshop in the us-east-1 (N. Virginia) or us-west-2 (Oregon) region.
+If you are running the workshop in SageMaker Studio, here are the recommended kernel configurations:
+Image: SageMaker Distribution 2.1.0 (or greater)
+Instance Type: ml.t3.medium
+If you intend to run the Model Customization module, you will need to change the instance type to a higher spec one such as ml.m5.2xlarge.
+Downloading code samples from the GitHub repo
+Clone the following repository, which includes examples showcased in the workshop:
+
+1
+git clone https://github.com/aws-samples/amazon-bedrock-workshop
+
+IAM Policy for Amazon Bedrock
+At the very minimium, this workshop requires an IAM role that has access to Amazon Bedrock. Here is an example IAM policy to grant access to Bedrock APIs:
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Statement1",
+            "Effect": "Allow",
+            "Action": "bedrock:*",
+            "Resource": "*"
+        }
+    ]
+}
+
+Important
+If you are running this workshop in SageMaker Studio, add this policy to the SageMaker role.
+
+If you are running into your own environment, ensure your user/role has these permissions.
+
+Note that there might be other IAM permissions required to complete separate workshop modules (see the module instructions).
+
+Boto3 Setup
+To execute this workshop, you need Python  installed.
+
+Python version must be greater than 3.8.
+Next, install the boto3 and botocore AWS SDK for Python (Boto3)  libraries. Both libraries contain required dependencies related with Bedrock APIs.
+
+To install them, you can run the commands in the section "Prerequisites" from bedrock_basics.ipynb file:
+
+1
+2
+3
+4
+pip install --no-build-isolation --force-reinstall \
+    "boto3>=1.28.57" \
+    "awscli>=1.29.57" \
+    "botocore>=1.31.57"
+
+boto3 version must be 1.28.57 or greater and botocore version must be 1.31.57 or greater.
+Next Steps
+Congratulations! In this section, you've completed all prerequisites to start the workshop. As all workshop modules are independent of each other, you can choose any of the available modules to explore next.
+
+Event ends in 2 days 22 hours 39 minutes.
+
+Event dashboard
+Prompt Engineering
+Event dashboard
+Prompt Engineering
+Prompt Engineering
+Overview
+Prompt engineering is an emerging discipline focused on developing optimized prompts to efficiently apply language models to various tasks. Prompt engineering helps researchers understand the abilities and limits of large language models (LLMs). By using various prompt engineering techniques, you can often get better answers from the foundation models without spending effort and cost on retraining or fine-tuning them.
+
+Note that prompt engineering does not involve fine-tuning the model. In fine-tuning, the weights/parameters are adjusted using training data with the goal of optimizing a cost function. Model fine-tuning is generally an expensive process in terms of computation time and actual costs. Prompt engineering attempts to guide the trained foundation model (FM) to provide more relevant and accurate answers using various methods, such as, better worded questions, similar examples, intermediate steps, and logical reasoning.
+
+Prompt Engineering leverages the principle of “priming”: providing the model with a context of few (3-5) examples of what the user expects the output to look like, so that the model mimics the previously “primed” behavior. By interacting with the LLM through a series of questions, statements, or instructions, users can effectively guide the LLM's understanding and adjust its behavior according to the specific context of the conversation.
+
+In short, prompt engineering is a new and important field for optimizing how you apply, develop, and understand language models, especially large language models. At its core, it is about designing prompts and interactions to expand what language technologies can do, address their weaknesses, and gain insights into their functioning. Prompt engineering equips us with strategies and techniques for pushing the boundaries of what is possible with language models and their applications.
+
+Why is it relevant?
+The key ideas are:
+
+Prompt engineering is the fastest way to harness the power of large language models.
+Prompt engineering optimizes how you work with and direct language models.
+It boosts abilities, improves safety, and provides understanding.
+Prompt engineering incorporates various skills for interfacing with and advancing language models.
+Prompt engineering enables new features like augmenting domain knowledge with language models without changing model parameters or fine-tuning.
+Prompt engineering provides methods for interacting with, building with, and grasping language models' capabilities.
+Higher quality prompt inputs lead to higher quality outputs.
+In this guide, you will focus on best practices for prompt engineering with several models in Bedrock, including Amazon Nova models and third party models provided by Anthropic and Mistral AI.
+
+Structure of a prompt
+As you explore prompt engineering examples, note that each prompt contains:
+
+Instructions: A task for the model to do. (Task description or instruction on how the model should perform)
+Context: External information to guide the model.
+Input data: The input you want a response for.
+Output indicator: The output type or format.
+Prompts don't require all four elements. Their structure depends on the task. You'll go through some examples soon.
+
+abstract-text
+
+With experimentation, you'll gain intuition for crafting and optimizing prompts to best suit your needs and models. Prompt engineering is an iterative skill that improves with practice.
+
+Prompt Engineering Patterns
+Zero-Shot
+Zero Shot prompting describes the technique where you present a task to an LLM without giving it further examples. You, therefore, expect it to perform the task without getting a prior look at a “shot” at the task, hence the name “zero-shot” prompting.
+
+Modern LLMs demonstrate remarkable zero-shot performance, and a positive correlation can be drawn between model size and zero-shot performance.
+
+Human: 
+Sulfuric acid reacts with sodium chloride, and gives <chemical1>_____</chemical1> and <chemical2>_____</chemical2>:
+Assistant: the chemical1 and chemical 2 are:
+
+Example executed on Amazon Bedrock text playground, with Anthropic Claude model:
+
+zero-shot
+
+Few-Shot
+Giving the model more information about the tasks at hand via examples is called Few-Shot Prompting. It can be used for in-context learning by providing examples of the task and the desired output. You can therefore condition the model on the examples to follow the task guidance more closely.
+
+Tweet: "I hate it when my phone battery dies.”: Sentiment: Negative
+Tweet: "My day has been great”: Sentiment: Positive
+Tweet: "This is the link to the article”: Sentiment: Neutral
+Tweet: "This new music video was incredible” Sentiment:
+
+Example executed in the Amazon Bedrock text playground, using the Amazon Nova Lite model.
+
+zero-shot
+
+Chain-of-Thought (with Few-Shot)
+Chain-of-Thought (CoT) prompting breaks down complex reasoning tasks through intermediary reasoning steps. Chain-of-Thought prompts are usually very specific to a problem type. One can try to invoke CoT reasoning by using the trigger phrase "(Think Step-by-Step)". Let's examine the following example of a few-shot CoT prompt.
+
+Hint: You can test following prompt in Amazon Bedrock text playground with distinct models
+
+
+On a given week, the viewers for a TV channel were
+Monday: 6500 viewers
+Tuesday: 6400 viewers
+Wednesday: 6300 viewers
+
+
+Question: How many viewers can we expect on Friday?
+Answer: Based on the numbers given and without any more information, there is a daily decrease of 100 viewers. If we assume this trend will continue during the following days, we can expect 6200 viewers on the next day that would be Thursday, and therefore 6100 viewers on the next day that would be Friday.
+
+
+Question: How many viewers can we expect on Saturday? (Think Step-by-Step)
+Answer:
+
+Answer provided by Anthropic Claude model:
+
+Here are the step-by-step workings:
+
+1. Monday viewers: 6500
+2. Tuesday viewers: 6400 (decrease of 100 from Monday)
+3. Wednesday viewers: 6300 (decrease of 100 from Tuesday)
+
+We see a daily decrease of 100 viewers from the previous day.
+
+4. Following the trend, Thursday viewers: 6200 (decrease of 100 from Wednesday) 
+5. Friday viewers: 6100 (decrease of 100 from Thursday)
+6. For Saturday, we continue the decreasing trend and subtract another 100 viewers from Friday:
+
+Saturday viewers: 6000 (decrease of 100 from 6100 on Friday)
+So based on the decreasing trend of 100 viewers per day, we can estimate 6000 viewers on Saturday.
+The step-by-step workings are:
+
+Monday: 6500 
+Tuesday: 6400  (6500 - 100)
+Wednesday: 6300 (6400 - 100)
+Thursday: 6200 (6300 - 100) 
+Friday: 6100 (6200 - 100)
+Saturday: 6000 (6100 - 100)
+
+Does this make sense? Let me know if you need any clarification.
+
+
+Conclusion
+You have learned examples of how to engineer prompts to get better results from models. These examples are just a few of the options that prompt engineering can provide. You can test other options in the Amazon Bedrock text playground.
+
+
+Prompt engineering is an emerging discipline focused on developing optimized prompts to efficiently apply language models to various tasks. Prompt engineering helps researchers understand the abilities and limits of large language models (LLMs). By using various prompt engineering techniques, you can often get better answers from the foundation models without spending effort and cost on retraining or fine-tuning them.
+
+Note that prompt engineering does not involve fine-tuning the model. In fine-tuning, the weights/parameters are adjusted using training data with the goal of optimizing a cost function. Model fine-tuning is generally an expensive process in terms of computation time and actual costs. Prompt engineering attempts to guide the trained foundation model (FM) to provide more relevant and accurate answers using various methods, such as, better worded questions, similar examples, intermediate steps, and logical reasoning.
+
+Prompt Engineering leverages the principle of “priming”: providing the model with a context of few (3-5) examples of what the user expects the output to look like, so that the model mimics the previously “primed” behavior. By interacting with the LLM through a series of questions, statements, or instructions, users can effectively guide the LLM's understanding and adjust its behavior according to the specific context of the conversation.
+
+In short, prompt engineering is a new and important field for optimizing how you apply, develop, and understand language models, especially large language models. At its core, it is about designing prompts and interactions to expand what language technologies can do, address their weaknesses, and gain insights into their functioning. Prompt engineering equips us with strategies and techniques for pushing the boundaries of what is possible with language models and their applications.
+
+Why is it relevant?
+The key ideas are:
+
+Prompt engineering is the fastest way to harness the power of large language models.
+Prompt engineering optimizes how you work with and direct language models.
+It boosts abilities, improves safety, and provides understanding.
+Prompt engineering incorporates various skills for interfacing with and advancing language models.
+Prompt engineering enables new features like augmenting domain knowledge with language models without changing model parameters or fine-tuning.
+Prompt engineering provides methods for interacting with, building with, and grasping language models' capabilities.
+Higher quality prompt inputs lead to higher quality outputs.
+In this guide, you will focus on best practices for prompt engineering with several models in Bedrock, including Amazon Nova models and third party models provided by Anthropic and Mistral AI.
+
+Structure of a prompt
+As you explore prompt engineering examples, note that each prompt contains:
+
+Instructions: A task for the model to do. (Task description or instruction on how the model should perform)
+Context: External information to guide the model.
+Input data: The input you want a response for.
+Output indicator: The output type or format.
+Prompts don't require all four elements. Their structure depends on the task. You'll go through some examples soon.
+
+abstract-text
+
+With experimentation, you'll gain intuition for crafting and optimizing prompts to best suit your needs and models. Prompt engineering is an iterative skill that improves with practice.
+
+Prompt Engineering Patterns
+Zero-Shot
+Zero Shot prompting describes the technique where you present a task to an LLM without giving it further examples. You, therefore, expect it to perform the task without getting a prior look at a “shot” at the task, hence the name “zero-shot” prompting.
+
+Modern LLMs demonstrate remarkable zero-shot performance, and a positive correlation can be drawn between model size and zero-shot performance.
+
+Human: 
+Sulfuric acid reacts with sodium chloride, and gives <chemical1>_____</chemical1> and <chemical2>_____</chemical2>:
+Assistant: the chemical1 and chemical 2 are:
+
+Example executed on Amazon Bedrock text playground, with Anthropic Claude model:
+
+zero-shot
+
+Few-Shot
+Giving the model more information about the tasks at hand via examples is called Few-Shot Prompting. It can be used for in-context learning by providing examples of the task and the desired output. You can therefore condition the model on the examples to follow the task guidance more closely.
+
+Tweet: "I hate it when my phone battery dies.”: Sentiment: Negative
+Tweet: "My day has been great”: Sentiment: Positive
+Tweet: "This is the link to the article”: Sentiment: Neutral
+Tweet: "This new music video was incredible” Sentiment:
+
+Example executed in the Amazon Bedrock text playground, using the Amazon Nova Lite model.
+
+zero-shot
+
+Chain-of-Thought (with Few-Shot)
+Chain-of-Thought (CoT) prompting breaks down complex reasoning tasks through intermediary reasoning steps. Chain-of-Thought prompts are usually very specific to a problem type. One can try to invoke CoT reasoning by using the trigger phrase "(Think Step-by-Step)". Let's examine the following example of a few-shot CoT prompt.
+
+Hint: You can test following prompt in Amazon Bedrock text playground with distinct models
+
+
+On a given week, the viewers for a TV channel were
+Monday: 6500 viewers
+Tuesday: 6400 viewers
+Wednesday: 6300 viewers
+
+
+Question: How many viewers can we expect on Friday?
+Answer: Based on the numbers given and without any more information, there is a daily decrease of 100 viewers. If we assume this trend will continue during the following days, we can expect 6200 viewers on the next day that would be Thursday, and therefore 6100 viewers on the next day that would be Friday.
+
+
+Question: How many viewers can we expect on Saturday? (Think Step-by-Step)
+Answer:
+
+Answer provided by Anthropic Claude model:
+
+Here are the step-by-step workings:
+
+1. Monday viewers: 6500
+2. Tuesday viewers: 6400 (decrease of 100 from Monday)
+3. Wednesday viewers: 6300 (decrease of 100 from Tuesday)
+
+We see a daily decrease of 100 viewers from the previous day.
+
+4. Following the trend, Thursday viewers: 6200 (decrease of 100 from Wednesday) 
+5. Friday viewers: 6100 (decrease of 100 from Thursday)
+6. For Saturday, we continue the decreasing trend and subtract another 100 viewers from Friday:
+
+Saturday viewers: 6000 (decrease of 100 from 6100 on Friday)
+So based on the decreasing trend of 100 viewers per day, we can estimate 6000 viewers on Saturday.
+The step-by-step workings are:
+
+Monday: 6500 
+Tuesday: 6400  (6500 - 100)
+Wednesday: 6300 (6400 - 100)
+Thursday: 6200 (6300 - 100) 
+Friday: 6100 (6200 - 100)
+Saturday: 6000 (6100 - 100)
+
+Does this make sense? Let me know if you need any clarification.
+
+
+Conclusion
+You have learned examples of how to engineer prompts to get better results from models. These examples are just a few of the options that prompt engineering can provide. You can test other options in the Amazon Bedrock text playground.
+
+Workshop Studio
+
+
+bryanj
+
+Event ends in 2 days 22 hours 39 minutes.
+
+Event dashboard
+Knowledge Bases and RAG
+Event dashboard
+Knowledge Bases and RAG
+Knowledge Bases and RAG
+Introduction
+Retrieval-Augmented Generation (RAG) is a powerful technique for enhancing the accuracy, relevance, and transparency of responses generated by large language models (LLMs). By combining the generative capabilities of foundation models with authoritative, real-time knowledge sources, RAG helps overcome the limitations of static training data and improves user trust.
+
+In this module, we’ll explore how Amazon Bedrock Knowledge Bases enables a fully managed, end-to-end implementation of RAG, empowering developers to quickly connect foundation models to internal and external data without managing complex infrastructure.
+
+Why Use RAG?
+LLMs are trained on vast corpora of data and are capable of generating remarkably human-like responses. However, they are not infallible. They can:
+
+Present outdated or inaccurate information.
+Provide confident but incorrect answers.
+Struggle with domain-specific terminology.
+Miss recent events or proprietary knowledge.
+RAG addresses these challenges by allowing models to retrieve relevant information from authoritative knowledge bases before generating responses. It augments user queries with real-time, contextual knowledge—ensuring answers are grounded in the latest and most relevant data.
+
+Think of the LLM as a brilliant but overly confident new employee.
+RAG gives that employee access to your company’s documentation and real-time data, ensuring better, more accurate answers.
+
+Benefits of RAG
+Cost-effective: No need to retrain models—simply connect your data.
+Current and accurate responses: Pulls from live or frequently-updated sources.
+Trust and transparency: Responses can include citations to retrieved documents.
+Control and flexibility: Developers can manage data access, filter results, and update sources as needed.
+What Is a Knowledge Base in Amazon Bedrock?
+The Amazon Bedrock Knowledge Bases provides fully-managed building blocks for all stages of the RAG workflow — from document ingestion and vectorization to retrieval and prompt augmentation.
+
+BKB Illustration
+
+With Amazon Bedrock Knowledge Bases, you can:
+
+Connect to both unstructured data (e.g., PDFs, web pages, Confluence) and structured data (e.g., SQL databases).
+Apply advanced parsing and chunking techniques to your data sources and synchronize them with your Bedrock Knowledge Bases.
+Leverage Retrieve API to fetch relevant results for a user query from knowledge bases, including visual elements such as images, diagrams, charts, and tables, or structured data from databases when applicable.
+Alternatively, you can go one step further and use the RetrieveAndGenerate API to automatically augment the FM prompt with retrieved data and return the response.
+Leverage source attribution (incl. visual elements) to enhance transparency and minimize hallucinations.
+Add Amazon Bedrock Knowledge Bases to Amazon Bedrock Agents to provide contextual information to AI agents for task automation.
+Use Cases
+Some common use cases for RAG and Knowledge Bases include:
+
+Internal chatbots for HR, legal, or IT support.
+Customer-facing assistants with up-to-date product or support information.
+Domain-specific research tools with access to scientific papers or financial reports.
+Enterprise analytics bots that query structured data using natural language.
+Next Steps
+This module walks you through building RAG applications using Amazon Bedrock Knowledge Bases. The core steps include:
+
+Setting up an Amazon OpenSearch Serverless collection and vector index for semantic search
+Uploading knowledge source documents to Amazon S3
+Creating and configuring a Bedrock Knowledge Base
+Running a fully automated ingestion workflow to prepare your data for retrieval
+Testing your RAG application with a few user queries
+You can complete this module in two distinct ways — choose either of the independent learning paths based on your preference:
+
+▶ Path 1 – Console Experience - A no-code walkthrough using the AWS Console. You'll learn how to create and use a Knowledge Base through the UI and explore an end-to-end demo using Bedrock Flows to chain retrieval and generation steps.
+
+▶ Path 2 – Notebook Experience - A code-first approach using Jupyter notebooks and AWS SDKs. You'll use Bedrock APIs to build and operate Knowledge Bases and gain hands-on experience with the foundational components of a production-grade RAG application.
+
+You can complete either path independently — pick the one that best fits your skill set or project goals and click on corresponding link above.
+
+Workshop Studio
+
+
+bryanj
+
+Event ends in 2 days 22 hours 39 minutes.
+
+Event dashboard
+Knowledge Bases and RAG
+Path 1: Console Experience
+Event dashboard
+Knowledge Bases and RAG
+Path 1: Console Experience
+Path 1: Console Experience
+This path offers a no-code, console-based learning experience for exploring Amazon Bedrock Knowledge Bases, ideal for users who prefer working through the AWS Management Console without writing code.
+
+You'll follow a sequence of guided steps to:
+
+Set up an Amazon OpenSearch Serverless vector index
+Upload documents to Amazon S3 as your knowledge source
+Create and configure a Bedrock Knowledge Base using the console
+Test retrieval and generation in the UI of AWS Console (using RetrieveAndGenerate API under the hood)
+Build an end-to-end RAG flow using the Bedrock Flows visual builder
+To get started, begin with Section 1.1 – Create a Vector Store, and follow the step-by-step instructions in this guide.
+
+1.1 Create a vector store - OpenSearch Serverless index
+Go to Amazon Opensearch Service 
+
+In the lefthand section, go to Serverless and click Dashboard
+
+
+
+Click on Get Started
+
+
+Give the collection name bedrock-sample-rag and in collection type select Vector Search , under Deployment type ensure Enable redundancy is selected and Security Easy create is selected. Click Next
+
+
+On Review and create collection Click Submit
+
+
+Wait for the collection to complete and then select the *index section.
+
+
+Click on Create vector index
+
+
+Select JSON option and then give the Vector index name as bedrock-sample-rag-index and paste the following json code and click create
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+{
+   "settings": {
+      "index.knn": "true",
+       "number_of_shards": 1,
+       "knn.algo_param.ef_search": 512,
+       "number_of_replicas": 0
+   },
+   "mappings": {
+      "properties": {
+         "vector": {
+            "type": "knn_vector",
+            "dimension": 1024,
+             "method": {
+                 "name": "hnsw",
+                 "engine": "faiss",
+                 "space_type": "l2"
+             }
+         },
+         "text": {
+            "type": "text"
+         },
+         "text-metadata": {
+            "type": "text"
+         }
+      }
+   }
+}
+
+
+
+Save the following properties this will be used when knowledge base will be created in Bedrock
+index name
+
+1
+bedrock-sample-rag-index
+
+Vector field name
+
+1
+vector
+
+Metadata
+
+1
+2
+text
+text-metadata
+
+
+
+Save the arn name of collection this will be later used in knowledge base creation
+
+
+1.2 Upload Data into S3
+Download the following files to your local directory,AMZN-2021-Shareholder-Letter ,AMZN-2019-Shareholder-Letter ,AMZN-2020-Shareholder-Letter ,AMZN-2022-Shareholder-Letter 
+
+Upload these files to a bucket in S3 , in this case the bucket name is aws-bedrock-kb-workshop-aoss, it is advised to choose a unique bucket name and remember it during knowledge base creation 
+
+1.3 Creating knowledge base
+Go to Bedrock Console 
+
+Go to Builder tools and select Knowledge Bases
+
+
+
+Click Create and select Knowledge Base with vectore store
+
+
+Make sure in IAM Permissions section Create and use a new service role is selected and in Choose data source section Amazon S3 is selected, click Next
+
+
+In the S3 URI Browse S3 and select the bucket in which the reports are uploaded from Section 1.2, Step b and in chunking strategy change to Fixed-size chunking and Max tokens to 512 and click Next
+
+
+In Embeddings Model Section click Select Model
+
+
+Select Titan Text Embeddings V2 and click *Apply
+
+
+In Vector Database section click Choose a vector store you have created and make sure Vector engine for Amazon OpenSearch is selected
+
+
+Scroll below to add the properties. In Collection ARN, enter the ARN from Section 1.1, Step j, in Vector index name enter bedrock-sample-rag-index from Section 1.1, Step i, similarly add Vector field name as vector. In Metadata field mapping enter Text field name as text and Bedrock-managed metadata field name as text-metadata. Click Next
+
+
+In Review and create section click Create Knowledge Base
+
+
+Once the Knowledge base is created go to Data Source select the data source and click on sync 
+1.4 Test the Knowledge Base
+In Test Knowledge Base click on Select Model
+
+
+Select Anthropic and then select Claude 3.5 Haiku and click Apply
+
+
+Enter the following question to use the Retreieve and Generate API and click Run
+1
+"What is Amazon's doing in the field of generative AI?"
+
+
+
+Click on Show Details of generated answer to check the chunks of data extracted from Knowledge base to answer the question. In Source details, the chunks and the metadata associated from chunks can be seen
+
+
+Congratulations on successfuly creating a knowledge base from a vector store. Please proceed to next section.
+
+3.1 Create a Bedrock Flow
+Go to Bedrock Console  and click on Flows
+
+
+Click on Create Flow
+
+
+Enter the name langchain-kb-retriever and under Service role name select Create and use a new service role and click Create flow
+
+
+This will take us to the flow builder where there are 3 nodes viz. Flow input,Prompts,Flow output. We will add one extra node which is the KB node.
+
+
+Add the KB function node
+
+
+Click on the Prompt Node and add the configuration.Click Select Model and add Nova Micro . Add the below Prompt.
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+Human: You are a financial advisor AI system, and provides answers to questions by using fact based and statistical information when possible. 
+Use the following pieces of information to provide a concise answer to the question enclosed in <question> tags. 
+If you don't know the answer, just say that you don't know, don't try to make up an answer.
+    
+<question>
+{{question}}
+</question>
+
+The response should be specific and use statistics or numbers when possible.
+
+Context: {{context}}
+
+A:
+
+
+
+Scroll in prompt settings to Input and under context change data type to Array. This is because the context will come from the retrieved answers from KB for the question which are in array form.
+
+
+Click on Knowledge Base node, select the Knowledge base created in section 1.3 and make sure Return retrieved results is selected.
+
+
+The connection methodology will be as follows. Once created click on Save
+Flow input > Prompt Input ({{question}})
+Flow input > Knowledge Base Input (retrieval query)
+Knowledge base Output (retrieved results) > Prompt Input({{Context}})
+Prompt Output (model completion) > Flow output
+
+
+Click on icon highlighted in the image below, to open test panel
+
+
+Enter the below message and click Run
+1
+What is Amazon doing in the field of generative AI?
+
+
+
+The successful output will show traces from all the nodes viz.Knowledge Base, flow input, Prompt, Flow ,output
+
+
+If trace for the prompt node is extended, this shows the documents retrieved from knowledge base 
+
+
+Workshop Studio
+
+
+bryanj
+
+Event ends in 2 days 22 hours 39 minutes.
+
+Event dashboard
+Knowledge Bases and RAG
+Path 2: Notebook Experience
+Event dashboard
+Knowledge Bases and RAG
+Path 2: Notebook Experience
+Path 2: Notebook Experience
+Instructions
+This path provides a code-first, programmatic learning experience for exploring Amazon Bedrock Knowledge Bases, designed for developers and data scientists building Retrieval-Augmented Generation (RAG) applications.
+
+You'll work through a sequence of Jupyter notebooks that guide you step by step—from setting up the required infrastructure to invoking Bedrock APIs that enable powerful, production-ready RAG capabilities. By the end of this module, you'll understand the basic building blocks for creating, operating, and extending RAG applications using Bedrock’s core APIs.
+
+Next Steps
+Here is the content overview of this module:
+
+▶ Notebook 1 – Create Knowledge Base and Ingest Documents 
+
+Set up environment and AWS SDKs (boto3)
+Upload documents to Amazon S3
+Create and configure an Amazon OpenSearch Serverless collection
+Set up and link a Bedrock Knowledge Base to data source and vector store
+Run a document ingestion job to populate the knowledge base
+▶ Notebook 2 – Fully-Managed RAG with RetrieveAndGenerate API 
+
+Use the RetrieveAndGenerate API to build a fully managed Q&A app
+Automatically fetch relevant context and generate responses
+Benefit from source attribution and simplified workflow
+▶ Notebook 3 – Custom RAG Workflow with Retrieve API )
+
+Use the Retrieve API to fetch semantically relevant chunks
+Manually construct augmented prompts using retrieved data
+Generate answers using the Converse API for fine-tuned control
+To begin, open Notebook 1 – Create Knowledge Base and Ingest Documents  in your IDE and follow the in-notebook instructions.
+
+
+Workshop Studio
+
+
+bryanj
+
+Event ends in 2 days 22 hours 38 minutes.
+
+Event dashboard
+Model Customization
+Event dashboard
+Model Customization
+Model Customization
+Overview
+Model customization is the process of providing training data to a model in order to improve its performance for specific use-cases. You can customize Amazon Bedrock foundation models in order to improve their performance and create a better customer experience. Amazon Bedrock currently provides the following customization methods.
+
+Continued Pre-training
+
+Provide unlabeled data to pre-train a foundation model by familiarizing it with certain types of inputs. You can provide data from specific topics in order to expose a model to those areas. The Continued Pre-training process will tweak the model parameters to accommodate the input data and improve its domain knowledge.
+
+For example, you can train a model with private data, such as business documents, that are not publically available for training large language models. Additionally, you can continue to improve the model by retraining the model with more unlabeled data as it becomes available.
+Fine-tuning
+
+Provide labeled data in order to train a model to improve performance on specific tasks. By providing a training dataset of labeled examples, the model learns to associate what types of outputs should be generated for certain types of inputs. The model parameters are adjusted in the process and the model's performance is improved for the tasks represented by the training dataset.
+Relevance
+Enterprises need to LLM to use domain specific and proprietary data and use the information to answer the user query
+
+The challenge here is that there is a limitation on the amount of contextual information that can be used in a given scenario based on the limited size of the prompt that most models can handle.
+
+This can be overcome by fine-tuning the model on your proprietary data. Bedrock provide a low code / no code approach to fine tune which abstracts all the complexity of the fine-tuning.
+
+Target Audience
+Machine Learning Engineers wanting to rapidly experiment and test.
+Data Scientists wanting to fine tune models.
+Anyone who needs to improve question search with accurate or specific documentation
+Challenges
+The challenges are getting relevant answers from a trained model and avoiding hallucinations and working on use cases which cannot be solved by RAG
+
+Introduction to Fine-tuning for Amazon Bedrock
+To view details of fine-tuning models in Bedrock visit Fine Tuning models . There are 2 key pre-requsites for creating the data needed for fine-tuning a model. Before you can begin a model customization job, you need to minimally prepare a training dataset. Whether a validation dataset is supported and the format of your training and validation dataset depend on the following factors.
+
+The type of customization job (fine-tuning or Continued Pre-training).
+The input and output modalities of the data.
+Workshop SubPattern - for text and multimodal models.
+For each of model families, you will be provided with setup, finetuning and clean up instructions in the respective notebooks.
+
+First step will involve a notebook that will guide you on the setup to make sure resources are properly set up for fine-tuning and continued pre-training using Amazon Bedrock.
+Second step will involve creating a finetuning/pre-training task for the foundational model and evaluating it's performance.
+Third step will involve a cleanup of the resources provisioned in the above steps.
+Section 1: Fine Tune Models
+
+In this lab, you will explore fine tuning and inference for different model families.The different model families are:
+
+Claude Haiku - This notebook will demonstrate the end-to-end process of fine-tuning the Anthropic Claude 3  **Haiku ** model using Amazon Bedrock, including selecting the base model, configuring hyperparameters, creating and monitoring the fine-tuning job, deploying the fine-tuned model with provisioned throughput and evaluating the performance of the fine-tuned model.
+For best practices and more information please refer to these blog posts. Fine-tune Anthropic’s Claude 3 Haiku  Best practices and lessons for fine-tuning Anthropic’s Claude 3 Haiku 
+
+Meta Llama   - This notebook will demonstrate how to fine-tune Meta's Llama  3.2 model with vision capabilities using Amazon Bedrock. You will learn how to prepare multi-modal data, train a custom model, and run inference with your fine-tuned model.The fine-tuned model can answer questions about images based on the patterns it learned from the training data.
+
+Amazon Nova  - This notebook will demonstrate the end-to-end process of fine-tuning Amazon Nova  Lite and Amazon Nova  Micro model using Amazon Bedrock, including selecting the base model, configuring hyperparameters, creating and monitoring the fine-tuning job, deploying the fine-tuned model with provisioned throughput and evaluating the performance of the fine-tuned model.
+
+Section 2: Continued Pre-Training models
+
+Continued Pre-Train Titan models  - This notebook will show to how to run a continued pre-train the titan model. Organizations want to build domain-specific applications that reflect the terminology of their business. However, many FMs are trained on large amounts of publicly available data and are not suited to highly specialized domains. To adapt FMs with knowledge more relevant to a domain, you can engage continued pre-training which leverages vast sets of unlabeled data. Continued pre-training in Bedrock helps address out-of-domain learning challenges by exposing models to new, diverse data, beyond their original training. With continued pre-training, you can expand the model’s understanding to include the language used in your domain and improve the model’s overall competency for your business.
+
+
+
+
+Event ends in 2 days 22 hours 38 minutes.
+
+Event dashboard
+Image and Video Generation Applications
+Event dashboard
+Image and Video Generation Applications
+Image and Video Generation Applications
+Introduction
+Image and video generation can be tedious tasks for artists, designers, and content creators. With the help of Foundation Models (FMs) like Amazon Nova Canvas and Amazon Nova Reel, this process can be streamlined to just a few simple steps. In this module, we'll explore how to use these models to create compelling visual and video ads for Octank, a premium dog food company.
+
+Visual Content Generation with Amazon Nova models
+Amazon Nova Canvas and Nova Reel are state-of-the-art image and video generation models that offer a wide range of features:
+
+Nova Canvas (Image Generation)
+Text-to-Image (T2I) Generation
+Image Conditioning
+Image Variation
+Inpainting
+Color Conditioning
+Outpainting
+Background Removal
+Responsible AI features
+Nova Reel (Video Generation)
+Text-to-Video Generation
+Image-to-Video Generation
+These capabilities make Nova Canvas and Nova Reel ideal tools for marketing teams, designers, and content creators who need to generate high-quality, customized images and videos quickly and efficiently.
+
+Additional use-cases with Titan Multimodal Embeddings
+In addition to image and video generation with Nova Canvas and Nova Reel, this module also covers the use of Amazon Titan Multimodal Embedding Models. These models can be used for enterprise tasks such as:
+
+Image search
+Similarity-based recommendations from documents
+Processing disparate information items like text, images, and graphs
+The Titan Multimodal Embedding Models are particularly useful for businesses dealing with diverse data types and needing to extract insights or perform searches across multiple modalities.
+
+Module Notebook and Next Steps
+This workshop module consists of the following labs:
+
+▶ Notebook 1 – Working with Titan Multimodal Embeddings  - In this notebook, you'll work with Amazon Titan Multimodal Embedding Models, which convert text and images into embeddings in a shared semantic space—ideal for building intelligent, similarity-based systems like semantic search or recommendations. You'll extract and index these embeddings to create a simple demo showcasing their power.
+
+▶ Notebook 2 – Exploring Image Generation with Amazon Nova Canvas  - In this notebook, you'll explore Amazon Nova Canvas, a cutting-edge image generation model that creates high-quality visuals from text prompts and supports advanced features like inpainting, outpainting, and image variation—ideal for product visualization, creative design, and content generation at scale.
+
+▶ Notebook 3 – Exploring Video Generation with Amazon Nova Reel  - In this notebook, you'll explore Amazon Nova Reel, a state-of-the-art model for generating high-quality videos from text or image-plus-text prompts. You'll create short video ads using Nova Reel’s text-to-video and image-to-video capabilities.
+
+To begin, open Notebook 1 – Working with Titan Multimodal Embeddings  in your IDE and follow the in-notebook instructions.
+
+Event dashboard
+Agents
+Event dashboard
+Agents
+Agents
+Overview
+In this lab, you will learn about Agents for Amazon Bedrock , an Amazon Bedrock  capability that lets you harness the Foundation Model's (FM's) reasoning skills to execute multi-steps business tasks using natural language. You can simply state your problem, like “help me update my product catalogue” and the agent breaks down the problem using the FM’s reasoning capabilities and executes the steps to fulfill your request. You set up an agent with access to your organization’s enterprise systems, processes, knowledge bases, and some building block functions. Then the agent comes up with the logic, figures out what APIs to call and when to call them, and completes the transactions in the right sequence. When an agent needs a piece of information from the user, it automatically asks the user for those additional details using natural language. And the best part about agents — it’s leveraging the most up-to-date information you have and gives you relevant answers securely and privately.
+
+An agent consists of the following components:
+
+Foundation model – You choose a foundation model that the agent invokes to interpret user input and subsequent prompts in its orchestration process, and to generate responses and follow-up steps in its process.
+Instructions – You write up instructions that describe what the agent is designed to do. With advanced prompts, you can further customize instructions for the agent at every step of orchestration and include Lambda functions to parse the output of each step.
+(Optional) Action groups – You define the actions that the agent can help the user performing. An action group is composed of actions and the action executor. You can define actions by passing the function details via JSON object or using an API Schema file. You can execute the actions using a Lambda function, or you can return the control to the application and handle the function execution outside of Agents.
+(Optional) Knowledge bases for Amazon Bedrock – Associate Knowledge bases for Amazon Bedrock  with an agent to allow it to query the knowledge base for extra context to augment response generation and input into steps of the orchestration process.
+(Optional) Guardrails for Amazon Bedrock Associate Guardrails for Amazon Bedrock  with an agent to safeguard your Agent based on use cases and Responsible AI policies
+The following image schematizes the components of your agent.
+
+Components of Agent
+
+In build-time, all these components are gathered to construct base prompts for the agent in order to carry out orchestration until the user request is completed. With advanced prompts, you can modify these base prompts with additional logic and few-shot examples to improve accuracy for each step of agent invocation. The base prompt templates contain instructions, action descriptions, knowledge base descriptions, and conversation history, all of which you can customize to modify the agent to the best of your needs. You then prepare your agent, which packages all the components of the agents, including security configurations, and brings the agent into a state where it is ready for testing in runtime.
+
+Next Steps
+This module walks you through building agentic applications using Amazon Bedrock Agents. The core steps include:
+
+You can complete this module in two distinct ways — choose either or both of the independent learning paths based on your preference:
+
+▶ Path 1 – Configuring Bedrock Agent through AWS Console - A no-code walkthrough using the AWS Console for Amazon Bedrock Agents. You will learn how to configure a Bedrock Agent for a task of code interpretation.
+
+▶ Path 2 – Multi-Step Bedrock Agent using Jupyter Notebooks - A code-first approach using Jupyter notebooks and AWS SDKs. You'll use Bedrock APIs to create, configure, and test a fully functioning agent from scratch. This hands-on path walks through:
+
+Creating a Bedrock Agent programmatically using Python SDK, with a restaurant-themed use case.
+Integrating a Knowledge Base to augment the agent’s responses with business-specific data.
+Invoking the Agent with user prompts to simulate real interactions and evaluate responses.
+This path is ideal for developers looking to automate agent workflows or integrate Bedrock Agents into broader applications.
+
+You can complete either path independently — pick the one that best fits your skill set or project goals and click on corresponding link above.
+
+
+
+
+
+Event ends in 2 days 22 hours 37 minutes.
+
+Event dashboard
+Agents
+Path 1: Configuring Bedrock Agent through AWS Console
+Event dashboard
+Agents
+Path 1: Configuring Bedrock Agent through AWS Console
+Path 1: Configuring Bedrock Agent through AWS Console
+Creating an AI agent with code interpretation capabilities using the Amazon Bedrock console
+This section walks you through the process of creating an AI agent with code interpretation capabilities using the Amazon Bedrock console. This agent will be able to perform data analysis tasks and generate visualizations.
+
+Prerequisites
+An AWS account with access to Amazon Bedrock
+Familiarity with the AWS Management Console
+Enable required models from Amazon Bedrock Model Access.
+Instructions
+1. Access Amazon Bedrock Console
+Sign in to the AWS Management Console
+Navigate to the Amazon Bedrock service
+Select "Agents" from the left navigation pane
+Bedrock Console Navigation
+
+2. Create a New Agent
+Click on "Create Agent"
+Provide a name for your agent "DataAnalysisAssistant"
+Add a description (Optional) - "AI Agent with Code Interpreter enabled for Data analysis"
+Click "Create"
+Create New Agent
+
+3. Configure Agent Details
+In the Agent builder, go to the "Agent details" section
+For "Agent resource role", select "Create and use a new service role"
+Choose a foundation model optimized for agents (e.g., Claude 3.5 Sonnet v2)
+In "Instructions for the Agent", enter:
+You are an AI assistant specialized in data analysis and visualization. You can write, run, and debug Python code to help users with their queries. Always provide clear explanations of your process and results.
+Configure Agent Details
+
+4. Enable Code Interpreter
+Expand "Additional settings"
+Find "Code Interpreter" and toggle it on
+5. Configure User Input Settings
+In the same "Additional settings" section, ensure "User input" is enabled
+Enable Code Interpreter and User Input Settings
+
+6. Review and Save Agent Configuration
+Review all settings to ensure they're correct
+Click "Save" to apply your configurations
+Save Configuration
+
+7. Prepare the Agent
+After saving, click on "Prepare" to make the agent ready for testing
+Wait for the preparation process to complete
+Prepare Agent
+
+8. Test the Agent
+Once prepared, use the test window (on the right side panel) to interact with your agent
+Try the following prompt to test the code interpreter:
+Using the customer satisfaction data provided below, create a bar graph showing the average overall rating for each hotel (H001, H002, H003). The graph should have the hotel IDs on the x-axis and the average overall rating on the y-axis.
+
+date,hotel_id,overall_rating,room_cleanliness,staff_service,amenities,value_for_money,location
+2023-01-05,H001,4.2,4.5,4.0,3.8,4.1,4.5
+2023-01-12,H002,3.8,4.0,3.5,3.9,3.7,4.2
+2023-01-20,H003,4.5,4.7,4.6,4.3,4.2,4.8
+2023-02-03,H001,3.9,4.2,3.7,3.6,3.8,4.4
+2023-02-15,H002,4.1,4.3,4.0,4.1,3.9,4.3
+2023-02-28,H003,4.3,4.5,4.4,4.2,4.0,4.6
+2023-03-10,H001,4.0,4.3,3.8,3.7,3.9,4.5
+2023-03-22,H002,3.7,3.9,3.6,3.8,3.5,4.1
+2023-04-05,H003,4.4,4.6,4.5,4.1,4.1,4.7
+2023-04-18,H001,4.1,4.4,3.9,3.8,4.0,4.6
+2023-05-01,H002,3.9,4.1,3.8,4.0,3.6,4.2
+2023-05-15,H003,4.6,4.8,4.7,4.4,4.3,4.9
+2023-06-02,H001,4.3,4.6,4.1,4.0,4.2,4.7
+2023-06-20,H002,4.0,4.2,3.9,4.1,3.8,4.3
+2023-06-30,H003,4.5,4.7,4.6,4.3,4.2,4.8
+Test Agent
+
+9. Review and Iterate
+Analyze the agent's responses, code outputs, and generated visualizations
+If necessary, adjust the agent's instructions or settings and prepare again
+Review Results Generated visualization
+
+9. Additional prompt testing
+Perform testing with below prompts for additional analysis and visualizations Using the customer satisfaction data provided above, perform the following tasks:
+Create a bar graph showing the average overall rating for each hotel (H001, H002, H003). The graph should have the hotel IDs on the x-axis and the average overall rating on the y-axis.
+Generate a heatmap that displays the correlation between different satisfaction factors (room_cleanliness, staff_service, amenities, value_for_money, location) and the overall_rating.
+Calculate and print the average scores for each satisfaction factor across all hotels.
+Identify the hotel with the highest average overall rating and provide its average scores for each satisfaction factor.
+Create a line graph showing the trend of overall ratings over time for each hotel.
+Ensure that all graphs are clearly labeled and easy to read. After generating the visualizations and performing the analysis, provide a brief interpretation of the results, highlighting key findings and any notable trends or patterns in the data.
+Conclusion
+By following these steps, you've created an AI agent capable of performing data analysis tasks using the Code Interpreter tool directly through the Amazon Bedrock console. This agent can help with various data processing, analysis, and visualization tasks, making it a powerful tool for data-driven decision making.
+
+
+
+Event ends in 2 days 22 hours 37 minutes.
+
+Event dashboard
+Agents
+Path 2: Multi-Step Bedrock Agent using Jupyter Notebooks
+Event dashboard
+Agents
+Path 2: Multi-Step Bedrock Agent using Jupyter Notebooks
+Path 2: Multi-Step Bedrock Agent using Jupyter Notebooks
+Introduction
+Generative AI applications often need to execute multistep tasks across company systems and data sources. Agents for Bedrock allows you to automatically orchestrate and analyze the task and break it down into the correct logical sequence using the FM’s reasoning abilities. Agents automatically call the necessary APIs to transact with the company systems and processes to fulfill the request, determining along the way if they can proceed or if they need to gather more information. Using encryption in transit and at rest and IAM roles, agents provide secure access to enterprise data and APIs. With the Action Groups integration with AWS Lambda functions, agents lets you choose the implementation language for your API’s connection. Thanks to the fully managed infrastructure provided, you don’t have to worry about provisioning or managing infrastructure for your agent.
+
+Module overview
+In this module we will create a restaurant assistant agent that connects with a Amazon Bedrock Knowledge Bases containing the restaurant's different menus. This agent also connects to an action group that provides functionalities for handling the table booking and updating a DynamoDB table for bookkeeping.
+
+Agents architect
+
+Next Steps
+During this section, you will cover four modules:
+
+▶ Notebook 1 – Building Agents for Bedrock using AWS SDK for Python  - In this notebook lab, you will create a Bedrock Agent programmatically using the restaurant agent example.
+
+▶ Notebook 2 – Integrating Knowledge Bases to your Agents  - here you will create a Bedrock Knowledge Base and update your restaurant agent to connect this knowledge.
+
+▶ Notebook 3 – Test your Agent  - then you will invoke your agent with different prompts.
+
+▶ Notebook 4 – Clean up Resources  - In the last module you will dissociate all resources from your agent and delete them.
+
+To begin, open Notebook 1 – Building Agents for Bedrock using AWS SDK for Python  in your IDE and follow the in-notebook instructions.
+
+Note - Labs for this section are in the GitHub Repo - amazon-bedrock-workshop/06_OpenSource_examples . These notebooks are up to date.
+
+A new Dedicated Open Source Workshop is planned for future release. Stay tunned for updates!
+
+This module focuses on showcasing Amazon Bedrock  in open source Generative AI application frameworks. Open source community has been at the fore-front of innovation like RAG, Agents to solve complex business problems. We will showcase major technologies like Langchain , LangGraph  and crewai . We will showcase RAG and Agents using these technologies.
+
+Why it is Relevant
+Open Source Within this series of labs, you will be taken through some of the most common usage patterns we are seeing with our customers for Generative AI. We will explore techniques for generating text and images, contextual chats, RAG, creating value for organizations by improving productivity. This is achieved by leveraging foundation models to help in composing emails, summarizing text, answering questions, building chatbots, interpreting and generating code. You will gain hands-on experience using Bedrock APIs, SDKs, and open-source software for example LangChain and FAISS to implement these usage patterns.
+
+Target Audience
+This module can be executed by any developer familiar with Python, as well as data scientists and other technical people.
+
+Recommended Learning Paths
+Labs can be completed in any order but. Each notebook is independent and has no expectation of any other notebook having been completed first. The Agents labs build on one another (hence the recommended ordering) but you can skip the basic labs and jump straight to the topic of interest to you.
+
+Are you a beginner? Start with basic examples (time estimate: 45-60 minutes)
+Start with simple text generation examples in the text-generation-with-langchain/ directory which demonstrate core ways to use Amazon Bedrock with LangChain:
+
+00_simple_chatbot.ipynb : Create a multi-lingual greeter chatbot using langchain with conversation retention and prompt templating.
+01_zero_shot_generation.ipynb : Zero-shot text generation with foundation models on Bedrock, wrapped in LangChain’s prompt interface.
+02_code_interpret_w_langchain.ipynb : Code interpretation and generation, showing how to integrate Bedrock models with LangChain abstractions for developer workflows.
+03_code_translate_w_langchain.ipynb : Demonstrates code translation from one programming language to another, powered by Bedrock + LangChain’s flexible prompt layering.
+04_long_text_summarization_using_LCEL_chains_on_langchain.ipynb : Explores how to summarize lengthy documents or text using LCEL (Language Chain Execution Logic) in LangChain, backed by Bedrock models.
+Interested in Deep Diving on Retrieval Augmented Generation? (time estimate: 20-35 minutes)
+find-relevant-information-using-RAG.ipynb : Demonstrates retrieval-augmented generation (RAG) with Bedrock for more accurate and context-rich responses. Teaches retrieval augmented generation prompt engineering patterns.
+Ready to get some practice building GenAI Agents? (time estimate: 60-90 minutes)
+simple-langragph-agent-setup.ipynb : Provides a starting point for building a single-agent flow with LangGraph, leveraging Bedrock behind the scenes.
+simple-crewai-agent-setup.ipynb : Illustrates a minimal React agent approach using CrewAI, contrasting with LangGraph workflows.
+intermediate-langragph-agent-setup-w-tools.ipynb : Focuses on an intermediate agentic workflow in LangGraph, integrating additional tools to handle complex tasks.
+advance-langragph-multi-agent-setup.ipynb : Shows how to set up a multi-agent environment leveraging LangGraph workflows and Amazon Bedrock.
+ragas-agent-evaluation.ipynb ragas-agent-evaluation.ipynb: Explains evaluating agent performance using Ragas, focusing on retrieval and generation quality with Bedrock.
+
+https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/06_OpenSource_examples/text-generation-with-langchain/00_simple_chatbot.ipynb
+
+https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/06_OpenSource_examples/text-generation-with-langchain/01_zero_shot_generation.ipynb
+
+https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/06_OpenSource_examples/text-generation-with-langchain/02_code_interpret_w_langchain.ipynb
+
+https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/06_OpenSource_examples/text-generation-with-langchain/03_code_translate_w_langchain.ipynb
+
+https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/06_OpenSource_examples/text-generation-with-langchain/04_long_text_summarization_using_LCEL_chains_on_langchain.ipynb
+
+https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/06_OpenSource_examples/find-relevant-information-using-RAG.ipynb
+
+https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/06_OpenSource_examples/simple-langragph-agent-setup.ipynb
+
+https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/06_OpenSource_examples/simple-langragph-agent-setup.ipynb
+
+https://catalog.us-east-1.prod.workshops.aws/event/dashboard/en-US/workshop/160-open-source#:~:text=intermediate%2Dlangragph%2Dagent%2Dsetup%2Dw%2Dtools.ipynb%C2%A0
+
+https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/06_OpenSource_examples/advance-langragph-multi-agent-setup.ipynb
+
+https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/06_OpenSource_examples/ragas-agent-evaluation.ipynb
+
+https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/05_Agents/01_create_agent.ipynb
+
+https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/05_Agents/02_associate_knowledge_base_to_agent.ipynb
+
+https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/05_Agents/03_invoke_agent.ipynb
+
+https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/05_Agents/04_clean_up_agent_resources.ipynb
+
