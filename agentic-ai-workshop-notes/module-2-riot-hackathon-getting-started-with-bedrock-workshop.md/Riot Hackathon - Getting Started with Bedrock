@@ -14,25 +14,8 @@ Image and Video Generation Applications
 Agents
 Open Source With Bedrock
 
-AWS account access
-Open AWS console
 (us-east-1)
-Get AWS CLI credentials
 
-Content preferences
-Language
-
-English
-Exit event
-Event ends in 2 days 22 hours 53 minutes.
-
-Event dashboard
-Amazon Bedrock Workshop
-Event dashboard
-Amazon Bedrock Workshop
-Riot Hackathon-Getting Started with Bedrock
-Event information
-Start time
 10/10/2025 02:00 PM
 Duration
 72 hours
@@ -55,38 +38,12 @@ Amazon Bedrock workshop with main design patterns
 Event Outputs (0)
 
 
-1
-
-
-Key
-Value
-Stack name
-Description
-Type
-No stack outputs
-No stack outputs to display.Workshop Studio
-
-
-bryanj
-
-Event ends in 2 days 22 hours 41 minutes.
-
-Event dashboard
-Prerequisites
-At an AWS Event (Setup)
-Event dashboard
-Prerequisites
-At an AWS Event (Setup)
-At an AWS Event (Setup)
-If you are running this workshop in an AWS event, an AWS account will be provisioned for you.
 
 To get started, go to AWS Console. Go to Amazon Bedrock console and on left menu, click on Model access:
 
-overview
-
 On the Model access screen, on top right, click on the button "Enable specific models":
 
-overview
+
 
 On model access screen, select only following models and click on "Next" button:
 
@@ -106,23 +63,23 @@ Llama 3.1 8B Instruct
 Llama 3.1 70B Instruct
 A "Review and submit" screen will appear, review selected models, review Terms, and click on Submit:
 
-overview
+
 
 Follow the below steps to launch SageMaker Studio (JupyterLab) environment
 Launch the Amazon SageMaker AI console  and click on Domains in the left pane:
-overview
+
 
 Click on the already created Domain amazon-bedrock-workshop:
-overview
+
 
 Under User profiles, click on the Launch dropdown and click on Studio to launch studio in another window:
-overview
+
 
 Within the SageMaker Studio window, click on JupyterLab under Applications to launch SageMaker JupyterLab:
-overview
+
 
 On the JupyterLab screen, click on the JupyterLab environment Name to open a detailed screen about it:
-overview
+
 
 On the details screen, verfiy that the Instance is set to ml.t3.medium. and the Image is set to the latest SageMaker Distribution.
 
@@ -130,56 +87,38 @@ Note: if you intend to run the Model Customization module, you will need to chan
 
 Click on Run space to launch JupyterLab environment:
 
-overview
+
 
 Note: A small message will appear on the bottom of the screen, showing that your environment is being updated.
-overview
+
 
 After the update proccess finishes, you can click on Open JupyterLab button to open your Jupyter environment:
-overview
+
 
 Click on File Browser to view already cloned git repository and to launch available notebooks:
-overview
+
 
 Important
 Make sure the source code has been downloaded in SageMaker Studio (JupyterLab) environment. If not, please execute the Download code sample repository step below.
 
 When you open your first notebook, you will be prompted to pick default kernel for your code execution. Keep as it shown up and click on Select:
-overview
+
 
 Download code sample repository
 If you cannot see the source code in SageMaker Studio (JupyterLab), clone it by running the following command in a Terminal window in SageMaker Studio (JupyterLab):
 
-1
 git clone https://github.com/aws-samples/amazon-bedrock-workshop
 
 Conclusion and Next Steps
 Congratulations! In this section, you've completed all prerequisites to start the workshop. As all workshop modules are independent of each other, you can choose any of the available modules to explore next.
 
+ Go to Amazon Bedrock console and on left menu, click on Model access:
 
-Workshop Studio
 
-
-bryanj
-
-Event ends in 2 days 22 hours 41 minutes.
-
-Event dashboard
-Prerequisites
-At an AWS Event (Setup)
-Event dashboard
-Prerequisites
-At an AWS Event (Setup)
-At an AWS Event (Setup)
-If you are running this workshop in an AWS event, an AWS account will be provisioned for you.
-
-To get started, go to AWS Console. Go to Amazon Bedrock console and on left menu, click on Model access:
-
-overview
 
 On the Model access screen, on top right, click on the button "Enable specific models":
 
-overview
+
 
 On model access screen, select only following models and click on "Next" button:
 
@@ -199,23 +138,23 @@ Llama 3.1 8B Instruct
 Llama 3.1 70B Instruct
 A "Review and submit" screen will appear, review selected models, review Terms, and click on Submit:
 
-overview
+
 
 Follow the below steps to launch SageMaker Studio (JupyterLab) environment
 Launch the Amazon SageMaker AI console  and click on Domains in the left pane:
-overview
+
 
 Click on the already created Domain amazon-bedrock-workshop:
-overview
+
 
 Under User profiles, click on the Launch dropdown and click on Studio to launch studio in another window:
-overview
+
 
 Within the SageMaker Studio window, click on JupyterLab under Applications to launch SageMaker JupyterLab:
-overview
+
 
 On the JupyterLab screen, click on the JupyterLab environment Name to open a detailed screen about it:
-overview
+
 
 On the details screen, verfiy that the Instance is set to ml.t3.medium. and the Image is set to the latest SageMaker Distribution.
 
@@ -223,22 +162,22 @@ Note: if you intend to run the Model Customization module, you will need to chan
 
 Click on Run space to launch JupyterLab environment:
 
-overview
+
 
 Note: A small message will appear on the bottom of the screen, showing that your environment is being updated.
-overview
+
 
 After the update proccess finishes, you can click on Open JupyterLab button to open your Jupyter environment:
-overview
+
 
 Click on File Browser to view already cloned git repository and to launch available notebooks:
-overview
+
 
 Important
 Make sure the source code has been downloaded in SageMaker Studio (JupyterLab) environment. If not, please execute the Download code sample repository step below.
 
 When you open your first notebook, you will be prompted to pick default kernel for your code execution. Keep as it shown up and click on Select:
-overview
+
 
 Download code sample repository
 If you cannot see the source code in SageMaker Studio (JupyterLab), clone it by running the following command in a Terminal window in SageMaker Studio (JupyterLab):
@@ -252,20 +191,7 @@ Congratulations! In this section, you've completed all prerequisites to start th
 Now, you can start the workshop.
 
 
-Workshop Studio
 
-
-bryanj
-
-Event ends in 2 days 22 hours 40 minutes.
-
-Event dashboard
-Prerequisites
-Self paced (Setup)
-Event dashboard
-Prerequisites
-Self paced (Setup)
-Self paced (Setup)
 Please note the following recommendations:
 We recommend you run this workshop in the us-east-1 (N. Virginia) or us-west-2 (Oregon) region.
 If you are running the workshop in SageMaker Studio, here are the recommended kernel configurations:
@@ -308,10 +234,6 @@ Next, install the boto3 and botocore AWS SDK for Python (Boto3)  libraries. Both
 
 To install them, you can run the commands in the section "Prerequisites" from bedrock_basics.ipynb file:
 
-1
-2
-3
-4
 pip install --no-build-isolation --force-reinstall \
     "boto3>=1.28.57" \
     "awscli>=1.29.57" \
@@ -321,14 +243,8 @@ boto3 version must be 1.28.57 or greater and botocore version must be 1.31.57 or
 Next Steps
 Congratulations! In this section, you've completed all prerequisites to start the workshop. As all workshop modules are independent of each other, you can choose any of the available modules to explore next.
 
-Event ends in 2 days 22 hours 39 minutes.
+Prompt Engineering
 
-Event dashboard
-Prompt Engineering
-Event dashboard
-Prompt Engineering
-Prompt Engineering
-Overview
 Prompt engineering is an emerging discipline focused on developing optimized prompts to efficiently apply language models to various tasks. Prompt engineering helps researchers understand the abilities and limits of large language models (LLMs). By using various prompt engineering techniques, you can often get better answers from the foundation models without spending effort and cost on retraining or fine-tuning them.
 
 Note that prompt engineering does not involve fine-tuning the model. In fine-tuning, the weights/parameters are adjusted using training data with the goal of optimizing a cost function. Model fine-tuning is generally an expensive process in terms of computation time and actual costs. Prompt engineering attempts to guide the trained foundation model (FM) to provide more relevant and accurate answers using various methods, such as, better worded questions, similar examples, intermediate steps, and logical reasoning.
@@ -666,33 +582,6 @@ Click on Create vector index
 
 
 Select JSON option and then give the Vector index name as bedrock-sample-rag-index and paste the following json code and click create
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
 {
    "settings": {
       "index.knn": "true",
@@ -730,20 +619,6 @@ index name
 bedrock-sample-rag-index
 
 Vector field name
-
-1
-vector
-
-Metadata
-
-1
-2
-text
-text-metadata
-
-
-
-Save the arn name of collection this will be later used in knowledge base creation
 
 
 1.2 Upload Data into S3
@@ -819,18 +694,6 @@ Add the KB function node
 
 Click on the Prompt Node and add the configuration.Click Select Model and add Nova Micro . Add the below Prompt.
 1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
 Human: You are a financial advisor AI system, and provides answers to questions by using fact based and statistical information when possible. 
 Use the following pieces of information to provide a concise answer to the question enclosed in <question> tags. 
 If you don't know the answer, just say that you don't know, don't try to make up an answer.
@@ -895,7 +758,7 @@ This path provides a code-first, programmatic learning experience for exploring 
 You'll work through a sequence of Jupyter notebooks that guide you step by step—from setting up the required infrastructure to invoking Bedrock APIs that enable powerful, production-ready RAG capabilities. By the end of this module, you'll understand the basic building blocks for creating, operating, and extending RAG applications using Bedrock’s core APIs.
 
 Next Steps
-Here is the content overview of this module:
+Here is the content  of this module:
 
 ▶ Notebook 1 – Create Knowledge Base and Ingest Documents 
 
@@ -917,19 +780,7 @@ Generate answers using the Converse API for fine-tuned control
 To begin, open Notebook 1 – Create Knowledge Base and Ingest Documents  in your IDE and follow the in-notebook instructions.
 
 
-Workshop Studio
 
-
-bryanj
-
-Event ends in 2 days 22 hours 38 minutes.
-
-Event dashboard
-Model Customization
-Event dashboard
-Model Customization
-Model Customization
-Overview
 Model customization is the process of providing training data to a model in order to improve its performance for specific use-cases. You can customize Amazon Bedrock foundation models in order to improve their performance and create a better customer experience. Amazon Bedrock currently provides the following customization methods.
 
 Continued Pre-training
@@ -980,15 +831,6 @@ Section 2: Continued Pre-Training models
 
 Continued Pre-Train Titan models  - This notebook will show to how to run a continued pre-train the titan model. Organizations want to build domain-specific applications that reflect the terminology of their business. However, many FMs are trained on large amounts of publicly available data and are not suited to highly specialized domains. To adapt FMs with knowledge more relevant to a domain, you can engage continued pre-training which leverages vast sets of unlabeled data. Continued pre-training in Bedrock helps address out-of-domain learning challenges by exposing models to new, diverse data, beyond their original training. With continued pre-training, you can expand the model’s understanding to include the language used in your domain and improve the model’s overall competency for your business.
 
-
-
-
-Event ends in 2 days 22 hours 38 minutes.
-
-Event dashboard
-Image and Video Generation Applications
-Event dashboard
-Image and Video Generation Applications
 Image and Video Generation Applications
 Introduction
 Image and video generation can be tedious tasks for artists, designers, and content creators. With the help of Foundation Models (FMs) like Amazon Nova Canvas and Amazon Nova Reel, this process can be streamlined to just a few simple steps. In this module, we'll explore how to use these models to create compelling visual and video ads for Octank, a premium dog food company.
@@ -1029,12 +871,8 @@ This workshop module consists of the following labs:
 
 To begin, open Notebook 1 – Working with Titan Multimodal Embeddings  in your IDE and follow the in-notebook instructions.
 
-Event dashboard
 Agents
-Event dashboard
-Agents
-Agents
-Overview
+
 In this lab, you will learn about Agents for Amazon Bedrock , an Amazon Bedrock  capability that lets you harness the Foundation Model's (FM's) reasoning skills to execute multi-steps business tasks using natural language. You can simply state your problem, like “help me update my product catalogue” and the agent breaks down the problem using the FM’s reasoning capabilities and executes the steps to fulfill your request. You set up an agent with access to your organization’s enterprise systems, processes, knowledge bases, and some building block functions. Then the agent comes up with the logic, figures out what APIs to call and when to call them, and completes the transactions in the right sequence. When an agent needs a piece of information from the user, it automatically asks the user for those additional details using natural language. And the best part about agents — it’s leveraging the most up-to-date information you have and gives you relevant answers securely and privately.
 
 An agent consists of the following components:
@@ -1178,7 +1016,7 @@ Path 2: Multi-Step Bedrock Agent using Jupyter Notebooks
 Introduction
 Generative AI applications often need to execute multistep tasks across company systems and data sources. Agents for Bedrock allows you to automatically orchestrate and analyze the task and break it down into the correct logical sequence using the FM’s reasoning abilities. Agents automatically call the necessary APIs to transact with the company systems and processes to fulfill the request, determining along the way if they can proceed or if they need to gather more information. Using encryption in transit and at rest and IAM roles, agents provide secure access to enterprise data and APIs. With the Action Groups integration with AWS Lambda functions, agents lets you choose the implementation language for your API’s connection. Thanks to the fully managed infrastructure provided, you don’t have to worry about provisioning or managing infrastructure for your agent.
 
-Module overview
+Module 
 In this module we will create a restaurant assistant agent that connects with a Amazon Bedrock Knowledge Bases containing the restaurant's different menus. This agent also connects to an action group that provides functionalities for handling the table booking and updating a DynamoDB table for bookkeeping.
 
 Agents architect
