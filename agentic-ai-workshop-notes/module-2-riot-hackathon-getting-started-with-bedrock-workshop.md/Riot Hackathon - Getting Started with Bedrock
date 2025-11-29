@@ -1096,3 +1096,39 @@ https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/05_Agents/03_in
 
 https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/05_Agents/04_clean_up_agent_resources.ipynb
 
+
+Open Source With Bedrock
+Overview
+Caution
+Note - Labs for this section are in the GitHub Repo - amazon-bedrock-workshop/06_OpenSource_examples . These notebooks are up to date.
+
+A new Dedicated Open Source Workshop is planned for future release. Stay tunned for updates!
+
+This module focuses on showcasing Amazon Bedrock  in open source Generative AI application frameworks. Open source community has been at the fore-front of innovation like RAG, Agents to solve complex business problems. We will showcase major technologies like Langchain , LangGraph  and crewai . We will showcase RAG and Agents using these technologies.
+
+Why it is Relevant
+Open Source Within this series of labs, you will be taken through some of the most common usage patterns we are seeing with our customers for Generative AI. We will explore techniques for generating text and images, contextual chats, RAG, creating value for organizations by improving productivity. This is achieved by leveraging foundation models to help in composing emails, summarizing text, answering questions, building chatbots, interpreting and generating code. You will gain hands-on experience using Bedrock APIs, SDKs, and open-source software for example LangChain and FAISS to implement these usage patterns.
+
+Target Audience
+This module can be executed by any developer familiar with Python, as well as data scientists and other technical people.
+
+Recommended Learning Paths
+Labs can be completed in any order but. Each notebook is independent and has no expectation of any other notebook having been completed first. The Agents labs build on one another (hence the recommended ordering) but you can skip the basic labs and jump straight to the topic of interest to you.
+
+Are you a beginner? Start with basic examples (time estimate: 45-60 minutes)
+Start with simple text generation examples in the text-generation-with-langchain/ directory which demonstrate core ways to use Amazon Bedrock with LangChain:
+
+00_simple_chatbot.ipynb : Create a multi-lingual greeter chatbot using langchain with conversation retention and prompt templating.
+01_zero_shot_generation.ipynb : Zero-shot text generation with foundation models on Bedrock, wrapped in LangChain’s prompt interface.
+02_code_interpret_w_langchain.ipynb : Code interpretation and generation, showing how to integrate Bedrock models with LangChain abstractions for developer workflows.
+03_code_translate_w_langchain.ipynb : Demonstrates code translation from one programming language to another, powered by Bedrock + LangChain’s flexible prompt layering.
+04_long_text_summarization_using_LCEL_chains_on_langchain.ipynb : Explores how to summarize lengthy documents or text using LCEL (Language Chain Execution Logic) in LangChain, backed by Bedrock models.
+Interested in Deep Diving on Retrieval Augmented Generation? (time estimate: 20-35 minutes)
+find-relevant-information-using-RAG.ipynb : Demonstrates retrieval-augmented generation (RAG) with Bedrock for more accurate and context-rich responses. Teaches retrieval augmented generation prompt engineering patterns.
+Ready to get some practice building GenAI Agents? (time estimate: 60-90 minutes)
+simple-langragph-agent-setup.ipynb : Provides a starting point for building a single-agent flow with LangGraph, leveraging Bedrock behind the scenes.
+simple-crewai-agent-setup.ipynb : Illustrates a minimal React agent approach using CrewAI, contrasting with LangGraph workflows.
+intermediate-langragph-agent-setup-w-tools.ipynb : Focuses on an intermediate agentic workflow in LangGraph, integrating additional tools to handle complex tasks.
+advance-langragph-multi-agent-setup.ipynb : Shows how to set up a multi-agent environment leveraging LangGraph workflows and Amazon Bedrock.
+ragas-agent-evaluation.ipynb ragas-agent-evaluation.ipynb: Explains evaluating agent performance using Ragas, focusing on retrieval and generation quality with Bedrock.
+
