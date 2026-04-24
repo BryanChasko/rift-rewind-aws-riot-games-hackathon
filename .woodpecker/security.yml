@@ -1,0 +1,10 @@
+---
+# woodpecker ci/cd — rift-rewind gitleaks security scan
+# replaces .github/workflows/deploy.yml security-check job
+
+steps:
+  - name: gitleaks
+    image: zricethezav/gitleaks:latest
+    commands:
+      - gitleaks detect --verbose --source . --exit-code 1
+

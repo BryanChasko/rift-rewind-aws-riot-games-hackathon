@@ -1,0 +1,54 @@
+---
+# woodpecker ci/cd — rift-rewind react + vite frontend deploy
+# replaces .github/workflows/deploy.yml deploy-frontend job
+# target: s3://awsaerospace.org/learning/api/ + cloudfront ECC3LP1BL2CZS
+# repo: BryanChasko/rift-rewind-aws-riot-games-hackathon
+#
+# NOTE: cross-account trust assumption via rolesanywhere.
+# heraldstack-ci-deploy (aerospace 211125425201) → awsaerospace.org bucket
+
+when:
+  - event: [manual]
+
+steps:
+  - name: install
+    image: node:22-slim
+    commands:
+      - cd rift-rewind-hackathon-aws && npm ci --no-audit --no-fund
+
+  - name: type-check
+    image: node:22-slim
+    depends_on: [install]
+    commands:
+      - cd rift-rewind-hackathon-aws && npm run type-check
+
+  - name: lint
+    image: node:22-slim
+    depends_on: [install]
+    commands:
+      - cd rift-rewind-hackathon-aws && npm run lint:check
+
+  - name: build
+    image: node:22-slim
+    depends_on: [type-check, lint]
+    commands:
+      - cd rift-rewind-hackathon-aws && npm run build
+
+  - name: deploy
+    image: public.ecr.aws/aws-cli/aws-cli:latest
+    depends_on: [build]
+    environment:
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_PROFILE: ci-deploy
+    commands:
+      - mkdir -p /root/.aws
+      - |
+        cat > /root/.aws/config <<EOF
+        [profile ci-deploy]
+        region = us-west-2
+        credential_process = /usr/local/bin/aws_signing_helper credential-process --trust-anchor-arn arn:aws:rolesanywhere:us-west-2:211125425201:trust-anchor/5e54afa4-d3d7-4e42-bae6-68f9d126c7d7 --profile-arn arn:aws:rolesanywhere:us-west-2:211125425201:profile/2177db77-a33c-4e5b-bcce-21b908659406 --role-arn arn:aws:iam::211125425201:role/heraldstack-ci-deploy --certificate /workload.crt --private-key /workload.key
+        EOF
+      - aws sts get-caller-identity
+      - cd rift-rewind-hackathon-aws && aws s3 sync dist/ s3://awsaerospace.org/learning/api/ --delete --exact-timestamps
+      - aws cloudfront create-invalidation --distribution-id ECC3LP1BL2CZS --paths "/learning/api/*"
+
