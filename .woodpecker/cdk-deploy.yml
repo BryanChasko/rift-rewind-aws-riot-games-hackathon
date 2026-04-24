@@ -1,0 +1,58 @@
+---
+# woodpecker ci/cd — rift-rewind riot-api-cdk deploy
+# replaces .github/workflows/deploy.yml deploy-infrastructure job
+# repo: BryanChasko/rift-rewind-aws-riot-games-hackathon
+#
+# NOTE: this pipeline requires AWS account + IAM role setup.
+# current status: dormant repo, cross-account trust not verified.
+# FLAG for ops: before enabling this pipeline, confirm:
+#   - target AWS account ID (not in repo, was in GitHub secrets)
+#   - IAM role ARN for OIDC/RolesAnywhere assumption
+#   - heraldstack-ci-deploy principal can assume target account deploy role
+#   - CDK bootstrap roles exist in target account
+# until cross-account trust is established, manual toggle only (no auto-trigger).
+
+when:
+  - event: [manual]
+
+steps:
+  - name: install
+    image: node:22-slim
+    commands:
+      - apt-get update -qq && apt-get install -y -qq --no-install-recommends python3 python3-pip >/dev/null
+      - cd riot-api-cdk && npm ci --no-audit --no-fund
+
+  - name: synth
+    image: node:22-slim
+    depends_on: [install]
+    environment:
+      AWS_REGION: us-east-2
+    commands:
+      - cd riot-api-cdk && npx cdk synth --quiet
+
+  - name: lambda-deps
+    image: python:3.11-slim
+    depends_on: [synth]
+    commands:
+      - cd riot-api-cdk/lambda/riot-api-source && pip install --quiet aws-xray-sdk -t . && find . -name "*.pyc" -delete && find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+      - cd ../../summoner-lookup-source && pip install --quiet aws-xray-sdk -t . && find . -name "*.pyc" -delete && find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+
+  - name: deploy
+    image: node:22-slim
+    depends_on: [lambda-deps]
+    environment:
+      AWS_REGION: us-east-2
+      AWS_PROFILE: ci-deploy
+    commands:
+      - apt-get update -qq && apt-get install -y -qq --no-install-recommends ca-certificates >/dev/null
+      - mkdir -p /root/.aws
+      - |
+        cat > /root/.aws/config <<EOF
+        [profile ci-deploy]
+        region = us-east-2
+        credential_process = /usr/local/bin/aws_signing_helper credential-process --trust-anchor-arn arn:aws:rolesanywhere:us-west-2:211125425201:trust-anchor/5e54afa4-d3d7-4e42-bae6-68f9d126c7d7 --profile-arn arn:aws:rolesanywhere:us-west-2:211125425201:profile/2177db77-a33c-4e5b-bcce-21b908659406 --role-arn arn:aws:iam::211125425201:role/heraldstack-ci-deploy --certificate /workload.crt --private-key /workload.key
+        EOF
+      - aws sts get-caller-identity
+      - cd riot-api-cdk && npx cdk bootstrap --require-approval never
+      - npx cdk deploy --require-approval never --outputs-file outputs.json
+
