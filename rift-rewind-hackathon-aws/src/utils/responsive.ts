@@ -20,7 +20,7 @@ export const useResponsive = () => {
   return { isMobile, isTablet, isDesktop: !isMobile && !isTablet };
 };
 
-export const getResponsiveColumns = (mobile: number, tablet: number, desktop: number) => {
+export const useResponsiveColumns = (mobile: number, tablet: number, desktop: number) => {
   const { isMobile, isTablet } = useResponsive();
   if (isMobile) return mobile;
   if (isTablet) return tablet;

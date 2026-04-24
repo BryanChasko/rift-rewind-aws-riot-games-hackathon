@@ -38,7 +38,7 @@ export const ApiButton: React.FC<ApiButtonProps> = ({
         dataMode === 'live' ? 'Success: Live data loaded' : 'Demo data loaded', 
         'assertive'
       );
-    } catch (error) {
+    } catch (_error) {
       // Error announcement with assertive priority
       announceToScreenReader('Error: Failed to load data', 'assertive');
     }

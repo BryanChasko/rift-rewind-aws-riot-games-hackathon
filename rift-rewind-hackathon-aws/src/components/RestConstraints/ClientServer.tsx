@@ -104,7 +104,7 @@ export class ClientServer extends RestConstraintBase {
             JSON.parse(error.response.data) : error.response.data;
           errorDetails = responseData.error;
           xrayTraceId = xrayTraceId || responseData.xray_trace_id;
-        } catch (e) {
+        } catch (_e) {
           // Ignore JSON parsing errors
         }
       }
@@ -130,7 +130,7 @@ export class ClientServer extends RestConstraintBase {
         dataSourceStatus: { live: null, test: true, summoner: null }
       });
       this.props.stateManager.setDataMode(this.section, 'demo');
-    } catch (error) {
+    } catch (_error) {
       this.setState({
         dataSourceStatus: { live: null, test: false, summoner: null }
       });
@@ -186,7 +186,7 @@ export class ClientServer extends RestConstraintBase {
       if (responseText.startsWith('{')) {
         try {
           data = JSON.parse(responseText);
-        } catch (e) {
+        } catch (_e) {
           throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
         }
       } else {
@@ -272,7 +272,7 @@ export class ClientServer extends RestConstraintBase {
       console.error('Error stack:', error.stack);
       
       let errorMessage = 'Network error - check browser console for details';
-      let xrayTraceId = error.xrayTraceId;
+      const xrayTraceId = error.xrayTraceId;
       
       if (error.message) {
         if (error.message.includes('Failed to fetch')) {
@@ -336,7 +336,7 @@ export class ClientServer extends RestConstraintBase {
         });
         throw new Error('Riot API unavailable');
       }
-    } catch (error) {
+    } catch (_error) {
       // Use local fallback data
       return this.getLocalFallbackSummoners();
     }
