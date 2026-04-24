@@ -38,13 +38,13 @@ steps:
       - cd ../../summoner-lookup-source && pip install --quiet aws-xray-sdk -t . && find . -name "*.pyc" -delete && find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
 
   - name: deploy
-    image: node:22-slim
+    image: public.ecr.aws/aws-cli/aws-cli:latest
     depends_on: [lambda-deps]
     environment:
       AWS_REGION: us-east-2
       AWS_PROFILE: ci-deploy
     commands:
-      - apt-get update -qq && apt-get install -y -qq --no-install-recommends ca-certificates >/dev/null
+      - yum install -y -q nodejs npm >/dev/null 2>&1
       - mkdir -p /root/.aws
       - |
         cat > /root/.aws/config <<EOF

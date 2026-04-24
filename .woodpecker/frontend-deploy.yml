@@ -14,7 +14,8 @@ steps:
   - name: install
     image: node:22-slim
     commands:
-      - cd rift-rewind-hackathon-aws && npm ci --no-audit --no-fund
+      - npm install -g yarn
+      - cd rift-rewind-hackathon-aws && yarn install --frozen-lockfile
 
   - name: type-check
     image: node:22-slim
