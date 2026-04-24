@@ -1,44 +1,49 @@
 ---
-# woodpecker ci/cd — rift-rewind react + vite frontend deploy
+# woodpecker ci/cd — rift-rewind react + vite frontend build + deploy
 # replaces .github/workflows/deploy.yml deploy-frontend job
 # target: s3://awsaerospace.org/learning/api/ + cloudfront ECC3LP1BL2CZS
 # repo: BryanChasko/rift-rewind-aws-riot-games-hackathon
 #
-# NOTE: cross-account trust assumption via rolesanywhere.
-# heraldstack-ci-deploy (aerospace 211125425201) → awsaerospace.org bucket
-
-when:
-  - event: [manual]
+# build (install/type-check/lint/build) runs on push + manual.
+# deploy runs on manual only — cross-account rolesanywhere trust to awsaerospace.org bucket.
 
 steps:
   - name: install
     image: node:22-slim
+    when:
+      - event: [push, manual]
     commands:
-      - cd rift-rewind-hackathon-aws && yarn install --no-lockfile
+      - cd rift-rewind-hackathon-aws && yarn install --frozen-lockfile
 
   - name: type-check
     image: node:22-slim
     depends_on: [install]
+    when:
+      - event: [push, manual]
     commands:
       - cd rift-rewind-hackathon-aws && npm run type-check
 
   - name: lint
     image: node:22-slim
     depends_on: [install]
-    # eslint flat config incompatibility in source — failure:ignore until fixed
-    failure: ignore
+    when:
+      - event: [push, manual]
     commands:
       - cd rift-rewind-hackathon-aws && npm run lint:check
 
   - name: build
     image: node:22-slim
     depends_on: [type-check, lint]
+    when:
+      - event: [push, manual]
     commands:
       - cd rift-rewind-hackathon-aws && npm run build
 
   - name: deploy
     image: public.ecr.aws/aws-cli/aws-cli:latest
     depends_on: [build]
+    when:
+      - event: [manual]
     environment:
       AWS_DEFAULT_REGION: us-east-1
       AWS_PROFILE: ci-deploy
@@ -53,4 +58,3 @@ steps:
       - aws sts get-caller-identity
       - cd rift-rewind-hackathon-aws && aws s3 sync dist/ s3://awsaerospace.org/learning/api/ --delete --exact-timestamps
       - aws cloudfront create-invalidation --distribution-id ECC3LP1BL2CZS --paths "/learning/api/*"
-
